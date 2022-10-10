@@ -9,14 +9,15 @@ add_executable(pink_engine main.cpp)
 find_package(OpenGL REQUIRED)
 
 
-add_subdirectory(glm)
-add_subdirectory(glfw)
+add_subdirectory(glm EXCLUDE_FROM_ALL)
+add_subdirectory(glfw EXCLUDE_FROM_ALL)
 
 set(ASSIMP_BUILD_STATIC_LIB ON)
 set(ASSIMP_INSTALL OFF)
 set(ENABLE_BOOST_WORKAROUND ON)
-add_subdirectory(assimp)
+add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
+add_subdirectory(glew-cmake)
 
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
 add_library(IMGUI STATIC)
@@ -45,7 +46,6 @@ target_link_libraries(IMGUI PUBLIC glfw ${CMAKE_DL_LIBS} ${OPENGL_LIBRARIES})
 add_subdirectory(pink_structs)
 add_subdirectory(pink_physics)
 add_subdirectory(pink_graphics)
-add_subdirectory( ${PROJECT_SOURCE_DIR}/glew/build/cmake )
 
 message( STATUS "assimp dir: ${ASSIMP_LIB_INSTALL_DIR}")
 
@@ -53,6 +53,7 @@ include_directories(
         ${OPENGL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/assimp/include
         ${PROJECT_SOURCE_DIR}
+        ${GLEW_INCLUDE_DIR}
         )
 
 
@@ -60,7 +61,7 @@ target_link_libraries(pink_engine
         ${OPENGL_LIBRARIES}
         glm
         glfw
-        libglew_static
+        ${GLEW_LIBRARY}
         IMGUI
         ${CMAKE_CURRENT_BINARY_DIR}/assimp/lib/Debug/assimp-vc143-mtd.lib
         ${CMAKE_DL_LIBS}
