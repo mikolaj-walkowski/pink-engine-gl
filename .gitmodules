@@ -10,3 +10,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui
+[submodule "glew"]
+	path = glew
+	url = https://github.com/nigels-com/glew

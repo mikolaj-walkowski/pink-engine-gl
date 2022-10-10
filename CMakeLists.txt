@@ -45,18 +45,22 @@ target_link_libraries(IMGUI PUBLIC glfw ${CMAKE_DL_LIBS} ${OPENGL_LIBRARIES})
 add_subdirectory(pink_structs)
 add_subdirectory(pink_physics)
 add_subdirectory(pink_graphics)
+add_subdirectory( ${PROJECT_SOURCE_DIR}/glew/build/cmake )
 
 message( STATUS "assimp dir: ${ASSIMP_LIB_INSTALL_DIR}")
 
 include_directories(
         ${OPENGL_INCLUDE_DIRS}
-        ${PROJECT_SOURCE_DIR}/assimp/include)
+        ${PROJECT_SOURCE_DIR}/assimp/include
+        ${PROJECT_SOURCE_DIR}
+        )
 
 
 target_link_libraries(pink_engine
         ${OPENGL_LIBRARIES}
         glm
         glfw
+        libglew_static
         IMGUI
         ${CMAKE_CURRENT_BINARY_DIR}/assimp/lib/Debug/assimp-vc143-mtd.lib
         ${CMAKE_DL_LIBS}
