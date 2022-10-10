@@ -1,4 +1,4 @@
-#include <glad/glad.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <sahder.hpp>
-#include <camera.h>
+#include <camera.hpp>
 
 #include <iostream>
 
@@ -64,11 +64,12 @@ int main()
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
+    if (glewInit() != GLEW_OK)
+	{
+		fprintf(stderr, "Cant initialize GLEW.\n");
+		exit(EXIT_FAILURE);
+	}
+
 
     // configure global opengl state
     // -----------------------------

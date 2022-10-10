@@ -17,7 +17,7 @@ set(ASSIMP_INSTALL OFF)
 set(ENABLE_BOOST_WORKAROUND ON)
 add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
-add_subdirectory(glew-cmake)
+add_subdirectory(glew-cmake EXCLUDE_FROM_ALL)
 
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
 add_library(IMGUI STATIC)
@@ -47,13 +47,11 @@ add_subdirectory(pink_structs)
 add_subdirectory(pink_physics)
 add_subdirectory(pink_graphics)
 
-message( STATUS "assimp dir: ${ASSIMP_LIB_INSTALL_DIR}")
 
 include_directories(
         ${OPENGL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/assimp/include
         ${PROJECT_SOURCE_DIR}
-        ${GLEW_INCLUDE_DIR}
         )
 
 
@@ -61,7 +59,7 @@ target_link_libraries(pink_engine
         ${OPENGL_LIBRARIES}
         glm
         glfw
-        ${GLEW_LIBRARY}
+        libglew_static 
         IMGUI
         ${CMAKE_CURRENT_BINARY_DIR}/assimp/lib/Debug/assimp-vc143-mtd.lib
         ${CMAKE_DL_LIBS}
