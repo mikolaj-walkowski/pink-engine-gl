@@ -1,0 +1,5 @@
+﻿{
+    TabWidth: '4';
+    UseTab: Never;
+    BasedOnStyle: Google;
+}
