@@ -6,8 +6,7 @@ enable_testing()
 
 add_executable(pink_engine main.cpp)
 
-find_package(OpenGL REQUIRED)
-
+find_package(Vulkan REQUIRED)
 
 add_subdirectory(glm EXCLUDE_FROM_ALL)
 add_subdirectory(glfw EXCLUDE_FROM_ALL)
@@ -32,7 +31,7 @@ target_sources( IMGUI
                     ${IMGUI_DIR}/imgui.cpp
 
                 PRIVATE
-                    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+                    ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
                     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
                 )
 
@@ -50,14 +49,13 @@ add_subdirectory(pink_graphics)
 
 
 include_directories(
-        ${OPENGL_INCLUDE_DIRS}
+        Vulkan::Vulkan
         ${PROJECT_SOURCE_DIR}/assimp/include
         ${PROJECT_SOURCE_DIR}
         )
 
 
 target_link_libraries(pink_engine
-        ${OPENGL_LIBRARIES}
         glm
         glfw
         libglew_static 
