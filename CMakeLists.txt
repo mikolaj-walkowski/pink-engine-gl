@@ -14,6 +14,7 @@ add_subdirectory(glfw EXCLUDE_FROM_ALL)
 
 set(ASSIMP_BUILD_STATIC_LIB ON)
 set(ASSIMP_INSTALL OFF)
+set(ASSIMP_TOOLS ON)
 set(ENABLE_BOOST_WORKAROUND ON)
 add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
@@ -61,7 +62,7 @@ target_link_libraries(pink_engine
         glfw
         libglew_static 
         IMGUI
-        ${CMAKE_CURRENT_BINARY_DIR}/assimp/lib/Debug/assimp-vc143-mtd.lib
+        assimp # ${CMAKE_CURRENT_BINARY_DIR}/assimp/lib/Debug/assimp-vc143-mtd.lib
         ${CMAKE_DL_LIBS}
         pink::structs
         pink::physics
