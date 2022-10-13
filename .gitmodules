@@ -13,3 +13,6 @@
 [submodule "glew-cmake"]
 	path = glew-cmake
 	url = https://github.com/Perlmint/glew-cmake
+[submodule "vk-bootstrap"]
+	path = vk-bootstrap
+	url = https://github.com/charles-lunarg/vk-bootstrap
