@@ -8,9 +8,10 @@ add_executable(pink_engine main.cpp)
 
 set (VULKAN_SDK_PATH "C:\\VulkanSDK\\1.3.216.0")
 
-if (DEFINED VULKAN_SDK_PATH)
-  set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include") # 1.1 Make sure this include path is correct
-  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib") # 1.2 Make sure lib path is correct
+message(STATUS "VULKAN $ENV{VK_SDK_PATH}")
+if (DEFINED ENV{VK_SDK_PATH})
+  set(Vulkan_INCLUDE_DIRS "$ENV{VK_SDK_PATH}/Include") # 1.1 Make sure this include path is correct
+  set(Vulkan_LIBRARIES "$ENV{VK_SDK_PATH}/Lib") # 1.2 Make sure lib path is correct
   set(Vulkan_FOUND "True")
 else()
   find_package(Vulkan) # throws error if could not find Vulkan
@@ -25,6 +26,7 @@ endif()
 add_subdirectory(glm EXCLUDE_FROM_ALL)
 add_subdirectory(glfw EXCLUDE_FROM_ALL)
 add_subdirectory(vk-bootstrap EXCLUDE_FROM_ALL)
+#add_subdirectory(VulkanMemoryAllocator EXCLUDE_FROM_ALL)
 
 set(ASSIMP_BUILD_STATIC_LIB ON)
 set(ASSIMP_INSTALL OFF)
@@ -69,8 +71,6 @@ add_subdirectory(pink_graphics)
 
 
 target_include_directories(pink_engine PUBLIC
-        ${PROJECT_SOURCE_DIR}/assimp/include
-        ${PROJECT_SOURCE_DIR}
         ${Vulkan_INCLUDE_DIRS}
         )
 
@@ -83,7 +83,7 @@ target_link_libraries(pink_engine
         glfw
         libglew_static 
         IMGUI
-        assimp # ${CMAKE_CURRENT_BINARY_DIR}/assimp/lib/Debug/assimp-vc143-mtd.lib
+        assimp
         ${CMAKE_DL_LIBS}
         pink::structs
         pink::physics
