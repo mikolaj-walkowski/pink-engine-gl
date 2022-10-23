@@ -6,7 +6,7 @@
 #include <string>
 #include <vulkan/vulkan.hpp>
 #include <vma/vk_mem_alloc.h>
-
+#include <pink_structs.hpp>
 
 #include "common.h"
 

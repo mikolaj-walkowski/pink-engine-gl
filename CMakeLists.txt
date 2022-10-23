@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 3.4.0)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # works
+
 project(pink_engine VERSION 0.1.0)
 
 include(CTest)
 enable_testing()
 
 add_executable(pink_engine main.cpp)
-
-set (VULKAN_SDK_PATH "C:\\VulkanSDK\\1.3.216.0")
 
 message(STATUS "VULKAN $ENV{VK_SDK_PATH}")
 if (DEFINED ENV{VK_SDK_PATH})
@@ -26,7 +27,6 @@ endif()
 add_subdirectory(glm EXCLUDE_FROM_ALL)
 add_subdirectory(glfw EXCLUDE_FROM_ALL)
 add_subdirectory(vk-bootstrap EXCLUDE_FROM_ALL)
-#add_subdirectory(VulkanMemoryAllocator EXCLUDE_FROM_ALL)
 
 set(ASSIMP_BUILD_STATIC_LIB ON)
 set(ASSIMP_INSTALL OFF)
@@ -84,7 +84,6 @@ target_link_libraries(pink_engine
         libglew_static 
         IMGUI
         assimp
-        ${CMAKE_DL_LIBS}
         pink::structs
         pink::physics
         pink::graphics
