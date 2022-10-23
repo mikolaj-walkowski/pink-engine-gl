@@ -32,6 +32,10 @@ set(ASSIMP_BUILD_STATIC_LIB ON)
 set(ASSIMP_INSTALL OFF)
 set(ASSIMP_TOOLS ON)
 set(ENABLE_BOOST_WORKAROUND ON)
+set(ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_NO_EXPORT OFF)
+
 add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
 add_subdirectory(glew-cmake EXCLUDE_FROM_ALL)
@@ -66,8 +70,8 @@ target_link_directories( IMGUI PUBLIC
 target_link_libraries(IMGUI PUBLIC glfw ${CMAKE_DL_LIBS})
 
 add_subdirectory(pink_structs)
-add_subdirectory(pink_physics)
 add_subdirectory(pink_graphics)
+add_subdirectory(pink_physics)
 
 
 target_include_directories(pink_engine PUBLIC

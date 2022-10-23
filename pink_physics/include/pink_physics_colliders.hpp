@@ -1,5 +1,3 @@
-#pragma once
-
 #include <vector>
 #include "pink_structs.hpp"
 #include "glm/glm.hpp"
@@ -13,10 +11,10 @@ struct Manifold {
 
 typedef void CollisionFunction(void*, void*, Manifold*) ;
 
-CollisionFunction sphereToSphere;
-CollisionFunction capsuleToCapsule;
-CollisionFunction cylinderToCylinder;
+// CollisionFunction sphereToSphere;
+// CollisionFunction capsuleToCapsule;
+// CollisionFunction cylinderToCylinder;
 
-CollisionFunction cylinderToHeightMap;
-CollisionFunction capsuleToHeightMap;
+// CollisionFunction cylinderToHeightMap;
+// CollisionFunction capsuleToHeightMap;
 

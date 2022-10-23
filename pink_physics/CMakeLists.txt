@@ -1,7 +1,6 @@
 project(pink_physics)
 
-add_library(${PROJECT_NAME} SHARED
-    src/pink_physics.cpp)
+add_library(${PROJECT_NAME} src/pink_physics.cpp)
     
 add_library(pink::physics ALIAS ${PROJECT_NAME})
 
