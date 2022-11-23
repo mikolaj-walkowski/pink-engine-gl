@@ -27,6 +27,7 @@ endif()
 add_subdirectory(glm EXCLUDE_FROM_ALL)
 add_subdirectory(glfw EXCLUDE_FROM_ALL)
 add_subdirectory(vk-bootstrap EXCLUDE_FROM_ALL)
+add_subdirectory(klein EXCLUDE_FROM_ALL)
 
 set(ASSIMP_BUILD_STATIC_LIB ON)
 set(ASSIMP_INSTALL OFF)
@@ -91,6 +92,7 @@ target_link_libraries(pink_engine
         pink::structs
         pink::physics
         pink::graphics
+        klein::klein
         vk-bootstrap::vk-bootstrap
 )
 

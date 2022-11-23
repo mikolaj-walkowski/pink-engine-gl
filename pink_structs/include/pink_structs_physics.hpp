@@ -1,4 +1,6 @@
 #pragma once 
+#include <klein/klein.hpp>
+
 
 namespace pp{
 
@@ -10,7 +12,8 @@ namespace pp{
         int radius;
     };
 
-    struct Rigidbody{
+    struct Rigidbody {
+        kln::motor M;
         ShapeType shapeType;
         void* shape;
     };

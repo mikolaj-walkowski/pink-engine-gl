@@ -2,6 +2,7 @@
 #include <vector>
 #include "glm/glm.hpp"
 #include "glm/gtx/quaternion.hpp"
+#include <klein/klein.hpp>
 
 namespace ps {
 #include "pink_structs_graphics.hpp"
