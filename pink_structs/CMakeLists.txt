@@ -1,5 +1,7 @@
 project(pink_structs)
 
+message(STATUS "Adding ${PROJECT_NAME} ")
+
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(pink::structs ALIAS ${PROJECT_NAME})
 

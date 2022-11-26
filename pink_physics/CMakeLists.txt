@@ -1,5 +1,7 @@
 project(pink_physics)
 
+message(STATUS "Adding ${PROJECT_NAME} ")
+
 file(GLOB SOURCE_FILES src/*.cpp)
 
 add_library(${PROJECT_NAME} SHARED)   
