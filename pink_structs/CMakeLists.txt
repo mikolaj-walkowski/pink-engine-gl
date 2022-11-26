@@ -5,7 +5,7 @@ add_library(pink::structs ALIAS ${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME}
     INTERFACE klein::klein
-    INTERFACE glm
+    INTERFACE nvpro_core
     INTERFACE assimp
 )
 

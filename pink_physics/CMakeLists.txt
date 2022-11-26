@@ -1,14 +1,22 @@
 project(pink_physics)
 
-add_library(${PROJECT_NAME} src/pink_physics.cpp)
-    
+file(GLOB SOURCE_FILES src/*.cpp)
+
+add_library(${PROJECT_NAME} SHARED)   
 add_library(pink::physics ALIAS ${PROJECT_NAME})
+
+target_sources(${PROJECT_NAME}
+    PUBLIC ${COMMON_SOURCE_FILES}
+    PUBLIC ${SOURCE_FILES}
+)
+
 
 target_link_libraries(${PROJECT_NAME}
     pink::structs
+    klein::klein
+    nvpro_core
 )
 
 target_include_directories( ${PROJECT_NAME}
     PUBLIC ${PROJECT_SOURCE_DIR}/include
-    INTERFACE ${glm_SOURCE_DIRS}
 )

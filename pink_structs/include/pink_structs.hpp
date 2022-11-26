@@ -1,7 +1,5 @@
 #pragma once
 #include <vector>
-#include "glm/glm.hpp"
-#include "glm/gtx/quaternion.hpp"
 #include <klein/klein.hpp>
 
 
@@ -10,13 +8,11 @@ namespace ps {
 #include "pink_structs_physics.hpp"
 
   typedef long int UniqueID; // Na razie robię tak bo nie wiem co dokładnie będziemy chcieli mieć jako ID
-  
+
   class Object {
- private:
+  private:
   public:
     UniqueID id;
-    glm::vec3 transform;
-    glm::quat rotation;
     std::vector<Object*> children;  // OPT można zmienić na tab albo zrobić własną klasę/struct pod tablice o jednolitym rozmiarze
     pp::Rigidbody rigidbody;  // Mogę dać funkcje getInterpolatedTransform(RigidBody previousState, float blend (0.0 ... 1.0 )) zamiast transform i rotation 
     pg::MeshRenderer meshRenderer;

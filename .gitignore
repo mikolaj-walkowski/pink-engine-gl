@@ -1,5 +1,5 @@
 build
-bin\_x64
 .vscode
 **/spv
+out
 spv

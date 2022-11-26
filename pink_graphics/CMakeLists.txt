@@ -1,15 +1,20 @@
 project(pink_graphics)
 
-add_library(${PROJECT_NAME} src/pink_graphics.cpp)
-add_library(pink::graphics ALIAS ${PROJECT_NAME})
-_add_project_definitions(${PROJECT_NAME})
+file(GLOB SOURCE_FILES src/*.cpp)
 
+add_library(${PROJECT_NAME} SHARED)
+add_library(pink::graphics ALIAS ${PROJECT_NAME})
+
+target_sources(${PROJECT_NAME}
+    PUBLIC ${COMMON_SOURCE_FILES}
+    PUBLIC ${SOURCE_FILES}
+)
 
 target_link_libraries(${PROJECT_NAME}
     pink::structs
+    nvpro_core
 )
 
 target_include_directories( ${PROJECT_NAME}
     PUBLIC ${PROJECT_SOURCE_DIR}/include
-    ${glm_SOURCE_DIRS}
 )
