@@ -1,2 +1,5 @@
 build
+bin\_x64
 .vscode
+**/spv
+spv
