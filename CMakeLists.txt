@@ -99,7 +99,8 @@ add_subdirectory(glew-cmake EXCLUDE_FROM_ALL)
 
 # target_link_libraries(imgui PUBLIC glfw ${CMAKE_DL_LIBS})
 
-add_executable(pink_engine ${PROJECT_SOURCE_DIR}/main.cpp)
+add_executable(pink_engine ${PROJECT_SOURCE_DIR}/main.cpp ${PROJECT_SOURCE_DIR}/hello_vulkan.cpp)
+
 add_subdirectory(pink_structs)
 add_subdirectory(pink_graphics)
 add_subdirectory(pink_physics)
@@ -107,6 +108,7 @@ add_subdirectory(pink_physics)
 
 target_include_directories(pink_engine PUBLIC
         ${Vulkan_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
 target_link_directories( pink_engine PUBLIC
@@ -123,6 +125,7 @@ target_link_libraries(pink_engine
         pink::physics
         pink::graphics
         klein::klein
+        tinyobjloader
         # vk-bootstrap::vk-bootstrap
         nvpro_core
 )
