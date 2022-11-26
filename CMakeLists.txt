@@ -10,22 +10,22 @@ enable_testing()
 
 
 
-message(STATUS "VULKAN $ENV{VK_SDK_PATH}")
-if (DEFINED ENV{VK_SDK_PATH})
-  set(Vulkan_INCLUDE_DIRS "$ENV{VK_SDK_PATH}/Include") # 1.1 Make sure this include path is correct
-  set(Vulkan_LIBRARIES "$ENV{VK_SDK_PATH}/Lib") # 1.2 Make sure lib path is correct
-  set(Vulkan_FOUND "True")
-else()
-  find_package(Vulkan) # throws error if could not find Vulkan
-  message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
-endif()
-if (NOT Vulkan_FOUND)
-    message(FATAL_ERROR "Could not find Vulkan library!")
-else()
-    message(STATUS "Using vulkan lib at: ${Vulkan_LIBRARIES}")
-endif()
+# message(STATUS "VULKAN $ENV{VK_SDK_PATH}")
+# if (DEFINED ENV{VK_SDK_PATH})
+#   set(Vulkan_INCLUDE_DIRS "$ENV{VK_SDK_PATH}/Include") # 1.1 Make sure this include path is correct
+#   set(Vulkan_LIBRARIES "$ENV{VK_SDK_PATH}/Lib") # 1.2 Make sure lib path is correct
+#   set(Vulkan_FOUND "True")
+# else()
+#   find_package(Vulkan) # throws error if could not find Vulkan
+#   message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
+# endif()
+# if (NOT Vulkan_FOUND)
+#     message(FATAL_ERROR "Could not find Vulkan library!")
+# else()
+#     message(STATUS "Using vulkan lib at: ${Vulkan_LIBRARIES}")
+# endif()
 
-add_subdirectory(glm EXCLUDE_FROM_ALL)
+# add_subdirectory(glm EXCLUDE_FROM_ALL)
 # add_subdirectory(glfw EXCLUDE_FROM_ALL)
 # add_subdirectory(vk-bootstrap EXCLUDE_FROM_ALL)
 add_subdirectory(klein EXCLUDE_FROM_ALL)
@@ -99,11 +99,11 @@ add_subdirectory(glew-cmake EXCLUDE_FROM_ALL)
 
 # target_link_libraries(imgui PUBLIC glfw ${CMAKE_DL_LIBS})
 
-add_executable(pink_engine ${PROJECT_SOURCE_DIR}/main.cpp ${PROJECT_SOURCE_DIR}/hello_vulkan.cpp)
+add_executable(pink_engine ${PROJECT_SOURCE_DIR}/main.cpp ${PROJECT_SOURCE_DIR}/hello_vulkan.cpp  ${PROJECT_SOURCE_DIR}/obj_loader.cpp)
 
-add_subdirectory(pink_structs)
-add_subdirectory(pink_graphics)
-add_subdirectory(pink_physics)
+# add_subdirectory(pink_structs)
+# add_subdirectory(pink_graphics)
+# add_subdirectory(pink_physics)
 
 
 target_include_directories(pink_engine PUBLIC
@@ -116,19 +116,21 @@ target_link_directories( pink_engine PUBLIC
 )
 
 target_link_libraries(pink_engine
-        glm
-        glfw
-        libglew_static 
-        imgui
-        assimp
-        pink::structs
-        pink::physics
-        pink::graphics
-        klein::klein
-        tinyobjloader
+        # glm
+        # glfw
+        # libglew_static 
+        # imgui
+        # assimp
+        # pink::structs
+        # pink::physics
+        # pink::graphics
+        # klein::klein
+        # tinyobjloader
         # vk-bootstrap::vk-bootstrap
         nvpro_core
 )
+
+_finalize_target(pink_engine)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
