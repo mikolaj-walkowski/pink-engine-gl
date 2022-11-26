@@ -14,6 +14,8 @@ namespace pp{
 
     struct Rigidbody {
         kln::motor M;
+        kln::point center;
+        
         ShapeType shapeType;
         void* shape;
     };

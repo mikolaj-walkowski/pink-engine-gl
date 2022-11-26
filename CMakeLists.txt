@@ -4,10 +4,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # works
 
 project(pink_engine VERSION 0.1.0)
 
+message(${CMAKE_SIZEOF_VOID_P})
 include(CTest)
 enable_testing()
 
-add_executable(pink_engine main.cpp)
+
 
 message(STATUS "VULKAN $ENV{VK_SDK_PATH}")
 if (DEFINED ENV{VK_SDK_PATH})
@@ -39,37 +40,59 @@ set(ASSIMP_NO_EXPORT OFF)
 
 add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
+set(USING_OPENGL OFF)
+set(USING_VULKANSDK  ON)
+set(USING_IMGUI ON)
+set(USING_DIRECTX12 OFF)
+set(USING_OPTIX ON)
+set(BASE_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR})
+
+include(${BASE_DIRECTORY}/nvpro_core/cmake/setup.cmake)
+include(${BASE_DIRECTORY}/nvpro_core/cmake/utilities.cmake)
+
+add_subdirectory(nvpro_core EXCLUDE_FROM_ALL)
+
+
+set(ASSIMP_BUILD_STATIC_LIB ON)
+set(ASSIMP_INSTALL OFF)
+set(ASSIMP_TOOLS ON)
+set(ENABLE_BOOST_WORKAROUND ON)
+set(ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_NO_EXPORT OFF)
+
 add_subdirectory(glew-cmake EXCLUDE_FROM_ALL)
 
-set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
-add_library(IMGUI STATIC)
+# set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
+# add_library(imgui STATIC)
 
-target_sources( IMGUI
-                PRIVATE
-                    ${IMGUI_DIR}/imgui_demo.cpp
-                    ${IMGUI_DIR}/imgui_draw.cpp
-                    ${IMGUI_DIR}/imgui_tables.cpp
-                    ${IMGUI_DIR}/imgui_widgets.cpp
-                    ${IMGUI_DIR}/imgui.cpp
+# target_sources( imgui
+#                 PRIVATE
+#                     ${IMGUI_DIR}/imgui_demo.cpp
+#                     ${IMGUI_DIR}/imgui_draw.cpp
+#                     ${IMGUI_DIR}/imgui_tables.cpp
+#                     ${IMGUI_DIR}/imgui_widgets.cpp
+#                     ${IMGUI_DIR}/imgui.cpp
 
-                PRIVATE
-                    ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
-                    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
-                )
+#                 PRIVATE
+#                     ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+#                     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+#                 )
 
-target_include_directories( IMGUI
-                            PUBLIC ${IMGUI_DIR}
-                            PUBLIC ${IMGUI_DIR}/backends
-                            PUBLIC ${GLFW_SOURCE_DIR}/include
-                            PUBLIC ${Vulkan_INCLUDE_DIRS}
-                            )
+# target_include_directories( imgui
+#                             PUBLIC ${IMGUI_DIR}
+#                             PUBLIC ${IMGUI_DIR}/backends
+#                             PUBLIC ${GLFW_SOURCE_DIR}/include
+#                             PUBLIC ${Vulkan_INCLUDE_DIRS}
+#                             )
 
-target_link_directories( IMGUI PUBLIC
-                        ${Vulkan_LIBRARIES} 
-)
+# target_link_directories( imgui PUBLIC
+#                         ${Vulkan_LIBRARIES} 
+# )
 
-target_link_libraries(IMGUI PUBLIC glfw ${CMAKE_DL_LIBS})
+# target_link_libraries(imgui PUBLIC glfw ${CMAKE_DL_LIBS})
 
+add_executable(pink_engine ${PROJECT_SOURCE_DIR}/main.cpp)
 add_subdirectory(pink_structs)
 add_subdirectory(pink_graphics)
 add_subdirectory(pink_physics)
@@ -87,13 +110,14 @@ target_link_libraries(pink_engine
         glm
         glfw
         libglew_static 
-        IMGUI
+        imgui
         assimp
         pink::structs
         pink::physics
         pink::graphics
         klein::klein
         vk-bootstrap::vk-bootstrap
+        nvpro_core
 )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
