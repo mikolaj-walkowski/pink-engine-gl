@@ -46,9 +46,9 @@ _add_nvpro_core_lib()
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/media DESTINATION ${OUTPUT_PATH})
 
-file(GLOB SOURCE_FILES *.cpp *.hpp *.inl *.h *.c)
-file(GLOB EXTRA_COMMON ${TUTO_KHR_DIR}/common/*.*)
-list(APPEND COMMON_SOURCE_FILES ${EXTRA_COMMON})
+# file(GLOB SOURCE_FILES *.cpp *.hpp *.inl *.h *.c)
+# file(GLOB EXTRA_COMMON ${TUTO_KHR_DIR}/common/*.*)
+# list(APPEND COMMON_SOURCE_FILES ${EXTRA_COMMON})
 
 compile_glsl_directory(
   SRC "${CMAKE_CURRENT_SOURCE_DIR}/shaders" 
