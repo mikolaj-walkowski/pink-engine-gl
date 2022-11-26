@@ -26,8 +26,8 @@ else()
 endif()
 
 add_subdirectory(glm EXCLUDE_FROM_ALL)
-add_subdirectory(glfw EXCLUDE_FROM_ALL)
-add_subdirectory(vk-bootstrap EXCLUDE_FROM_ALL)
+# add_subdirectory(glfw EXCLUDE_FROM_ALL)
+# add_subdirectory(vk-bootstrap EXCLUDE_FROM_ALL)
 add_subdirectory(klein EXCLUDE_FROM_ALL)
 
 set(ASSIMP_BUILD_STATIC_LIB ON)
@@ -50,7 +50,14 @@ set(BASE_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR})
 include(${BASE_DIRECTORY}/nvpro_core/cmake/setup.cmake)
 include(${BASE_DIRECTORY}/nvpro_core/cmake/utilities.cmake)
 
-add_subdirectory(nvpro_core EXCLUDE_FROM_ALL)
+if(MSVC)
+add_definitions(/wd26812)  # 'enum class' over 'enum'
+add_definitions(/wd26451)  # Arithmetic overflow, casting 4 byte value to 8 byte value
+endif()
+
+set(TUTO_KHR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+_add_nvpro_core_lib()
 
 
 set(ASSIMP_BUILD_STATIC_LIB ON)
@@ -116,7 +123,7 @@ target_link_libraries(pink_engine
         pink::physics
         pink::graphics
         klein::klein
-        vk-bootstrap::vk-bootstrap
+        # vk-bootstrap::vk-bootstrap
         nvpro_core
 )
 
