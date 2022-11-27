@@ -22,7 +22,7 @@
 
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "obj_loader.h"
+#include "pink_graphics.hpp"
 #include "stb_image.h"
 
 #include "hello_vulkan.h"
