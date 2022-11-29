@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.4.0)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # works
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 get_filename_component(PROJNAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
@@ -14,9 +14,9 @@ project(pink_engine VERSION 0.1.0 LANGUAGES C CXX)
 
 include(CTest)
 enable_testing()
-
-message(STATUS "Adding klein")
-
+message(STATUS "++++++++++++++++++++++++++++")
+message(STATUS "[PINK] Adding klein")
+message(STATUS "++++++++++++++++++++++++++++")
 add_subdirectory(klein EXCLUDE_FROM_ALL)
 
 set(ASSIMP_BUILD_STATIC_LIB ON)
@@ -27,11 +27,13 @@ set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
 set(ASSIMP_NO_EXPORT OFF)
 
-message(STATUS "Adding asimp")
+message(STATUS "++++++++++++++++++++++++++++")
+message(STATUS "[PINK] Adding asimp")
+message(STATUS "++++++++++++++++++++++++++++")
 
 add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
-message(STATUS "Adding nnvpro_core")
+message(STATUS "[PINK] Adding nnvpro_core")
 set(BASE_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(MSVC)
@@ -48,17 +50,13 @@ _add_package_ShaderC()
 
 _add_nvpro_core_lib()
 
-message(${OUTPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/media DESTINATION ${OUTPUT_PATH})
 
-compile_glsl_directory(
-  SRC "${CMAKE_CURRENT_SOURCE_DIR}/shaders" 
-	DST "${CMAKE_CURRENT_SOURCE_DIR}/spv" 
-	VULKAN_TARGET "vulkan1.2"
-	DEPENDENCY ${VULKAN_BUILD_DEPENDENCIES}
-	)
-  
-  add_executable(pink_engine)
+message(STATUS "++++++++++++++++++++++++++++")
+message(STATUS "[PINK] Creating ${PROJECT_NAME} target")
+message(STATUS "++++++++++++++++++++++++++++")
+
+add_executable(pink_engine)
   
   _add_project_definitions(${PROJECT_NAME})
 
@@ -67,10 +65,10 @@ compile_glsl_directory(
   target_sources(${PROJECT_NAME} 
         PUBLIC ${SOURCES}
         PUBLIC ${COMMON_SOURCE_FILES}
+        PUBLIC ${GLSL_HEADERS} ${GLSL_SOURCES}
   )
   
   target_include_directories(${PROJECT_NAME} 
-        PUBLIC ${PROJECT_SOURCE_DIR}/shaders
         PUBLIC  ${PROJECT_SOURCE_DIR}/include
   )
 
@@ -88,17 +86,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 _finalize_target(pink_engine)
-
-install(FILES ${SPV_OUTPUT} CONFIGURATIONS Release DESTINATION "bin_${ARCH}/${PROJNAME}/spv")
-install(FILES ${SPV_OUTPUT} CONFIGURATIONS Debug DESTINATION "bin_${ARCH}_debug/${PROJNAME}/spv")
-
-
-install(DIRECTORY "media" 
-        CONFIGURATIONS Release 
-        DESTINATION "bin_${ARCH}")
-install(DIRECTORY "media" 
-        CONFIGURATIONS Debug 
-        DESTINATION "bin_${ARCH}_debug")
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

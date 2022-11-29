@@ -1,6 +1,8 @@
 project(pink_structs)
 
-message(STATUS "Adding ${PROJECT_NAME} ")
+message(STATUS "++++++++++++++++++++++++++++")
+message(STATUS "[PINK] creating ${PROJECT_NAME} target")
+message(STATUS "++++++++++++++++++++++++++++")
 
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(pink::structs ALIAS ${PROJECT_NAME})

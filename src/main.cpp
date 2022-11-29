@@ -18,9 +18,9 @@
  */
 
 
-// ImGui - standalone example application for Glfw + Vulkan, using programmable
-// pipeline If you are new to ImGui, see examples/README.txt and documentation
-// at the top of imgui.cpp.
+ // ImGui - standalone example application for Glfw + Vulkan, using programmable
+ // pipeline If you are new to ImGui, see examples/README.txt and documentation
+ // at the top of imgui.cpp.
 
 #include <array>
 
@@ -53,7 +53,7 @@ static void onErrorCallback(int error, const char* description)
 void renderUI(HelloVulkan& helloVk)
 {
   ImGuiH::CameraWidget();
-  if(ImGui::CollapsingHeader("Light"))
+  if (ImGui::CollapsingHeader("Light"))
   {
     ImGui::RadioButton("Point", &helloVk.m_pcRaster.lightType, 0);
     ImGui::SameLine();
@@ -67,7 +67,7 @@ void renderUI(HelloVulkan& helloVk)
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
-static int const SAMPLE_WIDTH  = 1280;
+static int const SAMPLE_WIDTH = 1280;
 static int const SAMPLE_HEIGHT = 720;
 
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 
   // Setup GLFW window
   glfwSetErrorCallback(onErrorCallback);
-  if(!glfwInit())
+  if (!glfwInit())
   {
     return 1;
   }
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
   CameraManip.setLookat(nvmath::vec3f(2.0f, 2.0f, 2.0f), nvmath::vec3f(0, 0, 0), nvmath::vec3f(0, 1, 0));
 
   // Setup Vulkan
-  if(!glfwVulkanSupported())
+  if (!glfwVulkanSupported())
   {
     printf("GLFW: Vulkan Not Supported\n");
     return 1;
@@ -106,18 +106,19 @@ int main(int argc, char** argv)
   defaultSearchPaths = {
       NVPSystem::exePath() + PROJECT_RELDIRECTORY,
       NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
+      NVPSystem::exePath() + "../",
       std::string(PROJECT_NAME),
   };
 
   // Vulkan required extensions
   assert(glfwVulkanSupported() == 1);
-  uint32_t count{0};
+  uint32_t count{ 0 };
   auto     reqExtensions = glfwGetRequiredInstanceExtensions(&count);
 
   // Requesting Vulkan extensions and layers
   nvvk::ContextCreateInfo contextInfo;
   contextInfo.setVersion(1, 2);                       // Using Vulkan 1.2
-  for(uint32_t ext_id = 0; ext_id < count; ext_id++)  // Adding required extensions (surface, win32, linux, ..)
+  for (uint32_t ext_id = 0; ext_id < count; ext_id++)  // Adding required extensions (surface, win32, linux, ..)
     contextInfo.addInstanceExtension(reqExtensions[ext_id]);
   contextInfo.addInstanceLayer("VK_LAYER_LUNARG_monitor", true);              // FPS in titlebar
   contextInfo.addInstanceExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, true);  // Allow debug names
@@ -168,10 +169,10 @@ int main(int argc, char** argv)
   ImGui_ImplGlfw_InitForVulkan(window, true);
 
   // Main loop
-  while(!glfwWindowShouldClose(window))
+  while (!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
-    if(helloVk.isMinimized())
+    if (helloVk.isMinimized())
       continue;
 
     // Start the Dear ImGui frame
@@ -179,7 +180,7 @@ int main(int argc, char** argv)
     ImGui::NewFrame();
 
     // Show UI window.
-    if(helloVk.showGui())
+    if (helloVk.showGui())
     {
       ImGuiH::Panel::Begin();
       ImGui::ColorEdit3("Clear color", reinterpret_cast<float*>(&clearColor));
@@ -194,9 +195,9 @@ int main(int argc, char** argv)
 
     // Start command buffer of this frame
     auto                   curFrame = helloVk.getCurFrame();
-    const VkCommandBuffer& cmdBuf   = helloVk.getCommandBuffers()[curFrame];
+    const VkCommandBuffer& cmdBuf = helloVk.getCommandBuffers()[curFrame];
 
-    VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     vkBeginCommandBuffer(cmdBuf, &beginInfo);
 
@@ -205,17 +206,17 @@ int main(int argc, char** argv)
 
     // Clearing screen
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color        = {{clearColor[0], clearColor[1], clearColor[2], clearColor[3]}};
-    clearValues[1].depthStencil = {1.0f, 0};
+    clearValues[0].color = { {clearColor[0], clearColor[1], clearColor[2], clearColor[3]} };
+    clearValues[1].depthStencil = { 1.0f, 0 };
 
     // Offscreen render pass
     {
-      VkRenderPassBeginInfo offscreenRenderPassBeginInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+      VkRenderPassBeginInfo offscreenRenderPassBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
       offscreenRenderPassBeginInfo.clearValueCount = 2;
-      offscreenRenderPassBeginInfo.pClearValues    = clearValues.data();
-      offscreenRenderPassBeginInfo.renderPass      = helloVk.m_offscreenRenderPass;
-      offscreenRenderPassBeginInfo.framebuffer     = helloVk.m_offscreenFramebuffer;
-      offscreenRenderPassBeginInfo.renderArea      = {{0, 0}, helloVk.getSize()};
+      offscreenRenderPassBeginInfo.pClearValues = clearValues.data();
+      offscreenRenderPassBeginInfo.renderPass = helloVk.m_offscreenRenderPass;
+      offscreenRenderPassBeginInfo.framebuffer = helloVk.m_offscreenFramebuffer;
+      offscreenRenderPassBeginInfo.renderArea = { {0, 0}, helloVk.getSize() };
 
       // Rendering Scene
       vkCmdBeginRenderPass(cmdBuf, &offscreenRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -226,12 +227,12 @@ int main(int argc, char** argv)
 
     // 2nd rendering pass: tone mapper, UI
     {
-      VkRenderPassBeginInfo postRenderPassBeginInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+      VkRenderPassBeginInfo postRenderPassBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
       postRenderPassBeginInfo.clearValueCount = 2;
-      postRenderPassBeginInfo.pClearValues    = clearValues.data();
-      postRenderPassBeginInfo.renderPass      = helloVk.getRenderPass();
-      postRenderPassBeginInfo.framebuffer     = helloVk.getFramebuffers()[curFrame];
-      postRenderPassBeginInfo.renderArea      = {{0, 0}, helloVk.getSize()};
+      postRenderPassBeginInfo.pClearValues = clearValues.data();
+      postRenderPassBeginInfo.renderPass = helloVk.getRenderPass();
+      postRenderPassBeginInfo.framebuffer = helloVk.getFramebuffers()[curFrame];
+      postRenderPassBeginInfo.renderArea = { {0, 0}, helloVk.getSize() };
 
       // Rendering tonemapper
       vkCmdBeginRenderPass(cmdBuf, &postRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);

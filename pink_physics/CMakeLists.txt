@@ -1,6 +1,8 @@
 project(pink_physics)
 
-message(STATUS "Adding ${PROJECT_NAME} ")
+message(STATUS "++++++++++++++++++++++++++++")
+message(STATUS "[PINK] creating ${PROJECT_NAME} target")
+message(STATUS "++++++++++++++++++++++++++++")
 
 file(GLOB SOURCE_FILES src/*.cpp)
 
