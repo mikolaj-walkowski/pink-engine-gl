@@ -19,6 +19,12 @@ message(STATUS "[PINK] Adding klein")
 message(STATUS "++++++++++++++++++++++++++++")
 add_subdirectory(klein EXCLUDE_FROM_ALL)
 
+if(MSVC)
+set_target_properties(klein PROPERTIES COMPILE_FLAGS "/w")
+else()
+set_target_properties(klein PROPERTIES COMPILE_FLAGS "-w")
+endif()
+
 set(ASSIMP_BUILD_STATIC_LIB ON)
 set(ASSIMP_INSTALL OFF)
 set(ASSIMP_TOOLS ON)
@@ -33,7 +39,10 @@ message(STATUS "++++++++++++++++++++++++++++")
 
 add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
+message(STATUS "++++++++++++++++++++++++++++")
 message(STATUS "[PINK] Adding nnvpro_core")
+message(STATUS "++++++++++++++++++++++++++++")
+
 set(BASE_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(MSVC)

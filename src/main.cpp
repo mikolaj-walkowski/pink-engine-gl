@@ -35,6 +35,8 @@
 #include "nvvk/commands_vk.hpp"
 #include "nvvk/context_vk.hpp"
 
+#include "pink_physics.hpp"
+
 //////////////////////////////////////////////////////////////////////////
 #define UNUSED(x) (void)(x)
 //////////////////////////////////////////////////////////////////////////
@@ -42,6 +44,9 @@
 // Default search path for shaders
 std::vector<std::string> defaultSearchPaths;
 
+ps::WordState wordChain[4]; // Buffer dla kolejnych stanów 
+
+ps::pp::Engine physics_engine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver);
 
 // GLFW Callback functions
 static void onErrorCallback(int error, const char* description)

@@ -1,9 +1,10 @@
 # Requirements
 
 In order to finish first stage of the physics engine I will need to make:
-- Collison detectors
+
+- Collision detectors
 - Solver
-  - Local - doesnt need to  modiv
+  - Local
   - Iterative
   - Timed
 

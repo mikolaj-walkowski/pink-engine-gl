@@ -1,13 +1,14 @@
 #pragma once
 #include <vector>
 #include <klein/klein.hpp>
+#include "pink_structs_physics.hpp"
 
 
 namespace ps {
 #include "pink_structs_graphics.hpp"
-#include "pink_structs_physics.hpp"
 
   typedef long int UniqueID; // Na razie robię tak bo nie wiem co dokładnie będziemy chcieli mieć jako ID
+  const UniqueID nullID = 0;
 
   class Object {
   private:
@@ -16,10 +17,18 @@ namespace ps {
     std::vector<Object*> children;  // OPT można zmienić na tab albo zrobić własną klasę/struct pod tablice o jednolitym rozmiarze
     pp::Rigidbody rigidbody;  // Mogę dać funkcje getInterpolatedTransform(RigidBody previousState, float blend (0.0 ... 1.0 )) zamiast transform i rotation 
     pg::MeshRenderer meshRenderer;
+    struct Interpolation_catche {
+      kln::line log;
+      ps::UniqueID obj;
+    }interpolation_catche;
+
   };
 
-  typedef std::vector<Object> WordState; // Defacto output silnika fizycznego   
+  nvmath::mat4f interpolate(ps::Object* a, ps::Object* b, float t);
 
-  WordState wordChain[4]; // Buffer dla kolejnych stanów 
+  struct WordState { // Defacto output silnika fizycznego
+    std::vector<Object> staticObjects;
+    std::vector<Object> simulatedObjects;
+  };
 
 }  // namespace ps
