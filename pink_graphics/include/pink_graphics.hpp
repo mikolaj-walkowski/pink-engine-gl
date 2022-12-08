@@ -1,3 +1,2 @@
-#include "glm/glm.hpp"
-
 #include "obj_loader.h"
+#include "solid_color.hpp"

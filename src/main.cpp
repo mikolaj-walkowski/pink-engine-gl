@@ -27,7 +27,6 @@
 #include "backends/imgui_impl_glfw.h"
 #include "imgui.h"
 
-#include "solid_color.hpp"
 #include "imgui/imgui_camera_widget.h"
 #include "nvh/cameramanipulator.hpp"
 #include "nvh/fileoperations.hpp"
@@ -36,6 +35,7 @@
 #include "nvvk/context_vk.hpp"
 
 #include "pink_physics.hpp"
+#include "pink_graphics.hpp"
 
 //////////////////////////////////////////////////////////////////////////
 #define UNUSED(x) (void)(x)
