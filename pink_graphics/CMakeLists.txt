@@ -1,6 +1,5 @@
 project(pink_graphics)
 
-file(GLOB SOURCE_FILES src/*.cpp)
 
 add_library(${PROJECT_NAME} SHARED)
 message(STATUS "++++++++++++++++++++++++++++")
@@ -23,9 +22,9 @@ compile_glsl_directory(
 	DEPENDENCY ${VULKAN_BUILD_DEPENDENCIES}
 	)
     
-add_custom_target(compiled_shaders DEPENDS ${SPV_OUTPUT})
+    add_custom_target(compiled_shaders DEPENDS ${SPV_OUTPUT})
     
-add_dependencies(${PROJECT_NAME} compiled_shaders)
+    add_dependencies(${PROJECT_NAME} compiled_shaders)
 
 message(STATUS "++++++++++++++++++++++++++++")
 message(STATUS "[PINK] Adding ${PROJECT_NAME} target")
@@ -33,9 +32,13 @@ message(STATUS "++++++++++++++++++++++++++++")
 
 add_library(pink::graphics ALIAS ${PROJECT_NAME})
 
+file(GLOB SOURCE_FILES src/*.cpp)
+
 target_sources(${PROJECT_NAME}
     PUBLIC ${COMMON_SOURCE_FILES}
     PUBLIC ${SOURCE_FILES}
+    PUBLIC ${PACKAGE_SOURCE_FILES}
+    PUBLIC ${GLSL_SOURCES} ${GLSL_HEADERS}
 )
 
 target_link_libraries(${PROJECT_NAME}

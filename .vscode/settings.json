@@ -84,5 +84,18 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp"
-    }
+    },
+    "cSpell.words": [
+        "framebuffer",
+        "GLFW",
+        "Lookat",
+        "LUNARG",
+        "Manip",
+        "nvmath",
+        "nvvk",
+        "RELDIRECTORY",
+        "SWAPCHAIN",
+        "tonemapper",
+        "vkctx"
+    ]
 }

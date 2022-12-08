@@ -17,6 +17,7 @@
 class SolidColor : public nvvkhl::AppBaseVk
 {
 public:
+    std::vector<std::string> defaultSearchPaths;
     void setup(const VkInstance& instance, const VkDevice& device, const VkPhysicalDevice& physicalDevice, uint32_t queueFamily) override;
     void createDescriptorSetLayout();
     void createGraphicsPipeline();

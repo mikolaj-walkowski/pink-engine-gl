@@ -4,7 +4,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 get_filename_component(PROJNAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-set(PROJNAME vk_${PROJNAME}_KHR)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
@@ -61,13 +60,17 @@ _add_nvpro_core_lib()
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/media DESTINATION ${OUTPUT_PATH})
 
+
 message(STATUS "++++++++++++++++++++++++++++")
 message(STATUS "[PINK] Creating ${PROJECT_NAME} target")
 message(STATUS "++++++++++++++++++++++++++++")
 
 add_executable(pink_engine)
-  
-  _add_project_definitions(${PROJECT_NAME})
+
+_add_project_definitions(${PROJECT_NAME})
+add_subdirectory(pink_structs)
+add_subdirectory(pink_graphics)
+add_subdirectory(pink_physics)
 
   file(GLOB SOURCES  ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
@@ -81,12 +84,9 @@ add_executable(pink_engine)
         PUBLIC  ${PROJECT_SOURCE_DIR}/include
   )
 
-add_subdirectory(pink_structs)
-add_subdirectory(pink_graphics)
-add_subdirectory(pink_physics)
 
 target_link_libraries(${PROJECT_NAME}
-        assimp
+        #assimp
         klein::klein
         nvpro_core
         pink::structs

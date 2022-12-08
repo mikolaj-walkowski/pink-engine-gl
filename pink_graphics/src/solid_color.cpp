@@ -36,9 +36,6 @@
 #include "nvvk/shaders_vk.hpp"
 #include "nvvk/buffers_vk.hpp"
 
-extern std::vector<std::string> defaultSearchPaths;
-
-
 //--------------------------------------------------------------------------------------------------
 // Keep the handle on the device
 // Initialize the tool to do all our allocations: buffers, images
@@ -49,6 +46,13 @@ void SolidColor::setup(const VkInstance& instance, const VkDevice& device, const
     m_alloc.init(instance, device, physicalDevice);
     m_debug.setup(m_device);
     m_offscreenDepthFormat = nvvk::findDepthFormat(physicalDevice);
+    // Search path for shaders and other media
+    defaultSearchPaths = {
+      NVPSystem::exePath() + PROJECT_RELDIRECTORY,
+      NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
+      NVPSystem::exePath() + "../",
+      std::string(PROJECT_NAME),
+  };
 }
 
 //--------------------------------------------------------------------------------------------------
