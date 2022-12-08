@@ -1,5 +1,6 @@
 #pragma once
 #include "pink_structs.hpp"
+#include "pink_physics_colliders.hpp"
 #include "nvmath/nvmath.h"
 #include <stdint.h>
 #include <vector>
