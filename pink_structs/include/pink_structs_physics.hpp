@@ -6,26 +6,27 @@
 namespace ps::pp {
 
     enum ShapeType {
-        SHAPE_TYPE_SPHERE,
-        SHAPE_TYPE_PLAIN,
+        SHAPE_TYPE_SPHERE = 1 << 0,
+        SHAPE_TYPE_PLANE = 1 << 1,
     };
 
     struct Sphere {
         float radius;
+        kln::point center;
     };
 
-    struct Plain {
-        kln::line normal;
+    struct Plane {
+        kln::plane plane;
     };
 
     struct Rigidbody {
         kln::motor M;
-        kln::line B = kln::line();
+        kln::motor B = kln::motor();
         
         kln::motor dM;
-        kln::line dB;
+        kln::motor dB;
         
-        kln::point center;
+        kln::point centerOfMass;
 
         ShapeType shapeType;
         void* shape;

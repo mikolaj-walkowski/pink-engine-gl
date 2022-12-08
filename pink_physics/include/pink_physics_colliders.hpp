@@ -1,20 +1,21 @@
 #include <vector>
 #include "pink_structs.hpp"
-#include "glm/glm.hpp"
 
-struct Manifold {
-    int count;
-    ps::pp::Sphere sphere;
-    float penetration;
-    std::vector<glm::vec2> pointsOfContact;
-};
+namespace ps::pp {
+    struct Manifold {
+        int count;
+        float penetration;
+        std::vector<kln::point> pointsOfContact;
+    };
 
-typedef void CollisionFunction(void*, void*, Manifold*) ;
+    typedef void CollisionFunction(void*, void*, Manifold*);
 
-// CollisionFunction sphereToSphere;
-// CollisionFunction capsuleToCapsule;
-// CollisionFunction cylinderToCylinder;
+    // CollisionFunction sphereToSphere;
+    // CollisionFunction capsuleToCapsule;
+    // CollisionFunction cylinderToCylinder;
 
-// CollisionFunction cylinderToHeightMap;
-// CollisionFunction capsuleToHeightMap;
+    // CollisionFunction cylinderToHeightMap;
+    // CollisionFunction capsuleToHeightMap;
 
+    void sphereToPlane(void* sphere, void* plane, Manifold* m);
+}//namespace ps::pp

@@ -23,10 +23,11 @@ namespace ps::pp {
         ResolverFunc resolve;
         InterpolationFunc interpolation;
 
+        static const int maxNumber = 10;
         struct {
-            static const int maxNumber = 10;
             int size;
-            int collisions[Engine::collision_props.maxNumber];
+            Rigidbody* collisions[Engine::maxNumber];
+            Manifold collisionData[Engine::maxNumber];
         }collision_props;
 
         struct {
@@ -35,7 +36,7 @@ namespace ps::pp {
         } interpolation_props;
 
         void step(ps::WordState*, ps::WordState*);
-        Engine(SimulateFunc, ColliderFunc, ResolverFunc);
+        Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, InterpolationFunc iF);
     };
 
     void basicSimulate(Rigidbody*);
