@@ -19,17 +19,17 @@ message(STATUS "Adding klein")
 
 add_subdirectory(klein EXCLUDE_FROM_ALL)
 
-set(ASSIMP_BUILD_STATIC_LIB ON)
-set(ASSIMP_INSTALL OFF)
-set(ASSIMP_TOOLS ON)
-set(ENABLE_BOOST_WORKAROUND ON)
-set(ASSIMP_BUILD_TESTS OFF)
-set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
-set(ASSIMP_NO_EXPORT OFF)
+# set(ASSIMP_BUILD_STATIC_LIB ON)
+# set(ASSIMP_INSTALL OFF)
+# set(ASSIMP_TOOLS ON)
+# set(ENABLE_BOOST_WORKAROUND ON)
+# set(ASSIMP_BUILD_TESTS OFF)
+# set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+# set(ASSIMP_NO_EXPORT OFF)
 
-message(STATUS "Adding asimp")
+# message(STATUS "Adding asimp")
 
-add_subdirectory(assimp EXCLUDE_FROM_ALL)
+# add_subdirectory(assimp EXCLUDE_FROM_ALL)
 
 message(STATUS "Adding nnvpro_core")
 set(BASE_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR})
@@ -83,7 +83,7 @@ add_subdirectory(pink_graphics)
 add_subdirectory(pink_physics)
 
 target_link_libraries(${PROJECT_NAME}
-        assimp
+        # assimp
         klein::klein
         nvpro_core
         pink::structs
