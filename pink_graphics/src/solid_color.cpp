@@ -25,6 +25,9 @@
 #include "stb_image.h"
 #include "solid_color.hpp"
 
+#include "backends/imgui_impl_glfw.h"
+#include "imgui.h"
+
 #include "nvh/alignment.hpp"
 #include "nvh/cameramanipulator.hpp"
 #include "nvh/fileoperations.hpp"
@@ -36,23 +39,20 @@
 #include "nvvk/shaders_vk.hpp"
 #include "nvvk/buffers_vk.hpp"
 
-//--------------------------------------------------------------------------------------------------
-// Keep the handle on the device
-// Initialize the tool to do all our allocations: buffers, images
-//
+#include "GLFW/glfw3.h"
+#include "nvvk/commands_vk.hpp"
+#include "nvvk/context_vk.hpp"
+
+ //--------------------------------------------------------------------------------------------------
+ // Keep the handle on the device
+ // Initialize the tool to do all our allocations: buffers, images
+ //
 void SolidColor::setup(const VkInstance& instance, const VkDevice& device, const VkPhysicalDevice& physicalDevice, uint32_t queueFamily)
 {
     AppBaseVk::setup(instance, device, physicalDevice, queueFamily);
     m_alloc.init(instance, device, physicalDevice);
     m_debug.setup(m_device);
     m_offscreenDepthFormat = nvvk::findDepthFormat(physicalDevice);
-    // Search path for shaders and other media
-    defaultSearchPaths = {
-      NVPSystem::exePath() + PROJECT_RELDIRECTORY,
-      NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
-      NVPSystem::exePath() + "../",
-      std::string(PROJECT_NAME),
-  };
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ void SolidColor::createGraphicsPipeline()
 
 
     // Creating the Pipeline
-    std::vector<std::string>                paths = defaultSearchPaths;
+    std::vector<std::string>                paths = *defaultSearchPaths;
     nvvk::GraphicsPipelineGeneratorCombined gpb(m_device, m_pipelineLayout, m_offscreenRenderPass);
     gpb.depthStencilState.depthTestEnable = true;
     gpb.addShader(nvh::loadFile("spv/vert_shader.vert.spv", true, paths, true), VK_SHADER_STAGE_VERTEX_BIT);
@@ -314,7 +314,7 @@ void SolidColor::createTextureImages(const VkCommandBuffer& cmdBuf, const std::v
             std::stringstream o;
             int               texWidth, texHeight, texChannels;
             o << "media/textures/" << texture;
-            std::string txtFile = nvh::findFile(o.str(), defaultSearchPaths, true);
+            std::string txtFile = nvh::findFile(o.str(), *defaultSearchPaths, true);
 
             stbi_uc* stbi_pixels = stbi_load(txtFile.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
@@ -522,8 +522,8 @@ void SolidColor::createPostPipeline()
 
     // Pipeline: completely generic, no vertices
     nvvk::GraphicsPipelineGeneratorCombined pipelineGenerator(m_device, m_postPipelineLayout, m_renderPass);
-    pipelineGenerator.addShader(nvh::loadFile("spv/passthrough.vert.spv", true, defaultSearchPaths, true), VK_SHADER_STAGE_VERTEX_BIT);
-    pipelineGenerator.addShader(nvh::loadFile("spv/post.frag.spv", true, defaultSearchPaths, true), VK_SHADER_STAGE_FRAGMENT_BIT);
+    pipelineGenerator.addShader(nvh::loadFile("spv/passthrough.vert.spv", true, *defaultSearchPaths, true), VK_SHADER_STAGE_VERTEX_BIT);
+    pipelineGenerator.addShader(nvh::loadFile("spv/post.frag.spv", true, *defaultSearchPaths, true), VK_SHADER_STAGE_FRAGMENT_BIT);
     pipelineGenerator.rasterizationState.cullMode = VK_CULL_MODE_NONE;
     m_postPipeline = pipelineGenerator.createPipeline();
     m_debug.setObjectName(m_postPipeline, "post");
@@ -568,4 +568,112 @@ void SolidColor::drawPost(VkCommandBuffer cmdBuf)
 
 
     m_debug.endLabel(cmdBuf);
+}
+
+void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w, const int h) {
+    // Window need to be opened to get the surface on which to draw
+    const VkSurfaceKHR surface = getVkSurface(vkctx->m_instance, window);
+
+    defaultSearchPaths = sp;
+
+
+    vkctx->setGCTQueueWithPresent(surface);
+    setup(vkctx->m_instance, vkctx->m_device, vkctx->m_physicalDevice, vkctx->m_queueGCT.familyIndex);
+    createSwapchain(surface, w, h);
+    createDepthBuffer();
+    createRenderPass();
+    createFrameBuffers();
+
+    // Setup Imgui
+    initGUI(0);  // Using sub-pass 0
+
+    // Creation of the example
+    loadModel(nvh::findFile("media/scenes/cube_multi.obj", *defaultSearchPaths, true));
+
+    createOffscreenRender();
+    createDescriptorSetLayout();
+    createGraphicsPipeline();
+    createUniformBuffer();
+    createObjDescriptionBuffer();
+    updateDescriptorSet();
+
+    createPostDescriptor();
+    createPostPipeline();
+    updatePostDescriptorSet();
+    clearColor = nvmath::vec4f(1, 1, 1, 1.00f);
+}
+
+void SolidColor::drawFrame(ps::WordState* w) {
+    // Start rendering the scene
+    prepareFrame();
+
+    // Start command buffer of this frame
+    auto                   curFrame = getCurFrame();
+    const VkCommandBuffer& cmdBuf = getCommandBuffers()[curFrame];
+
+    VkCommandBufferBeginInfo beginInfo{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vkBeginCommandBuffer(cmdBuf, &beginInfo);
+
+    // Updating camera buffer
+    updateUniformBuffer(cmdBuf);
+
+    // Clearing screen
+    std::array<VkClearValue, 2> clearValues{};
+    clearValues[0].color = { clearColor[0],clearColor[1],clearColor[2],clearColor[3] };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+
+    // Offscreen render pass
+    {
+        VkRenderPassBeginInfo offscreenRenderPassBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+        offscreenRenderPassBeginInfo.clearValueCount = 2;
+        offscreenRenderPassBeginInfo.pClearValues = clearValues.data();
+        offscreenRenderPassBeginInfo.renderPass = m_offscreenRenderPass;
+        offscreenRenderPassBeginInfo.framebuffer = m_offscreenFramebuffer;
+        offscreenRenderPassBeginInfo.renderArea = { {0, 0}, getSize() };
+
+        // Rendering Scene
+        vkCmdBeginRenderPass(cmdBuf, &offscreenRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        rasterize(cmdBuf);
+        vkCmdEndRenderPass(cmdBuf);
+    }
+
+
+    // 2nd rendering pass: tone mapper, UI
+    {
+        VkRenderPassBeginInfo postRenderPassBeginInfo{ VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+        postRenderPassBeginInfo.clearValueCount = 2;
+        postRenderPassBeginInfo.pClearValues = clearValues.data();
+        postRenderPassBeginInfo.renderPass = getRenderPass();
+        postRenderPassBeginInfo.framebuffer = getFramebuffers()[curFrame];
+        postRenderPassBeginInfo.renderArea = { {0, 0}, getSize() };
+
+        // Rendering tonemapper
+        vkCmdBeginRenderPass(cmdBuf, &postRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        drawPost(cmdBuf);
+        // Rendering UI
+        ImGui::Render();
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuf);
+        vkCmdEndRenderPass(cmdBuf);
+    }
+
+
+    // Submit for display
+    vkEndCommandBuffer(cmdBuf);
+    submitFrame();
+
+}
+
+void SolidColor::renderUI()
+{
+    ImGuiH::CameraWidget();
+    if (ImGui::CollapsingHeader("Light"))
+    {
+        ImGui::RadioButton("Point", &m_pcRaster.lightType, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("Infinite", &m_pcRaster.lightType, 1);
+
+        ImGui::SliderFloat3("Position", &m_pcRaster.lightPosition.x, -20.f, 20.f);
+        ImGui::SliderFloat("Intensity", &m_pcRaster.lightIntensity, 0.f, 150.f);
+    }
 }

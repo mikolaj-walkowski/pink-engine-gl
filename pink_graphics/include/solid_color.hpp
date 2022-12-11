@@ -6,18 +6,23 @@
 #include "nvvk/memallocator_dma_vk.hpp"
 #include "nvvk/resourceallocator_vk.hpp"
 #include "host_device.h"
+#include "nvvk/context_vk.hpp"
+#include "pink_structs.hpp"
 
- //--------------------------------------------------------------------------------------------------
- // Simple rasterizer of OBJ objects
- // - Each OBJ loaded are stored in an `ObjModel` and referenced by a `ObjInstance`
- // - It is possible to have many `ObjInstance` referencing the same `ObjModel`
- // - Rendering is done in an offscreen framebuffer
- // - The image of the framebuffer is displayed in post-process in a full-screen quad
- //
-class SolidColor : public nvvkhl::AppBaseVk
+
+//--------------------------------------------------------------------------------------------------
+// Simple rasterizer of OBJ objects
+// - Each OBJ loaded are stored in an `ObjModel` and referenced by a `ObjInstance`
+// - It is possible to have many `ObjInstance` referencing the same `ObjModel`
+// - Rendering is done in an offscreen framebuffer
+// - The image of the framebuffer is displayed in post-process in a full-screen quad
+//
+class SolidColor: public nvvkhl::AppBaseVk
 {
 public:
-    std::vector<std::string> defaultSearchPaths;
+    std::vector<std::string>* defaultSearchPaths;
+    nvmath::vec4f clearColor;
+
     void setup(const VkInstance& instance, const VkDevice& device, const VkPhysicalDevice& physicalDevice, uint32_t queueFamily) override;
     void createDescriptorSetLayout();
     void createGraphicsPipeline();
@@ -30,6 +35,11 @@ public:
     void onResize(int /*w*/, int /*h*/) override;
     void destroyResources();
     void rasterize(const VkCommandBuffer& cmdBuff);
+
+    void drawFrame(ps::WordState*);
+    void renderUI();
+
+    void init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w,const int h);
 
     // The OBJ model
     struct ObjModel
