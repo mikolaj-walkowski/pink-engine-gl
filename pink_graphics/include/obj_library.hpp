@@ -4,11 +4,21 @@
 #include <iostream>
 #include <vector>
 
+
 class ObjLibrary
 {
 private:
+    struct ObjDesc
+    {
+    int      txtOffset;             // Texture index offset in the array of textures
+    uint64_t vertexAddress;         // Address of the Vertex buffer
+    uint64_t indexAddress;          // Address of the index buffer
+    uint64_t materialAddress;       // Address of the material buffer
+    uint64_t materialIndexAddress;  // Address of the triangle material index buffer
+    };
+    
     std::vector<ps::pg::ObjMesh> m_meshContainer;    //Robię to jako private, żeby raczej nie dodawać elementów ręcznie, tylko metodą AddMesh()
-    std::vector<ps::pg::ObjMesh> m_descContainer;
+    std::vector<ObjDesc> m_descContainer;
     nvvk::Buffer m_bObjDesc;
 
 public:
