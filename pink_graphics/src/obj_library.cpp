@@ -2,7 +2,17 @@
 #include "obj_loader.h"
 #include "nvvk/commands_vk.hpp"
 #include "nvvk/buffers_vk.hpp"
+#include "nvh/fileoperations.hpp"
 #include "host_device.h"
+
+void ObjLibrary::init(nvvk::ResourceAllocatorDma* ap_alloc, VkDevice a_device, 
+                uint32_t a_graphicsQueueIndex, nvvk::DebugUtil& ar_debug){
+
+        mp_alloc = ap_alloc;
+        m_device = a_device;
+        m_graphicsQueueIndex = a_graphicsQueueIndex;
+        mp_debug = &ar_debug;
+    }
 
 void ObjLibrary::AddMesh(ps::pg::ObjMesh& a_objMesh, const std::string& a_objName){
     a_objMesh.objIndex = static_cast<uint32_t>(m_meshContainer.size());
@@ -27,12 +37,12 @@ ps::pg::ObjMesh* ObjLibrary::GetMesh(const std::string& ar_objName){
     return nullptr;
 }
 
-void ObjLibrary::LoadMesh(const std::string& filename, const std::string& name, 
-                          nvvk::ResourceAllocatorDma& alloc, VkDevice device, 
-                          uint32_t graphicsQueueIndex, nvvk::DebugUtil& debug){
+void ObjLibrary::LoadMesh(const std::string& ar_file_path, const std::string& ar_name){
     
+    const std::string objName = ar_name.empty()? nvh::getFileName(ar_file_path) : ar_name;
+
     ObjLoader loader;
-    loader.loadModel(filename);
+    loader.loadModel(ar_file_path);
 
     // Converting from Srgb to linear
     for (auto& m : loader.m_materials)
@@ -47,25 +57,25 @@ void ObjLibrary::LoadMesh(const std::string& filename, const std::string& name,
     model.nbVertices = static_cast<uint32_t>(loader.m_vertices.size());
 
     // Create the buffers on Device and copy vertices, indices and materials
-    nvvk::CommandPool  cmdBufGet(device, graphicsQueueIndex);
+    nvvk::CommandPool  cmdBufGet(m_device, m_graphicsQueueIndex);
     VkCommandBuffer    cmdBuf = cmdBufGet.createCommandBuffer();
     VkBufferUsageFlags flag = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-    model.vertexBuffer = alloc.createBuffer(cmdBuf, loader.m_vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | flag);
-    model.indexBuffer = alloc.createBuffer(cmdBuf, loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | flag);
-    model.matColorBuffer = alloc.createBuffer(cmdBuf, loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | flag);
-    model.matIndexBuffer = alloc.createBuffer(cmdBuf, loader.m_matIndx, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | flag);
+    model.vertexBuffer = mp_alloc->createBuffer(cmdBuf, loader.m_vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | flag);
+    model.indexBuffer = mp_alloc->createBuffer(cmdBuf, loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | flag);
+    model.matColorBuffer = mp_alloc->createBuffer(cmdBuf, loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | flag);
+    model.matIndexBuffer = mp_alloc->createBuffer(cmdBuf, loader.m_matIndx, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | flag);
 
     // Creates all textures found and find the offset for this model
     // auto txtOffset = static_cast<uint32_t>(m_textures.size());
     // createTextureImages(cmdBuf, loader.m_textures);
     cmdBufGet.submitAndWait(cmdBuf);
-    alloc.finalizeAndReleaseStaging();
+    mp_alloc->finalizeAndReleaseStaging();
 
     std::string objNb = std::to_string(m_meshContainer.size());
-    debug.setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb)));
-    debug.setObjectName(model.indexBuffer.buffer, (std::string("index_" + objNb)));
-    debug.setObjectName(model.matColorBuffer.buffer, (std::string("mat_" + objNb)));
-    debug.setObjectName(model.matIndexBuffer.buffer, (std::string("matIdx_" + objNb)));
+    mp_debug->setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb)));
+    mp_debug->setObjectName(model.indexBuffer.buffer, (std::string("index_" + objNb)));
+    mp_debug->setObjectName(model.matColorBuffer.buffer, (std::string("mat_" + objNb)));
+    mp_debug->setObjectName(model.matIndexBuffer.buffer, (std::string("matIdx_" + objNb)));
 
     // Keeping transformation matrix of the instance
     // ObjInstance instance;
@@ -77,22 +87,23 @@ void ObjLibrary::LoadMesh(const std::string& filename, const std::string& name,
     ObjDesc desc;
     desc.txtOffset = 0;
     // desc.txtOffset = txtOffset;
-    desc.vertexAddress = nvvk::getBufferDeviceAddress(device, model.vertexBuffer.buffer);
-    desc.indexAddress = nvvk::getBufferDeviceAddress(device, model.indexBuffer.buffer);
-    desc.materialAddress = nvvk::getBufferDeviceAddress(device, model.matColorBuffer.buffer);
-    desc.materialIndexAddress = nvvk::getBufferDeviceAddress(device, model.matIndexBuffer.buffer);
+    desc.vertexAddress = nvvk::getBufferDeviceAddress(m_device, model.vertexBuffer.buffer);
+    desc.indexAddress = nvvk::getBufferDeviceAddress(m_device, model.indexBuffer.buffer);
+    desc.materialAddress = nvvk::getBufferDeviceAddress(m_device, model.matColorBuffer.buffer);
+    desc.materialIndexAddress = nvvk::getBufferDeviceAddress(m_device, model.matIndexBuffer.buffer);
 
     // Keeping the obj host model and device description
-    this->AddMesh(model, name);
+    this->AddMesh(model, objName);
     m_descContainer.emplace_back(desc);
+    return;
 }
 
-void ObjLibrary::CreateObjDescriptionBuffer(nvvk::ResourceAllocatorDma& alloc, VkDevice device, uint32_t graphicsQueueIndex, nvvk::DebugUtil& debug){
-    nvvk::CommandPool cmdGen(device, graphicsQueueIndex);
+void ObjLibrary::CreateObjDescriptionBuffer(){
+    nvvk::CommandPool cmdGen(m_device, m_graphicsQueueIndex);
 
     auto cmdBuf = cmdGen.createCommandBuffer();
-    m_bObjDesc = alloc.createBuffer(cmdBuf, m_descContainer, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    m_bObjDesc = mp_alloc->createBuffer(cmdBuf, m_descContainer, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
     cmdGen.submitAndWait(cmdBuf);
-    alloc.finalizeAndReleaseStaging();
-    debug.setObjectName(m_bObjDesc.buffer, "ObjDescs");
+    mp_alloc->finalizeAndReleaseStaging();
+    mp_debug->setObjectName(m_bObjDesc.buffer, "ObjDescs");
 }

@@ -8,6 +8,9 @@
 class ObjLibrary
 {
 public:
+    /**
+     * Struct z informacjami do desktryptora
+     */
     struct ObjDesc
     {
         int      txtOffset;             // Texture index offset in the array of textures
@@ -21,14 +24,18 @@ public:
     std::vector<ObjDesc> m_descContainer;
     std::vector<std::string> m_objectNames;
     nvvk::Buffer m_bObjDesc;
+    nvvk::ResourceAllocatorDma* mp_alloc; 
+    VkDevice m_device; 
+    uint32_t m_graphicsQueueIndex; 
+    nvvk::DebugUtil* mp_debug;
+
+    void init(nvvk::ResourceAllocatorDma* ap_alloc, VkDevice a_device, uint32_t a_graphicsQueueIndex, nvvk::DebugUtil& ar_debug);
 
     void AddMesh(ps::pg::ObjMesh& a_objMesh, const std::string& a_objName);
     ps::pg::ObjMesh* GetMesh(uint32_t index);
     ps::pg::ObjMesh* GetMesh(const std::string& ar_objName);
 
-    void LoadMesh(const std::string& filename, const std::string& name, 
-                  nvvk::ResourceAllocatorDma& alloc, VkDevice device, 
-                  uint32_t graphicsQueueIndex, nvvk::DebugUtil& debug);
+    void LoadMesh(const std::string& ar_file_path, const std::string& ar_name = "");
 
-    void CreateObjDescriptionBuffer(nvvk::ResourceAllocatorDma& alloc, VkDevice device, uint32_t graphicsQueueIndex, nvvk::DebugUtil& debug);
+    void CreateObjDescriptionBuffer();
 };
