@@ -15,7 +15,7 @@ ps::pg::ObjMesh ObjLibrary::GetMesh(uint32_t index){
     return m_meshContainer[index];
 }
 
-void ObjLibrary::LoadMesh(const std::string& filename, nvmath::mat4f transform, nvvk::ResourceAllocatorDma& alloc, VkDevice device, uint32_t graphicsQueueIndex, nvvk::DebugUtil& debug){
+void ObjLibrary::LoadMesh(const std::string& filename, nvvk::ResourceAllocatorDma& alloc, VkDevice device, uint32_t graphicsQueueIndex, nvvk::DebugUtil& debug){
     
     ObjLoader loader;
     loader.loadModel(filename);
@@ -71,4 +71,14 @@ void ObjLibrary::LoadMesh(const std::string& filename, nvmath::mat4f transform, 
     // Keeping the obj host model and device description
     this->AddMesh(model);
     m_descContainer.emplace_back(desc);
+}
+
+void ObjLibrary::CreateObjDescriptionBuffer(nvvk::ResourceAllocatorDma& alloc, VkDevice device, uint32_t graphicsQueueIndex, nvvk::DebugUtil& debug){
+    nvvk::CommandPool cmdGen(device, graphicsQueueIndex);
+
+    auto cmdBuf = cmdGen.createCommandBuffer();
+    m_bObjDesc = alloc.createBuffer(cmdBuf, m_descContainer, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+    cmdGen.submitAndWait(cmdBuf);
+    alloc.finalizeAndReleaseStaging();
+    debug.setObjectName(m_bObjDesc.buffer, "ObjDescs");
 }
