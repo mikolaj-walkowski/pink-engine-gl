@@ -4,18 +4,32 @@
 #include "nvvk/buffers_vk.hpp"
 #include "host_device.h"
 
-void ObjLibrary::AddMesh(ps::pg::ObjMesh& a_objMesh){
+void ObjLibrary::AddMesh(ps::pg::ObjMesh& a_objMesh, const std::string& a_objName){
     a_objMesh.objIndex = static_cast<uint32_t>(m_meshContainer.size());
     this->m_meshContainer.push_back(a_objMesh);
+    this->m_objectNames.push_back(a_objName);
 
     return;
 }
 
-ps::pg::ObjMesh ObjLibrary::GetMesh(uint32_t index){
-    return m_meshContainer[index];
+ps::pg::ObjMesh* ObjLibrary::GetMesh(uint32_t index){
+    return (m_meshContainer.size() > index ? &m_meshContainer[index] : nullptr);
 }
 
-void ObjLibrary::LoadMesh(const std::string& filename, nvvk::ResourceAllocatorDma& alloc, VkDevice device, uint32_t graphicsQueueIndex, nvvk::DebugUtil& debug){
+ps::pg::ObjMesh* ObjLibrary::GetMesh(const std::string& ar_objName){
+    uint32_t index = 0;
+    for(auto name: this->m_objectNames){
+        if(ar_objName == name){
+            return &m_meshContainer[index];
+        }
+        ++index;
+    }
+    return nullptr;
+}
+
+void ObjLibrary::LoadMesh(const std::string& filename, const std::string& name, 
+                          nvvk::ResourceAllocatorDma& alloc, VkDevice device, 
+                          uint32_t graphicsQueueIndex, nvvk::DebugUtil& debug){
     
     ObjLoader loader;
     loader.loadModel(filename);
@@ -69,7 +83,7 @@ void ObjLibrary::LoadMesh(const std::string& filename, nvvk::ResourceAllocatorDm
     desc.materialIndexAddress = nvvk::getBufferDeviceAddress(device, model.matIndexBuffer.buffer);
 
     // Keeping the obj host model and device description
-    this->AddMesh(model);
+    this->AddMesh(model, name);
     m_descContainer.emplace_back(desc);
 }
 
