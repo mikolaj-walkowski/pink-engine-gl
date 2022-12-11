@@ -5,6 +5,14 @@
 
 namespace ps::pp {
 
+    typedef struct Manifold {
+        static const int maxContactPoints= 10;
+        int count;
+        float penetration;
+        kln::line normal;
+        kln::point pointsOfContact[maxContactPoints];
+    } Manifold;
+
     enum ShapeType {
         SHAPE_TYPE_SPHERE = 1 << 0,
         SHAPE_TYPE_PLANE = 1 << 1,
@@ -21,10 +29,10 @@ namespace ps::pp {
 
     struct Rigidbody {
         kln::motor M;
-        kln::motor B = kln::motor();
+        kln::line B = kln::line();
         
         kln::motor dM;
-        kln::motor dB;
+        kln::line dB;
         
         kln::point centerOfMass;
 

@@ -2,10 +2,10 @@
 #include <vector>
 #include <klein/klein.hpp>
 #include "pink_structs_physics.hpp"
+#include "pink_structs_graphics.hpp"
 
 
 namespace ps {
-#include "pink_structs_graphics.hpp"
 
   typedef long int UniqueID; // Na razie robię tak bo nie wiem co dokładnie będziemy chcieli mieć jako ID
   const UniqueID nullID = 0;

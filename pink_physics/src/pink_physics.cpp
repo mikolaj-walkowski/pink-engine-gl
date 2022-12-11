@@ -2,6 +2,12 @@
 #include "pink_structs.hpp"
 #include "pink_physics_colliders.hpp"
 
+kln::line::line(motor l){
+    p1_ = l.p1_;
+    p2_ = l.p2_;
+}
+
+
 void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     int iterations = e->interpolation_props.iterations;
     float step = e->interpolation_props.step;
@@ -10,6 +16,9 @@ void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         e->simulate(rb);
         rb->M = rb->M + step * rb->dM;
         rb->B = rb->B + step * rb->dB;
+
+        e->collide(e, rb);
+        e->resolve(e, rb);
     }
 
 }
@@ -20,8 +29,9 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     kln::line F = G; // + wszystkie siły
 
     // TODO try to implement the Hodge dual 
-    rb->dM = -0.5f * (rb->M * (rb->B));
-    //rb->dB = F - 0.5f * !(!rb->B * rb->B - rb->B * !rb->B);
+    // BUG  using P-something dual instead of Hodge may backfire
+    rb->dM = -0.5f * (rb->M * ((kln::motor)(rb->B)));
+    rb->dB = F - 0.5f * !(kln::line(!rb->B * rb->B - rb->B * !rb->B));
 }
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     auto staticObjects = e->out->staticObjects;
@@ -51,17 +61,45 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
             break;
         }
 
-        if (&collisionData[*collisionSize].count != 0) {
+        if (collisionData[*collisionSize].count != 0) {
             collisions[*collisionSize] = &i.rigidbody;
-            *collisionSize++;
+            ++(*collisionSize);
         }
     }
     
     
 }
 
+
+//BUG main nest
 void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
-    // TODO THIS mess
+    for (int i = 0; i < e->collision_props.size; i++)
+    {
+        auto rb2 = e->collision_props.collisions[i];
+        auto data = e->collision_props.collisionData[i];
+        auto normal = data.normal;
+
+        float rho = 0.5;
+
+        for (int ii = 0; ii < data.count; ii++)
+        {
+            auto point = data.pointsOfContact[ii];
+            auto point_plane = kln::plane(point.p3_);
+
+            auto np = ((normal | point) | point);
+            
+
+            // auto com = 0.5f * (kln::line)(point_plane* (kln::motor)rb->B - (kln::motor)rb->B * point_plane);
+            // auto com2 = 0.5f * (kln::line)(point_plane * (kln::motor)!np - (kln::motor)!np * point_plane);
+            
+            // auto Vm = point & com;
+            // auto j = -(1 + rho) * ((Vm | np) / ((point & com2) | np));
+
+            rb->B = rb->B + j.scalar() * !np;
+        }
+        
+    }
+    
 }
 
 nvmath::mat4f ps::interpolate(ps::Object* a, ps::Object* b, float t) {
@@ -80,7 +118,7 @@ namespace ps::pp {
 
     }
 
-    //TODO move collide and resolve inbetweent the interpolation steps its dumb but is easy
+    //TODO move collide and resolve in between the interpolation steps its dumb but is easy
     void Engine::step(ps::WordState* _in, ps::WordState* _out) {
         this->in = _in;
         this->out = _out;
@@ -91,9 +129,9 @@ namespace ps::pp {
             this->interpolation(this,&out->simulatedObjects[i].rigidbody);
         }
 
-        for (int i = 0; i < in->simulatedObjects.size(); i++) {
-            this->collide(this, &out->simulatedObjects[i].rigidbody);
-            this->resolve(this, &out->simulatedObjects[i].rigidbody);
-        }
+        // for (int i = 0; i < in->simulatedObjects.size(); i++) {
+        //     this->collide(this, &out->simulatedObjects[i].rigidbody);
+        //     this->resolve(this, &out->simulatedObjects[i].rigidbody);
+        // }
     }
 }

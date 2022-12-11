@@ -1,13 +1,19 @@
 #include "pink_physics_colliders.hpp"
 
 void ps::pp::sphereToPlane(void* _sphere, void* _plane, ps::pp::Manifold* m) {
-    auto plane = (ps::pp::Plane*)_plane;
+    auto plane = ((ps::pp::Plane*)_plane)->plane.normalized();
     auto sphere = (ps::pp::Sphere*)_sphere;
-    auto distance = (plane->plane & sphere->center).scalar();
+    
+    auto center = sphere->center.normalized();
+
+    auto line = plane | center;
+
+    auto distance = (plane & center).scalar();
 
     if (distance < sphere->radius) {
         m->count = 1;
-        m->pointsOfContact = { (plane->plane | sphere->center) ^ plane->plane };
+        m->pointsOfContact[0] = line ^ plane;
+        m->normal = line.normalized();
         m->penetration = sphere->radius - distance;
     }
     else {
