@@ -214,6 +214,7 @@ void SolidColor::loadModel(const std::string& filename, nvmath::mat4f transform)
     model.indexBuffer = m_alloc.createBuffer(cmdBuf, loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | flag);
     model.matColorBuffer = m_alloc.createBuffer(cmdBuf, loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | flag);
     model.matIndexBuffer = m_alloc.createBuffer(cmdBuf, loader.m_matIndx, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | flag);
+
     // Creates all textures found and find the offset for this model
     auto txtOffset = static_cast<uint32_t>(m_textures.size());
     createTextureImages(cmdBuf, loader.m_textures);
@@ -402,12 +403,14 @@ void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
     vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
     vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descSet, 0, nullptr);
 
+    ps::WordState a;
 
-    for (const SolidColor::ObjInstance& inst : m_instances)
+    for (const ps::Object& inst : a.staticObjects)
     {
-        auto& model = m_objModel[inst.objIndex];
-        m_pcRaster.objIndex = inst.objIndex;  // Telling which object is drawn
-        m_pcRaster.modelMatrix = inst.transform;
+        
+        auto model = inst.mesh;
+        m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
+        m_pcRaster.modelMatrix = nvmath::mat4f(inst.rigidbody.M.as_mat4x4().data);
 
         vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
             sizeof(PushConstantRaster), &m_pcRaster);

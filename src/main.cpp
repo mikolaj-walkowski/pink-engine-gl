@@ -44,20 +44,16 @@
 //////////////////////////////////////////////////////////////////////////
 
 // Default search path for shaders
-std::vector<std::string> defaultSearchPaths;
+std::vector<std::string> defaultSearchPaths ={
+      NVPSystem::exePath() + PROJECT_RELDIRECTORY,
+      NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
+      NVPSystem::exePath() + "../",
+      std::string(PROJECT_NAME),
+  };
 
 ps::WordState wordChain[4]; // Buffer dla kolejnych stanów 
 
 ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::eulerInterpolation);
-
-
-// Extra UI
-
-
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-
 
 
 //--------------------------------------------------------------------------------------------------
@@ -72,14 +68,6 @@ int main(int argc, char** argv)
   GLFWwindow* window = utils::glfw::setupGLFWindow();
   // setup some basic things for the sample, logging file for example
   NVPSystem system(PROJECT_NAME);
-
-  // Search path for shaders and other media
-  defaultSearchPaths = {
-      NVPSystem::exePath() + PROJECT_RELDIRECTORY,
-      NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
-      NVPSystem::exePath() + "../",
-      std::string(PROJECT_NAME),
-  };
 
   // Creating Vulkan base application
   nvvk::Context vkctx{};
