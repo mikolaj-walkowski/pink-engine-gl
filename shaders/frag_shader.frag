@@ -66,23 +66,37 @@ void main()
   vec3 N = normalize(i_worldNrm);
 
   // Vector toward light
-  vec3  L;
-  float lightIntensity = pcRaster.lightIntensity;
+  vec3  LightDir;
+  float lightIntensity;
+
+  // Point light
   if(pcRaster.lightType == 0)
   {
-    vec3  lDir     = pcRaster.lightPosition - i_worldPos;
-    float d        = length(lDir);
-    lightIntensity = pcRaster.lightIntensity / (d * d);
-    L              = normalize(lDir);
+    vec3  lDir          = pcRaster.lightPosition - i_worldPos;
+    float lightDistance = length(lDir);
+    lightIntensity      = pcRaster.lightIntensity / (lightDistance * lightDistance);
+    LightDir            = normalize(lDir);
   }
-  else
+  else if(pcRaster.lightType == 1)
   {
-    L = normalize(pcRaster.lightPosition);
+    vec3  lDir          = pcRaster.lightPosition - i_worldPos;
+    float lightDistance = length(lDir);
+    lightIntensity      = pcRaster.lightIntensity / (lightDistance * lightDistance);
+    LightDir            = normalize(lDir);
+    float theta         = dot(LightDir, normalize(-pcRaster.lightDirection));
+    float epsilon       = pcRaster.lightSpotCutoff - pcRaster.lightSpotOuterCutoff;
+    float spotIntensity = clamp((theta - pcRaster.lightSpotOuterCutoff) / epsilon, 0.0, 1.0);
+    lightIntensity *= spotIntensity;
   }
-
+  else  // Directional light
+  {
+    LightDir       = normalize(-pcRaster.lightDirection);
+    lightIntensity = 1.0;
+  }
 
   // Diffuse
-  vec3 diffuse = computeDiffuse(mat, L, N);
+  vec3 diffuse = computeDiffuse(mat, LightDir, N);
+
   if(mat.textureId >= 0)
   {
     int  txtOffset  = objDesc.i[pcRaster.objIndex].txtOffset;
@@ -91,8 +105,9 @@ void main()
     diffuse *= diffuseTxt;
   }
 
+
   // Specular
-  vec3 specular = computeSpecular(mat, i_viewDir, L, N);
+  vec3 specular = computeSpecular(mat, i_viewDir, LightDir, N);
 
   // Result
   o_color = vec4(lightIntensity * (diffuse + specular), 1);

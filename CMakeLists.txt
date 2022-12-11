@@ -51,12 +51,16 @@ _add_nvpro_core_lib()
 message(${OUTPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/media DESTINATION ${OUTPUT_PATH})
 
+SET(SHADER_DST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/spv)
+SET(SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
+file(MAKE_DIRECTORY "${SHADER_DST_DIR}")
 compile_glsl_directory(
-  SRC "${CMAKE_CURRENT_SOURCE_DIR}/shaders" 
-	DST "${CMAKE_CURRENT_SOURCE_DIR}/spv" 
+    SRC "${SHADER_DIR}"
+	DST "${SHADER_DST_DIR}"
 	VULKAN_TARGET "vulkan1.2"
 	DEPENDENCY ${VULKAN_BUILD_DEPENDENCIES}
 	)
+  add_custom_target(compiled_shaders2 DEPENDS ${SPV_OUTPUT})
   
   add_executable(pink_engine)
   
@@ -88,10 +92,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 _finalize_target(pink_engine)
-
-install(FILES ${SPV_OUTPUT} CONFIGURATIONS Release DESTINATION "bin_${ARCH}/${PROJNAME}/spv")
-install(FILES ${SPV_OUTPUT} CONFIGURATIONS Debug DESTINATION "bin_${ARCH}_debug/${PROJNAME}/spv")
-
 
 install(DIRECTORY "media" 
         CONFIGURATIONS Release 
