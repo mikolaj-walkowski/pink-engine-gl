@@ -24,6 +24,7 @@
 #include "pink_graphics.hpp"
 #include "stb_image.h"
 #include "solid_color.hpp"
+#include "obj_library.hpp"
 
 #include "backends/imgui_impl_glfw.h"
 #include "imgui.h"
