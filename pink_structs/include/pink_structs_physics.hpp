@@ -29,7 +29,7 @@ namespace ps::pp {
 
     struct Rigidbody {
         kln::motor M;
-        kln::line B = kln::line();
+        kln::line B;
         
         kln::motor dM;
         kln::line dB;
@@ -38,7 +38,6 @@ namespace ps::pp {
 
         ShapeType shapeType;
         void* shape;
-
     };
 
 } //namespace ps::pp
