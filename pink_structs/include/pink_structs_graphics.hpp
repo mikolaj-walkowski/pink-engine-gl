@@ -1,9 +1,9 @@
 #pragma once
-#include "nvmath/nvmath.h"
+#include "nvvk/resourceallocator_vk.hpp"
 
 namespace ps::pg{
 
-class ObjMesh
+struct ObjMesh
 {
     uint32_t     objIndex;
     uint32_t     nbIndices{ 0 };
