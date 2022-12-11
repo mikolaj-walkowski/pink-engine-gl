@@ -608,7 +608,7 @@ void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std:
     createPostDescriptor();
     createPostPipeline();
     updatePostDescriptorSet();
-    clearColor = nvmath::vec4f(1, 1, 1, 1.00f);
+    clearColor = nvmath::vec4f(1, 0, 1, 1.00f);
 }
 
 void SolidColor::drawFrame(ps::WordState* _w1, ps::WordState* _w2,float _dT) {
