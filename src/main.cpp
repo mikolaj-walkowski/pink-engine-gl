@@ -80,10 +80,21 @@ int main(int argc, char** argv)
   graphicsEngine.init(&vkctx, window, &defaultSearchPaths, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT, &objLib);
 
   ps::Object object;
-  object.mesh = objLib.GetMesh("cube_multi.obj");
+  object.mesh = objLib.GetMesh("cube_multi");
   object.rigidbody.M = kln::translator(1, 1, 0, 0);
 
+  ps::Object object2;
+  object2.mesh = objLib.GetMesh("sphere");
+  object2.rigidbody.M = kln::translator(-3, 1, 0, 0);
+
+  ps::Object object3;
+  object3.mesh = objLib.GetMesh("plane");
+  object3.rigidbody.M = kln::translator(-3, 0, 1, 0);
+
   wordChain[0].simulatedObjects.push_back(object);
+  wordChain[0].simulatedObjects.push_back(object2);
+  wordChain[0].simulatedObjects.push_back(object3);
+  
 
   graphicsEngine.setupGlfwCallbacks(window);
   ImGui_ImplGlfw_InitForVulkan(window, true);

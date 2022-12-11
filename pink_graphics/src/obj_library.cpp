@@ -113,7 +113,7 @@ void ObjLibrary::LoadDirectory(const std::string& ar_directory_path, std::vector
             continue;
 
         if(ar_names.empty() || ar_names.size() <= index || ar_names[index].empty())
-            objName = dir_entry.path().filename().string(); // this almost looks like Java code.
+            objName = dir_entry.path().stem().string(); // this almost looks like Java code. Yep, that's why c++ > 11 is a joke.
         else
             objName = ar_names[index];
         
