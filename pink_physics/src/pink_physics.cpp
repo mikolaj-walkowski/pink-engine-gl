@@ -95,7 +95,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
             // auto Vm = point & com;
             // auto j = -(1 + rho) * ((Vm | np) / ((point & com2) | np));
 
-            rb->B = rb->B + j.scalar() * !np;
+            //rb->B = rb->B + j.scalar() * !np;
         }
         
     }
