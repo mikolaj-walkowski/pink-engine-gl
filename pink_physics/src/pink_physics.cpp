@@ -2,7 +2,7 @@
 #include "pink_structs.hpp"
 #include "pink_physics_colliders.hpp"
 
-kln::line::line(motor l){
+kln::line::line(motor l) {
     p1_ = l.p1_;
     p2_ = l.p2_;
 }
@@ -48,14 +48,14 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     {
         if (*collisionSize >= collisionMaxSize) break;
         if (rb == &i.rigidbody) continue;
-        
+
         auto type = rb->shapeType & i.rigidbody.shapeType;
         switch (type)
         {
-        case SHAPE_TYPE_SPHERE & SHAPE_TYPE_PLANE:
+        case SHAPE_TYPE_SPHERE& SHAPE_TYPE_PLANE:
             sphereToPlane(rb->shape, i.rigidbody.shape, &collisionData[*collisionSize]);
             break;
-        
+
         default:
             collisionData[*collisionSize].count = 0;
             break;
@@ -66,8 +66,8 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
             ++(*collisionSize);
         }
     }
-    
-    
+
+
 }
 
 
@@ -87,19 +87,19 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
             auto point_plane = kln::plane(point.p3_);
 
             auto np = ((normal | point) | point);
-            
+
 
             // auto com = 0.5f * (kln::line)(point_plane* (kln::motor)rb->B - (kln::motor)rb->B * point_plane);
             // auto com2 = 0.5f * (kln::line)(point_plane * (kln::motor)!np - (kln::motor)!np * point_plane);
-            
+
             // auto Vm = point & com;
             // auto j = -(1 + rho) * ((Vm | np) / ((point & com2) | np));
 
             //rb->B = rb->B + j.scalar() * !np;
         }
-        
+
     }
-    
+
 }
 
 nvmath::mat4f ps::interpolate(ps::Object* a, ps::Object* b, float t) {
@@ -112,9 +112,24 @@ nvmath::mat4f ps::interpolate(ps::Object* a, ps::Object* b, float t) {
     return nvmath::mat4f(m.as_mat4x4().data);
 }
 
+ps::pp::Rigidbody ps::pp::rigidbodyCreate(kln::motor m, ShapeType type, void* shape, int size) {
+    void* shape_dynamic = malloc(size);
+    memcpy(shape_dynamic, shape, size);    
+
+    ps::pp::Rigidbody out = { m, kln::line(), kln::motor(), kln::line(), kln::origin(), type, shape_dynamic };
+
+    return out;
+}
+
+void ps::pp::rigidbodyDestroy(ps::pp::Rigidbody* rb) {
+    if (rb->shape != NULL) {
+        free(rb->shape);
+    }
+}
+
 namespace ps::pp {
 
-    Engine::Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, InterpolationFunc iF) : simulate(sF), collide(cF), resolve(rF), interpolation(iF) {
+    Engine::Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, InterpolationFunc iF): simulate(sF), collide(cF), resolve(rF), interpolation(iF) {
 
     }
 
@@ -126,7 +141,7 @@ namespace ps::pp {
         *out = *in;
 
         for (int i = 0; i < in->simulatedObjects.size(); i++) {
-            this->interpolation(this,&out->simulatedObjects[i].rigidbody);
+            this->interpolation(this, &out->simulatedObjects[i].rigidbody);
         }
 
         // for (int i = 0; i < in->simulatedObjects.size(); i++) {
