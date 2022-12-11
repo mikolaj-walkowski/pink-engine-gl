@@ -44,12 +44,12 @@
 //////////////////////////////////////////////////////////////////////////
 
 // Default search path for shaders
-std::vector<std::string> defaultSearchPaths ={
+std::vector<std::string> defaultSearchPaths = {
       NVPSystem::exePath() + PROJECT_RELDIRECTORY,
       NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
       NVPSystem::exePath() + "../",
       std::string(PROJECT_NAME),
-  };
+};
 
 ps::WordState wordChain[4]; // Buffer dla kolejnych stanów 
 
@@ -77,10 +77,11 @@ int main(int argc, char** argv)
   ObjLibrary objLib;
 
   // Create example
-  graphicsEngine.init(&vkctx, window,&defaultSearchPaths,utils::glfw::SAMPLE_WIDTH,utils::glfw::SAMPLE_HEIGHT, &objLib);
+  graphicsEngine.init(&vkctx, window, &defaultSearchPaths, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT, &objLib);
+
   ps::Object object;
   object.mesh = &objLib.GetMesh(0);
-  object.rigidbody.M = kln::motor();
+  object.rigidbody.M = kln::translator(1, 1, 0, 0);
 
   wordChain[0].simulatedObjects.push_back(object);
 
@@ -109,7 +110,7 @@ int main(int argc, char** argv)
       ImGuiH::Panel::End();
     }
 
-    graphicsEngine.drawFrame(&wordChain[0],&wordChain[1],1.0f);
+    graphicsEngine.drawFrame(&wordChain[0], &wordChain[1], 1.0f);
   }
 
   // Cleanup

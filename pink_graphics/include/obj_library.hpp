@@ -7,7 +7,7 @@
 
 class ObjLibrary
 {
-private:
+public:
     struct ObjDesc
     {
     int      txtOffset;             // Texture index offset in the array of textures
@@ -21,7 +21,7 @@ private:
     std::vector<ObjDesc> m_descContainer;
     nvvk::Buffer m_bObjDesc;
 
-public:
+
     void AddMesh(ps::pg::ObjMesh& a_objMesh);
     ps::pg::ObjMesh GetMesh(uint32_t index);
     void LoadMesh(const std::string& filename, nvvk::ResourceAllocatorDma& alloc, 
