@@ -24,7 +24,6 @@
 #include "pink_graphics.hpp"
 #include "stb_image.h"
 #include "solid_color.hpp"
-#include "obj_library.hpp"
 
 #include "backends/imgui_impl_glfw.h"
 #include "imgui.h"
@@ -577,9 +576,11 @@ void SolidColor::drawPost(VkCommandBuffer cmdBuf)
     m_debug.endLabel(cmdBuf);
 }
 
-void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w, const int h) {
+void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w, const int h, ObjLibrary* objLib) {
     // Window need to be opened to get the surface on which to draw
     const VkSurfaceKHR surface = getVkSurface(vkctx->m_instance, window);
+
+    m_objLibrary = objLib;
 
     defaultSearchPaths = sp;
 
@@ -595,13 +596,13 @@ void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std:
     initGUI(0);  // Using sub-pass 0
 
     // Creation of the example
-    loadModel(nvh::findFile("media/scenes/cube_multi.obj", *defaultSearchPaths, true));
+    m_objLibrary->LoadMesh(nvh::findFile("media/scenes/cube_multi.obj", *defaultSearchPaths, true), m_alloc, m_device, m_graphicsQueueIndex, m_debug);
 
     createOffscreenRender();
     createDescriptorSetLayout();
     createGraphicsPipeline();
     createUniformBuffer();
-    createObjDescriptionBuffer();
+    m_objLibrary->CreateObjDescriptionBuffer(m_alloc, m_device, m_graphicsQueueIndex, m_debug);
     updateDescriptorSet();
 
     createPostDescriptor();

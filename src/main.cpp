@@ -74,9 +74,16 @@ int main(int argc, char** argv)
 
   utils::nvidia::setupContext(&vkctx, { utils::glfw::getGLFWExtensions() });
 
+  ObjLibrary objLib;
+
   // Create example
-  graphicsEngine.init(&vkctx, window,&defaultSearchPaths,utils::glfw::SAMPLE_WIDTH,utils::glfw::SAMPLE_HEIGHT);
- 
+  graphicsEngine.init(&vkctx, window,&defaultSearchPaths,utils::glfw::SAMPLE_WIDTH,utils::glfw::SAMPLE_HEIGHT, &objLib);
+  ps::Object object;
+  object.mesh = &objLib.GetMesh(0);
+  object.rigidbody.M = kln::motor();
+
+  wordChain[0].simulatedObjects.push_back(object);
+
   graphicsEngine.setupGlfwCallbacks(window);
   ImGui_ImplGlfw_InitForVulkan(window, true);
 
