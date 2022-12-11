@@ -102,7 +102,7 @@ int main(int argc, char** argv)
       ImGuiH::Panel::End();
     }
 
-    graphicsEngine.drawFrame(&wordChain[0]);
+    graphicsEngine.drawFrame(&wordChain[0],&wordChain[1],1.0f);
   }
 
   // Cleanup

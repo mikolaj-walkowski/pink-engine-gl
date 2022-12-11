@@ -387,13 +387,28 @@ void SolidColor::destroyResources()
     m_alloc.deinit();
 }
 
+void SolidColor::rasterizeHelper(const VkCommandBuffer& cmdBuf, std::vector<ps::Object>* vec) {
+    VkDeviceSize offset{ 0 };
+
+    for (const ps::Object obj : *vec)
+    {
+        auto model = obj.mesh;
+        m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
+        m_pcRaster.modelMatrix = nvmath::mat4f(obj.rigidbody.M.as_mat4x4().data);
+
+        vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+            sizeof(PushConstantRaster), &m_pcRaster);
+        vkCmdBindVertexBuffers(cmdBuf, 0, 1, &model->vertexBuffer.buffer, &offset);
+        vkCmdBindIndexBuffer(cmdBuf, model->indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmdBuf, model->nbIndices, 1, 0, 0, 0);
+    }
+
+}
 //--------------------------------------------------------------------------------------------------
 // Drawing the scene in raster mode
 //
 void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
 {
-    VkDeviceSize offset{ 0 };
-
     m_debug.beginLabel(cmdBuf, "Rasterize");
 
     // Dynamic Viewport
@@ -403,21 +418,9 @@ void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
     vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
     vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descSet, 0, nullptr);
 
-    ps::WordState a;
+    rasterizeHelper(cmdBuf, &w1->staticObjects);
+    rasterizeHelper(cmdBuf, &w1->simulatedObjects);
 
-    for (const ps::Object& inst : a.staticObjects)
-    {
-        
-        auto model = inst.mesh;
-        m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
-        m_pcRaster.modelMatrix = nvmath::mat4f(inst.rigidbody.M.as_mat4x4().data);
-
-        vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-            sizeof(PushConstantRaster), &m_pcRaster);
-        vkCmdBindVertexBuffers(cmdBuf, 0, 1, &model.vertexBuffer.buffer, &offset);
-        vkCmdBindIndexBuffer(cmdBuf, model.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(cmdBuf, model.nbIndices, 1, 0, 0, 0);
-    }
     m_debug.endLabel(cmdBuf);
 }
 
@@ -606,7 +609,10 @@ void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std:
     clearColor = nvmath::vec4f(1, 1, 1, 1.00f);
 }
 
-void SolidColor::drawFrame(ps::WordState* w) {
+void SolidColor::drawFrame(ps::WordState* _w1, ps::WordState* _w2,float _dT) {
+    w1 = _w1;
+    w2 = _w2;
+    dT = _dT;
     // Start rendering the scene
     prepareFrame();
 

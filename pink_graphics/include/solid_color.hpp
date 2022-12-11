@@ -22,6 +22,9 @@ class SolidColor: public nvvkhl::AppBaseVk
 public:
     std::vector<std::string>* defaultSearchPaths;
     nvmath::vec4f clearColor;
+    ps::WordState* w1;
+    ps::WordState* w2;
+    float dT;
 
     void setup(const VkInstance& instance, const VkDevice& device, const VkPhysicalDevice& physicalDevice, uint32_t queueFamily) override;
     void createDescriptorSetLayout();
@@ -35,8 +38,9 @@ public:
     void onResize(int /*w*/, int /*h*/) override;
     void destroyResources();
     void rasterize(const VkCommandBuffer& cmdBuff);
+    void rasterizeHelper(const VkCommandBuffer&, std::vector<ps::Object>*);
 
-    void drawFrame(ps::WordState*);
+    void drawFrame(ps::WordState*, ps::WordState*,float);
     void renderUI();
 
     void init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w,const int h);
