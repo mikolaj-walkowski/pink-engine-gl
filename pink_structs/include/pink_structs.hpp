@@ -4,7 +4,6 @@
 #include "pink_structs_physics.hpp"
 #include "pink_structs_graphics.hpp"
 
-
 namespace ps {
 
   typedef long int UniqueID; // Na razie robię tak bo nie wiem co dokładnie będziemy chcieli mieć jako ID
@@ -16,6 +15,7 @@ namespace ps {
     UniqueID id;
     std::vector<Object*> children;  // OPT można zmienić na tab albo zrobić własną klasę/struct pod tablice o jednolitym rozmiarze
     pp::Rigidbody rigidbody;  // Mogę dać funkcje getInterpolatedTransform(RigidBody previousState, float blend (0.0 ... 1.0 )) zamiast transform i rotation 
+    pg::ObjMesh* mesh;
     pg::MeshRenderer meshRenderer;
     struct Interpolation_catche {
       kln::line log;
