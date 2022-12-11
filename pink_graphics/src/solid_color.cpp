@@ -599,7 +599,7 @@ void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std:
     m_objLibrary->init(&m_alloc, m_device, m_graphicsQueueIndex, m_debug);
 
     // Creation of the example
-    m_objLibrary->LoadMesh(nvh::findFile("media/scenes/cube_multi.obj", *defaultSearchPaths, true), "cube");
+    m_objLibrary->LoadDirectory("../../media/scenes/");
 
     createOffscreenRender();
     createDescriptorSetLayout();

@@ -5,6 +5,8 @@
 #include "nvh/fileoperations.hpp"
 #include "host_device.h"
 
+#include <filesystem>
+
 void ObjLibrary::init(nvvk::ResourceAllocatorDma* ap_alloc, VkDevice a_device, 
                 uint32_t a_graphicsQueueIndex, nvvk::DebugUtil& ar_debug){
 
@@ -14,9 +16,9 @@ void ObjLibrary::init(nvvk::ResourceAllocatorDma* ap_alloc, VkDevice a_device,
         mp_debug = &ar_debug;
     }
 
-void ObjLibrary::AddMesh(ps::pg::ObjMesh& a_objMesh, const std::string& a_objName){
-    a_objMesh.objIndex = static_cast<uint32_t>(m_meshContainer.size());
-    this->m_meshContainer.push_back(a_objMesh);
+void ObjLibrary::AddMesh(ps::pg::ObjMesh& ar_objMesh, const std::string a_objName){
+    ar_objMesh.objIndex = static_cast<uint32_t>(m_meshContainer.size());
+    this->m_meshContainer.push_back(ar_objMesh);
     this->m_objectNames.push_back(a_objName);
 
     return;
@@ -95,6 +97,29 @@ void ObjLibrary::LoadMesh(const std::string& ar_file_path, const std::string& ar
     // Keeping the obj host model and device description
     this->AddMesh(model, objName);
     m_descContainer.emplace_back(desc);
+    return;
+}
+
+void ObjLibrary::LoadDirectory(const std::string& ar_directory_path, std::vector<std::string>& ar_names){
+
+    uint32_t index = 0;
+    std::string objName = "";
+
+    std::filesystem::path input_directory(ar_directory_path);
+    for (const auto& dir_entry : std::filesystem::directory_iterator{input_directory}) 
+    {
+        auto test = dir_entry.path().extension().string();
+        if(dir_entry.path().extension().string() != ".obj")
+            continue;
+
+        if(ar_names.empty() || ar_names.size() <= index || ar_names[index].empty())
+            objName = dir_entry.path().filename().string(); // this almost looks like Java code.
+        else
+            objName = ar_names[index];
+        
+        LoadMesh(dir_entry.path().string(), objName);
+    }
+
     return;
 }
 

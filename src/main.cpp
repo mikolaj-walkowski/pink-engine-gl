@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   graphicsEngine.init(&vkctx, window, &defaultSearchPaths, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT, &objLib);
 
   ps::Object object;
-  object.mesh = objLib.GetMesh("cube");
+  object.mesh = objLib.GetMesh("cube_multi.obj");
   object.rigidbody.M = kln::translator(1, 1, 0, 0);
 
   wordChain[0].simulatedObjects.push_back(object);
