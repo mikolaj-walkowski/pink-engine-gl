@@ -53,6 +53,7 @@ std::vector<std::string> defaultSearchPaths = {
 
 ps::WordState wordChain[4]; // Buffer dla kolejnych stanów 
 
+//engin
 ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::eulerInterpolation);
 
 
