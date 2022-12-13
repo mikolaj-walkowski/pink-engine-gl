@@ -59,6 +59,11 @@ void main()
   ObjDesc    objResource = objDesc.i[pcRaster.objIndex];
   MatIndices matIndices  = MatIndices(objResource.materialIndexAddress);
   Materials  materials   = Materials(objResource.materialAddress);
+  
+  Indices vi = Indices(objResource.indexAddress);
+  Vertices v = Vertices(objResource.vertexAddress);
+
+  vec3 color = v.v[vi.i[gl_PrimitiveID]].color;
 
   int               matIndex = matIndices.i[gl_PrimitiveID];
   WaveFrontMaterial mat      = materials.m[matIndex];
@@ -95,5 +100,5 @@ void main()
   vec3 specular = computeSpecular(mat, i_viewDir, L, N);
 
   // Result
-  o_color = vec4(lightIntensity * (diffuse + specular), 1);
+  o_color = vec4(clamp((color*0.3),vec3(0,0,0),vec3(1,1,1)), 1);
 }

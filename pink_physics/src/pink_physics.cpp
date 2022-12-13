@@ -84,16 +84,14 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         for (int ii = 0; ii < data.count; ii++)
         {
             auto point = data.pointsOfContact[ii];
-            auto point_plane = kln::plane(point.p3_);
 
             auto np = ((normal | point) | point);
-
-
-            // auto com = 0.5f * (kln::line)(point_plane* (kln::motor)rb->B - (kln::motor)rb->B * point_plane);
-            // auto com2 = 0.5f * (kln::line)(point_plane * (kln::motor)!np - (kln::motor)!np * point_plane);
+ 
+            // auto com = 0.5f * (point * rb->B - rb->B * point);
+            // auto com2 = 0.5f * (point * !np - !np * point);
 
             // auto Vm = point & com;
-            // auto j = -(1 + rho) * ((Vm | np) / ((point & com2) | np));
+            // auto j = -(1 + rho) * ( point &(Vm | np) / ((point & com2) | np));
 
             //rb->B = rb->B + j.scalar() * !np;
         }

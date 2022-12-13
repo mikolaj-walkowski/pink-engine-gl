@@ -3,22 +3,12 @@
 #include "nvvk/debug_util_vk.hpp"
 #include <iostream>
 #include <vector>
+#include "host_device.h"
 
 
 class ObjLibrary
 {
 public:
-    /**
-     * Struct z informacjami do desktryptora
-     */
-    struct ObjDesc
-    {
-        int      txtOffset;             // Texture index offset in the array of textures
-        uint64_t vertexAddress;         // Address of the Vertex buffer
-        uint64_t indexAddress;          // Address of the index buffer
-        uint64_t materialAddress;       // Address of the material buffer
-        uint64_t materialIndexAddress;  // Address of the triangle material index buffer
-    };
     
     std::vector<ps::pg::ObjMesh> m_meshContainer;    //Robię to jako private, żeby raczej nie dodawać elementów ręcznie, tylko metodą AddMesh()
     std::vector<ObjDesc> m_descContainer;

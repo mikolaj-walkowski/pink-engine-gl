@@ -361,7 +361,7 @@ void SolidColor::destroyResources()
     m_alloc.destroy(m_bGlobals);
     m_alloc.destroy(m_objLibrary->m_bObjDesc);
 
-    for (auto& m : m_objModel)
+    for (auto& m : m_objLibrary->m_meshContainer)
     {
         m_alloc.destroy(m.vertexBuffer);
         m_alloc.destroy(m.indexBuffer);
@@ -594,7 +594,7 @@ void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std:
 
     // Setup Imgui
     initGUI(0);  // Using sub-pass 0
-    
+
     // Setup ObjLibrary
     m_objLibrary->init(&m_alloc, m_device, m_graphicsQueueIndex, m_debug);
 
@@ -614,7 +614,7 @@ void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std:
     clearColor = nvmath::vec4f(1, 0, 1, 1.00f);
 }
 
-void SolidColor::drawFrame(ps::WordState* _w1, ps::WordState* _w2,float _dT) {
+void SolidColor::drawFrame(ps::WordState* _w1, ps::WordState* _w2, float _dT) {
     w1 = _w1;
     w2 = _w2;
     dT = _dT;
