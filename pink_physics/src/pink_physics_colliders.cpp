@@ -8,7 +8,7 @@ void ps::pp::sphereToPlane(void* _sphere, void* _plane, ps::pp::Manifold* m) {
 
     auto line = plane | center;
 
-    auto distance = (plane & center).scalar();
+    auto distance = (plane & center).norm();
 
     if (distance < sphere->radius) {
         m->count = 1;

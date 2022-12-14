@@ -8,7 +8,8 @@ add_library(${PROJECT_NAME} INTERFACE)
 add_library(pink::structs ALIAS ${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME}
-    INTERFACE klein::klein
+    # INTERFACE klein::klein
+    INTERFACE pga
     INTERFACE nvpro_core
     # INTERFACE assimp
 )

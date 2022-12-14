@@ -40,7 +40,7 @@ namespace ps::pp {
         Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, InterpolationFunc iF);
     };
 
-    Rigidbody rigidbodyCreate(kln::motor, ShapeType, void*, int);
+    Rigidbody rigidbodyCreate(PGA3D m, ShapeType type, void* shape, int size);
     void rigidbodyDestroy(Rigidbody*);
 
 

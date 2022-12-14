@@ -18,6 +18,7 @@ message(STATUS "[PINK] Adding klein")
 message(STATUS "++++++++++++++++++++++++++++")
 add_subdirectory(klein EXCLUDE_FROM_ALL)
 
+
 if(MSVC)
 set_target_properties(klein PROPERTIES COMPILE_FLAGS "/w")
 else()
@@ -68,6 +69,8 @@ message(STATUS "++++++++++++++++++++++++++++")
 add_executable(pink_engine)
 
 _add_project_definitions(${PROJECT_NAME})
+
+add_subdirectory(pga EXCLUDE_FROM_ALL)
 add_subdirectory(pink_structs)
 add_subdirectory(pink_graphics)
 add_subdirectory(pink_physics)
@@ -87,7 +90,8 @@ add_subdirectory(pink_physics)
 
 target_link_libraries(${PROJECT_NAME}
         #assimp
-        klein::klein
+      #   klein::klein
+        pga
         nvpro_core
         pink::structs
         pink::graphics

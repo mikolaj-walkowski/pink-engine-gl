@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <klein/klein.hpp>
 #include "pink_structs_physics.hpp"
 #include "pink_structs_graphics.hpp"
 
@@ -18,7 +17,7 @@ namespace ps {
     pg::ObjMesh* mesh;
     pg::MeshRenderer meshRenderer;
     struct Interpolation_catche {
-      kln::line log;
+      PGA3D log;
       ps::UniqueID obj;
     }interpolation_catche;
 

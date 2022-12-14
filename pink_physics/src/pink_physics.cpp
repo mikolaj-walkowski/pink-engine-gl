@@ -2,12 +2,6 @@
 #include "pink_structs.hpp"
 #include "pink_physics_colliders.hpp"
 
-kln::line::line(motor l) {
-    p1_ = l.p1_;
-    p2_ = l.p2_;
-}
-
-
 void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     int iterations = e->interpolation_props.iterations;
     float step = e->interpolation_props.step;
@@ -24,14 +18,14 @@ void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 }
 
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
-    kln::line G = (~(rb->M))(kln::ideal_line(0.f, 9.81f, 0.f));
+    auto G = ~(rb->M)* (9.81f * e1) * rb->M;
 
-    kln::line F = G; // + wszystkie siły
+    auto F = G; // + wszystkie siły
 
     // TODO try to implement the Hodge dual 
     // BUG  using P-something dual instead of Hodge may backfire
-    rb->dM = -0.5f * (rb->M * ((kln::motor)(rb->B)));
-    rb->dB = F - 0.5f * !(kln::line(!rb->B * rb->B - rb->B * !rb->B));
+    rb->dM = -0.5f * (rb->M * (rb->B));
+    rb->dB = F - 0.5f * !(!rb->B * rb->B - rb->B * !rb->B);
 }
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     auto staticObjects = e->out->staticObjects;
@@ -87,13 +81,13 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
             auto np = ((normal | point) | point);
  
-            // auto com = 0.5f * (point * rb->B - rb->B * point);
-            // auto com2 = 0.5f * (point * !np - !np * point);
+            auto com = 0.5f * (point * rb->B - rb->B * point);
+            auto com2 = 0.5f * (point * !np - !np * point);
 
-            // auto Vm = point & com;
-            // auto j = -(1 + rho) * ( point &(Vm | np) / ((point & com2) | np));
+            auto Vm = point & com;
+            auto j = -(1 + rho) * ( (point &(Vm | np)).norm() / ((point & com2) | np).norm());
 
-            //rb->B = rb->B + j.scalar() * !np;
+            rb->B = rb->B + j * !np;
         }
 
     }
@@ -101,20 +95,21 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 }
 
 nvmath::mat4f ps::interpolate(ps::Object* a, ps::Object* b, float t) {
-    if (a->interpolation_catche.obj != b->id) {
-        a->interpolation_catche.log = kln::log(b->rigidbody.M * ~a->rigidbody.M);
-        a->interpolation_catche.obj = b->id;
-    }
+    // if (a->interpolation_catche.obj != b->id) {
+    //     a->interpolation_catche.log = kln::log(b->rigidbody.M * ~a->rigidbody.M);
+    //     a->interpolation_catche.obj = b->id;
+    // }
 
-    kln::motor m = kln::exp(a->interpolation_catche.log * t) * a->rigidbody.M;
-    return nvmath::mat4f(m.as_mat4x4().data);
+    // kln::motor m = kln::exp(a->interpolation_catche.log * t) * a->rigidbody.M;
+    // return nvmath::mat4f(m.as_mat4x4().data);
+    return nvmath::mat4f();
 }
 
-ps::pp::Rigidbody ps::pp::rigidbodyCreate(kln::motor m, ShapeType type, void* shape, int size) {
+ps::pp::Rigidbody ps::pp::rigidbodyCreate(PGA3D m, ShapeType type, void* shape, int size) {
     void* shape_dynamic = malloc(size);
     memcpy(shape_dynamic, shape, size);    
 
-    ps::pp::Rigidbody out = { m, kln::line(), kln::motor(), kln::line(), kln::origin(), type, shape_dynamic };
+    ps::pp::Rigidbody out = { m, PGA3D(), PGA3D(), PGA3D(), point(0,0,0), type, shape_dynamic };
 
     return out;
 }

@@ -1,5 +1,5 @@
 #pragma once 
-#include <klein/klein.hpp>
+#include <pga3d.hpp>
 #include "nvmath/nvmath.h"
 #include "pink_structs.hpp"
 
@@ -9,8 +9,8 @@ namespace ps::pp {
         static const int maxContactPoints= 10;
         int count;
         float penetration;
-        kln::line normal;
-        kln::point pointsOfContact[maxContactPoints];
+        PGA3D normal;
+        PGA3D pointsOfContact[maxContactPoints];
     } Manifold;
 
     enum ShapeType {
@@ -20,21 +20,21 @@ namespace ps::pp {
 
     struct Sphere {
         float radius;
-        kln::point center;
+        PGA3D center;
     };
 
     struct Plane {
-        kln::plane plane;
+        PGA3D plane;
     };
 
     struct Rigidbody {
-        kln::motor M;
-        kln::line B;
+        PGA3D M;
+        PGA3D B;
         
-        kln::motor dM;
-        kln::line dB;
+        PGA3D  dM;
+        PGA3D  dB;
         
-        kln::point centerOfMass;
+        PGA3D  centerOfMass;
 
         ShapeType shapeType;
         void* shape;

@@ -390,11 +390,13 @@ void SolidColor::destroyResources()
 void SolidColor::rasterizeHelper(const VkCommandBuffer& cmdBuf, std::vector<ps::Object>* vec) {
     VkDeviceSize offset{ 0 };
 
-    for (const ps::Object obj : *vec)
+    for (ps::Object obj : *vec)
     {
         auto model = obj.mesh;
         m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
-        m_pcRaster.modelMatrix = nvmath::mat4f(obj.rigidbody.M.as_mat4x4().data);
+        nvmath::mat4f out = obj.rigidbody.M.as_mat4x4();
+        
+        m_pcRaster.modelMatrix = out;
 
         vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
             sizeof(PushConstantRaster), &m_pcRaster);

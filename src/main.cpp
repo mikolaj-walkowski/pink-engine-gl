@@ -82,15 +82,18 @@ int main(int argc, char** argv)
 
   ps::Object object;
   object.mesh = objLib.GetMesh("cube_multi");
-  object.rigidbody.M = kln::translator(1, 1, 0, 0);
+  auto line = point(0,2,0)  & point(0,1,0);
+  object.rigidbody.M = pga_I + pga_1 + 1 * e01;
+
+  auto rotor2 = rotor(2 * PI, line);
 
   ps::Object object2;
   object2.mesh = objLib.GetMesh("sphere");
-  object2.rigidbody.M = kln::translator(-3, 1, 0, 0);
+  object2.rigidbody.M =rotor2* translator(1, line);
 
   ps::Object object3;
   object3.mesh = objLib.GetMesh("plane");
-  object3.rigidbody.M = kln::translator(-3, 0, 1, 0);
+  object3.rigidbody.M =rotor2* translator(-3, line);
 
   wordChain[0].simulatedObjects.push_back(object);
   wordChain[0].simulatedObjects.push_back(object2);
