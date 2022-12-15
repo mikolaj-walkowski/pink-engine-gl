@@ -44,13 +44,6 @@
 #define WC_SIZE 4
 //////////////////////////////////////////////////////////////////////////
 
-// Default search path for shaders
-std::vector<std::string> defaultSearchPaths = {
-      NVPSystem::exePath() + PROJECT_RELDIRECTORY,
-      NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
-      NVPSystem::exePath() + "../",
-      std::string(PROJECT_NAME),
-};
 
 ps::WordState wordChain[WC_SIZE]; // Buffer dla kolejnych stanów 
 
@@ -61,6 +54,7 @@ ps::WordState wordChain[WC_SIZE]; // Buffer dla kolejnych stanów
 int main(int argc, char** argv)
 {
   UNUSED(argc);
+  
 
   SolidColor graphicsEngine;
   ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::eulerInterpolation);
@@ -77,11 +71,13 @@ int main(int argc, char** argv)
 
 
   // Create example
-  graphicsEngine.init(&vkctx, window, &defaultSearchPaths, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT);
+  graphicsEngine.init(&vkctx, window, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT);
 
   // ps::Object object;
   // object.mesh = objLib.GetMesh("cube_multi");
-  // object.rigidbody.M = kln::translator(1, 1, 0, 0);
+  // object.rigidbody.M = kln::translator(1, 1, 0, 0);'
+  ps::pp::Sphere o1 = { 1.f,kln::point(0,0,0) };
+  ps::Object object1 = utils::objectCreate(kln::motor(kln::translator(6, -1, 1, 0)), ps::pp::ST_SPHERE, &o1);
 
   ps::pp::Sphere o2 = { 1.f,kln::point(0,0,0) };
   ps::Object object2 = utils::objectCreate(kln::motor(kln::translator(-3, 1, 0, 0)), ps::pp::ST_SPHERE, &o2);
@@ -91,7 +87,7 @@ int main(int argc, char** argv)
   ps::Object object3 = utils::objectCreate(kln::motor(kln::translator(-3, 0, 1, 0)), ps::pp::ST_PLANE, &o3);
 
 
-  //wordChain[0].simulatedObjects.push_back(object);
+  wordChain[0].simulatedObjects.push_back(object1);
   wordChain[0].simulatedObjects.push_back(object2);
   wordChain[0].staticObjects.push_back(object3);
 

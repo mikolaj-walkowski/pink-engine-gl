@@ -107,7 +107,7 @@ void SolidColor::updateUniformBuffer(const VkCommandBuffer& cmdBuf)
 //
 void SolidColor::createDescriptorSetLayout()
 {
-    auto nbTxt = static_cast<uint32_t>(m_textures.size());
+    auto nbTxt = static_cast<uint32_t>(ps::pg::ObjLibrary::getObjLibrary().m_textures.size());
 
     // Camera matrices
     m_descSetLayoutBind.addBinding(SceneBindings::eGlobals, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
@@ -140,12 +140,12 @@ void SolidColor::updateDescriptorSet()
     writes.emplace_back(m_descSetLayoutBind.makeWrite(m_descSet, SceneBindings::eObjDescs, &dbiSceneDesc));
 
     // All texture samplers
-    // std::vector<VkDescriptorImageInfo> diit;
-    // for (auto& texture : m_textures)
-    // {
-    //     diit.emplace_back(texture.descriptor);
-    // }
-    // writes.emplace_back(m_descSetLayoutBind.makeWriteArray(m_descSet, SceneBindings::eTextures, diit.data()));
+    std::vector<VkDescriptorImageInfo> diit;
+    for (auto& texture : ps::pg::ObjLibrary::getObjLibrary().m_textures)
+    {
+        diit.emplace_back(texture.descriptor);
+    }
+    writes.emplace_back(m_descSetLayoutBind.makeWriteArray(m_descSet, SceneBindings::eTextures, diit.data()));
 
     // Writing the information
     vkUpdateDescriptorSets(m_device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
@@ -169,7 +169,7 @@ void SolidColor::createGraphicsPipeline()
 
 
     // Creating the Pipeline
-    std::vector<std::string>                paths = *defaultSearchPaths;
+    std::vector<std::string>                paths = ps::defaultSearchPaths;
     nvvk::GraphicsPipelineGeneratorCombined gpb(m_device, m_pipelineLayout, m_offscreenRenderPass);
     gpb.depthStencilState.depthTestEnable = true;
     gpb.addShader(nvh::loadFile("spv/vert_shader.vert.spv", true, paths, true), VK_SHADER_STAGE_VERTEX_BIT);
@@ -187,68 +187,6 @@ void SolidColor::createGraphicsPipeline()
 }
 
 //--------------------------------------------------------------------------------------------------
-// Loading the OBJ file and setting up all buffers
-//
-void SolidColor::loadModel(const std::string& filename, nvmath::mat4f transform)
-{
-    LOGI("Loading File:  %s \n", filename.c_str());
-    ObjLoader loader;
-    loader.loadModel(filename);
-
-    // Converting from Srgb to linear
-    for (auto& m : loader.m_materials)
-    {
-        m.ambient = nvmath::pow(m.ambient, 2.2f);
-        m.diffuse = nvmath::pow(m.diffuse, 2.2f);
-        m.specular = nvmath::pow(m.specular, 2.2f);
-    }
-
-    ObjModel model;
-    model.nbIndices = static_cast<uint32_t>(loader.m_indices.size());
-    model.nbVertices = static_cast<uint32_t>(loader.m_vertices.size());
-
-    // Create the buffers on Device and copy vertices, indices and materials
-    nvvk::CommandPool  cmdBufGet(m_device, m_graphicsQueueIndex);
-    VkCommandBuffer    cmdBuf = cmdBufGet.createCommandBuffer();
-    VkBufferUsageFlags flag = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-    model.vertexBuffer = m_alloc.createBuffer(cmdBuf, loader.m_vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | flag);
-    model.indexBuffer = m_alloc.createBuffer(cmdBuf, loader.m_indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | flag);
-    model.matColorBuffer = m_alloc.createBuffer(cmdBuf, loader.m_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | flag);
-    model.matIndexBuffer = m_alloc.createBuffer(cmdBuf, loader.m_matIndx, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | flag);
-
-    // Creates all textures found and find the offset for this model
-    auto txtOffset = static_cast<uint32_t>(m_textures.size());
-    createTextureImages(cmdBuf, loader.m_textures);
-    cmdBufGet.submitAndWait(cmdBuf);
-    m_alloc.finalizeAndReleaseStaging();
-
-    std::string objNb = std::to_string(m_objModel.size());
-    m_debug.setObjectName(model.vertexBuffer.buffer, (std::string("vertex_" + objNb)));
-    m_debug.setObjectName(model.indexBuffer.buffer, (std::string("index_" + objNb)));
-    m_debug.setObjectName(model.matColorBuffer.buffer, (std::string("mat_" + objNb)));
-    m_debug.setObjectName(model.matIndexBuffer.buffer, (std::string("matIdx_" + objNb)));
-
-    // Keeping transformation matrix of the instance
-    ObjInstance instance;
-    instance.transform = transform;
-    instance.objIndex = static_cast<uint32_t>(m_objModel.size());
-    m_instances.push_back(instance);
-
-    // Creating information for device access
-    ObjDesc desc;
-    desc.txtOffset = txtOffset;
-    desc.vertexAddress = nvvk::getBufferDeviceAddress(m_device, model.vertexBuffer.buffer);
-    desc.indexAddress = nvvk::getBufferDeviceAddress(m_device, model.indexBuffer.buffer);
-    desc.materialAddress = nvvk::getBufferDeviceAddress(m_device, model.matColorBuffer.buffer);
-    desc.materialIndexAddress = nvvk::getBufferDeviceAddress(m_device, model.matIndexBuffer.buffer);
-
-    // Keeping the obj host model and device description
-    m_objModel.emplace_back(model);
-    m_objDesc.emplace_back(desc);
-}
-
-
-//--------------------------------------------------------------------------------------------------
 // Creating the uniform buffer holding the camera matrices
 // - Buffer is host visible
 //
@@ -257,23 +195,6 @@ void SolidColor::createUniformBuffer()
     m_bGlobals = m_alloc.createBuffer(sizeof(GlobalUniforms), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_debug.setObjectName(m_bGlobals.buffer, "Globals");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Create a storage buffer containing the description of the scene elements
-// - Which geometry is used by which instance
-// - Transformation
-// - Offset for texture
-//
-void SolidColor::createObjDescriptionBuffer()
-{
-    nvvk::CommandPool cmdGen(m_device, m_graphicsQueueIndex);
-
-    auto cmdBuf = cmdGen.createCommandBuffer();
-    m_bObjDesc = m_alloc.createBuffer(cmdBuf, m_objDesc, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-    cmdGen.submitAndWait(cmdBuf);
-    m_alloc.finalizeAndReleaseStaging();
-    m_debug.setObjectName(m_bObjDesc.buffer, "ObjDescs");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -290,7 +211,7 @@ void SolidColor::createTextureImages(const VkCommandBuffer& cmdBuf, const std::v
     VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
     // If no textures are present, create a dummy one to accommodate the pipeline layout
-    if (textures.empty() && m_textures.empty())
+    if (textures.empty() && ps::pg::ObjLibrary::getObjLibrary().m_textures.empty())
     {
         nvvk::Texture texture;
 
@@ -306,7 +227,7 @@ void SolidColor::createTextureImages(const VkCommandBuffer& cmdBuf, const std::v
 
         // The image format must be in VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         nvvk::cmdBarrierImageLayout(cmdBuf, texture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        m_textures.push_back(texture);
+        ps::pg::ObjLibrary::getObjLibrary().m_textures.push_back(texture);
     }
     else
     {
@@ -316,7 +237,7 @@ void SolidColor::createTextureImages(const VkCommandBuffer& cmdBuf, const std::v
             std::stringstream o;
             int               texWidth, texHeight, texChannels;
             o << "media/textures/" << texture;
-            std::string txtFile = nvh::findFile(o.str(), *defaultSearchPaths, true);
+            std::string txtFile = nvh::findFile(o.str(), ps::defaultSearchPaths, true);
 
             stbi_uc* stbi_pixels = stbi_load(txtFile.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
@@ -341,7 +262,7 @@ void SolidColor::createTextureImages(const VkCommandBuffer& cmdBuf, const std::v
                 VkImageViewCreateInfo ivInfo = nvvk::makeImageViewCreateInfo(image.image, imageCreateInfo);
                 nvvk::Texture         texture = m_alloc.createTexture(image, ivInfo, samplerCreateInfo);
 
-                m_textures.push_back(texture);
+                ps::pg::ObjLibrary::getObjLibrary().m_textures.push_back(texture);
             }
 
             stbi_image_free(stbi_pixels);
@@ -370,7 +291,7 @@ void SolidColor::destroyResources()
         m_alloc.destroy(m.matIndexBuffer);
     }
 
-    for (auto& t : m_textures)
+    for (auto& t : ps::pg::ObjLibrary::getObjLibrary().m_textures)
     {
         m_alloc.destroy(t);
     }
@@ -529,8 +450,8 @@ void SolidColor::createPostPipeline()
 
     // Pipeline: completely generic, no vertices
     nvvk::GraphicsPipelineGeneratorCombined pipelineGenerator(m_device, m_postPipelineLayout, m_renderPass);
-    pipelineGenerator.addShader(nvh::loadFile("spv/passthrough.vert.spv", true, *defaultSearchPaths, true), VK_SHADER_STAGE_VERTEX_BIT);
-    pipelineGenerator.addShader(nvh::loadFile("spv/post.frag.spv", true, *defaultSearchPaths, true), VK_SHADER_STAGE_FRAGMENT_BIT);
+    pipelineGenerator.addShader(nvh::loadFile("spv/passthrough.vert.spv", true, ps::defaultSearchPaths, true), VK_SHADER_STAGE_VERTEX_BIT);
+    pipelineGenerator.addShader(nvh::loadFile("spv/post.frag.spv", true, ps::defaultSearchPaths, true), VK_SHADER_STAGE_FRAGMENT_BIT);
     pipelineGenerator.rasterizationState.cullMode = VK_CULL_MODE_NONE;
     m_postPipeline = pipelineGenerator.createPipeline();
     m_debug.setObjectName(m_postPipeline, "post");
@@ -577,12 +498,9 @@ void SolidColor::drawPost(VkCommandBuffer cmdBuf)
     m_debug.endLabel(cmdBuf);
 }
 
-void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w, const int h) {
+void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, const int w, const int h) {
     // Window need to be opened to get the surface on which to draw
     const VkSurfaceKHR surface = getVkSurface(vkctx->m_instance, window);
-
-    defaultSearchPaths = sp;
-
 
     vkctx->setGCTQueueWithPresent(surface);
     setup(vkctx->m_instance, vkctx->m_device, vkctx->m_physicalDevice, vkctx->m_queueGCT.familyIndex);

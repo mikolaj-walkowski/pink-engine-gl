@@ -3,9 +3,19 @@
 #include <klein/klein.hpp>
 #include "pink_structs_physics.hpp"
 #include "pink_structs_graphics.hpp"
+#include "nvp/nvpsystem.hpp"
 
 namespace ps {
 
+  // Default search path for shaders
+  static std::vector<std::string> defaultSearchPaths = {
+        NVPSystem::exePath() + PROJECT_RELDIRECTORY,
+        NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
+        NVPSystem::exePath() + "../",
+        NVPSystem::exePath() + "../../",
+        std::string(PROJECT_NAME),
+  };
+  
   typedef long int UniqueID; // Na razie robię tak bo nie wiem co dokładnie będziemy chcieli mieć jako ID
   const UniqueID nullID = 0;
 

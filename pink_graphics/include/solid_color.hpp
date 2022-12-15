@@ -20,7 +20,6 @@
 class SolidColor: public nvvkhl::AppBaseVk
 {
 public:
-    std::vector<std::string>* defaultSearchPaths;
     nvmath::vec4f clearColor;
     ps::WordState* w1;
     ps::WordState* w2;
@@ -29,10 +28,8 @@ public:
     void setup(const VkInstance& instance, const VkDevice& device, const VkPhysicalDevice& physicalDevice, uint32_t queueFamily) override;
     void createDescriptorSetLayout();
     void createGraphicsPipeline();
-    void loadModel(const std::string& filename, nvmath::mat4f transform = nvmath::mat4f(1));
     void updateDescriptorSet();
     void createUniformBuffer();
-    void createObjDescriptionBuffer();
     void createTextureImages(const VkCommandBuffer& cmdBuf, const std::vector<std::string>& textures);
     void updateUniformBuffer(const VkCommandBuffer& cmdBuf);
     void onResize(int /*w*/, int /*h*/) override;
@@ -43,25 +40,7 @@ public:
     void drawFrame(ps::WordState*, ps::WordState*,float);
     void renderUI();
 
-    void init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w,const int h);
-
-    // The OBJ model
-    struct ObjModel
-    {
-        uint32_t     nbIndices{ 0 };
-        uint32_t     nbVertices{ 0 };
-        nvvk::Buffer vertexBuffer;    // Device buffer of all 'Vertex'
-        nvvk::Buffer indexBuffer;     // Device buffer of the indices forming triangles
-        nvvk::Buffer matColorBuffer;  // Device buffer of array of 'Wavefront material'
-        nvvk::Buffer matIndexBuffer;  // Device buffer of array of 'Wavefront material'
-    };
-
-    struct ObjInstance
-    {
-        nvmath::mat4f transform;    // Matrix of the instance
-        uint32_t      objIndex{ 0 };  // Model index reference
-    };
-
+    void init(nvvk::Context* vkctx, GLFWwindow* window, const int w,const int h);
 
     // Information pushed at each draw call
     PushConstantRaster m_pcRaster{
@@ -71,12 +50,6 @@ public:
         100.f,              // light intensity
         0                   // light type
     };
-
-    // Array of objects and instances in the scene
-    std::vector<ObjModel>    m_objModel;   // Model on host
-    std::vector<ObjDesc>     m_objDesc;    // Model description for device access
-    std::vector<ObjInstance> m_instances;  // Scene model instances
-
 
     // Graphic pipeline
     VkPipelineLayout            m_pipelineLayout;
