@@ -5,7 +5,6 @@
 #include "nvpsystem.hpp"
 #include "nvvk/commands_vk.hpp"
 #include "nvvk/context_vk.hpp"
-#include "GLFW/glfw3.h"
 
 
 static void utils::glfw::onErrorCallback(int error, const char* description)
@@ -65,4 +64,27 @@ void utils::nvidia::setupContext(nvvk::Context* c, std::vector<utils::ExtensionL
     assert(!compatibleDevices.empty());
     // Use a compatible device
     c->initDevice(compatibleDevices[0], ci);
+
+
+}
+
+ps::Object utils::objectCreate(kln::motor m, ps::pp::ShapeType type, void* shape) {
+
+    void* shape_dynamic = malloc(ps::pp::shapeSize[type]);
+    memcpy(shape_dynamic, shape, ps::pp::shapeSize[type]);
+
+    ps::pp::Rigidbody rb = { m, kln::line(), kln::motor(), kln::line(), kln::origin(), type, shape_dynamic };
+
+    ps::Object out = {};
+
+    out.rigidbody = rb;
+    out.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh(ps::pp::shapeName[type]);
+
+    return out;
+}
+
+void utils::objectDestroy(ps::Object* ob) {
+    if (ob->rigidbody.shape != NULL) {
+        free(ob->rigidbody.shape);
+    }
 }

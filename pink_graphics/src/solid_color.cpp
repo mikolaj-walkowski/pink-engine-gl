@@ -43,6 +43,7 @@
 #include "nvvk/commands_vk.hpp"
 #include "nvvk/context_vk.hpp"
 
+//extern ps::pg::ObjLibrary m_objLibrary;
  //--------------------------------------------------------------------------------------------------
  // Keep the handle on the device
  // Initialize the tool to do all our allocations: buffers, images
@@ -135,7 +136,7 @@ void SolidColor::updateDescriptorSet()
     VkDescriptorBufferInfo dbiUnif{ m_bGlobals.buffer, 0, VK_WHOLE_SIZE };
     writes.emplace_back(m_descSetLayoutBind.makeWrite(m_descSet, SceneBindings::eGlobals, &dbiUnif));
 
-    VkDescriptorBufferInfo dbiSceneDesc{ m_objLibrary->m_bObjDesc.buffer, 0, VK_WHOLE_SIZE };
+    VkDescriptorBufferInfo dbiSceneDesc{ ps::pg::ObjLibrary::getObjLibrary().m_bObjDesc.buffer, 0, VK_WHOLE_SIZE };
     writes.emplace_back(m_descSetLayoutBind.makeWrite(m_descSet, SceneBindings::eObjDescs, &dbiSceneDesc));
 
     // All texture samplers
@@ -359,9 +360,9 @@ void SolidColor::destroyResources()
     vkDestroyDescriptorSetLayout(m_device, m_descSetLayout, nullptr);
 
     m_alloc.destroy(m_bGlobals);
-    m_alloc.destroy(m_objLibrary->m_bObjDesc);
+    m_alloc.destroy(ps::pg::ObjLibrary::getObjLibrary().m_bObjDesc);
 
-    for (auto& m : m_objLibrary->m_meshContainer)
+    for (auto& m : ps::pg::ObjLibrary::getObjLibrary().m_meshContainer)
     {
         m_alloc.destroy(m.vertexBuffer);
         m_alloc.destroy(m.indexBuffer);
@@ -576,11 +577,9 @@ void SolidColor::drawPost(VkCommandBuffer cmdBuf)
     m_debug.endLabel(cmdBuf);
 }
 
-void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w, const int h, ObjLibrary* objLib) {
+void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w, const int h) {
     // Window need to be opened to get the surface on which to draw
     const VkSurfaceKHR surface = getVkSurface(vkctx->m_instance, window);
-
-    m_objLibrary = objLib;
 
     defaultSearchPaths = sp;
 
@@ -596,16 +595,16 @@ void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std:
     initGUI(0);  // Using sub-pass 0
 
     // Setup ObjLibrary
-    m_objLibrary->init(&m_alloc, m_device, m_graphicsQueueIndex, m_debug);
+    ps::pg::ObjLibrary::getObjLibrary().init(&m_alloc, m_device, m_graphicsQueueIndex, m_debug);
 
     // Creation of the example
-    m_objLibrary->LoadDirectory("../../media/scenes/");
+    ps::pg::ObjLibrary::getObjLibrary().LoadDirectory("../../media/scenes/");
 
     createOffscreenRender();
     createDescriptorSetLayout();
     createGraphicsPipeline();
     createUniformBuffer();
-    m_objLibrary->CreateObjDescriptionBuffer();
+    ps::pg::ObjLibrary::getObjLibrary().CreateObjDescriptionBuffer();
     updateDescriptorSet();
 
     createPostDescriptor();

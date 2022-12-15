@@ -14,21 +14,22 @@ void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     for (int i = 0; i < iterations; i++)
     {
         e->simulate(rb);
-        rb->M = rb->M + step * rb->dM;
-        rb->B = rb->B + step * rb->dB;
+        rb->M = rb->M + (step * rb->dM);
+        rb->B = rb->B + (step * rb->dB);
+
+        
 
         e->collide(e, rb);
         e->resolve(e, rb);
     }
-
+    rb->M.normalize();
 }
 
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
-    kln::line G = (~(rb->M))(kln::ideal_line(0.f, 9.81f, 0.f));
+    kln::line G = (~(rb->M))(kln::ideal_line(0.f, -9.81f, 0.f));
 
     kln::line F = G; // + wszystkie siły
 
-    // TODO try to implement the Hodge dual 
     // BUG  using P-something dual instead of Hodge may backfire
     rb->dM = -0.5f * (rb->M * ((kln::motor)(rb->B)));
     rb->dB = F - 0.5f * !(kln::line(!rb->B * rb->B - rb->B * !rb->B));
@@ -49,11 +50,11 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         if (*collisionSize >= collisionMaxSize) break;
         if (rb == &i.rigidbody) continue;
 
-        auto type = rb->shapeType & i.rigidbody.shapeType;
+        auto type = BM(rb->shapeType) & BM(i.rigidbody.shapeType);
         switch (type)
         {
-        case SHAPE_TYPE_SPHERE& SHAPE_TYPE_PLANE:
-            sphereToPlane(rb->shape, i.rigidbody.shape, &collisionData[*collisionSize]);
+        case BM(ST_SPHERE) & BM(ST_PLANE):
+            sphereToPlane(rb, &i.rigidbody, &collisionData[*collisionSize]);
             break;
 
         default:
@@ -77,23 +78,32 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     {
         auto rb2 = e->collision_props.collisions[i];
         auto data = e->collision_props.collisionData[i];
-        auto normal = data.normal;
+        auto normal = (~rb->M)(data.normal);
+        
 
         float rho = 0.5;
 
         for (int ii = 0; ii < data.count; ii++)
         {
-            auto point = data.pointsOfContact[ii];
+            auto point = (~rb->M)(data.pointsOfContact[ii]);
 
-            auto np = ((normal | point) | point);
- 
-            // auto com = 0.5f * (point * rb->B - rb->B * point);
+            auto np = kln::project(normal,point);
+
+            auto comV2 =kln::point((point & rb->B).p0_);
+            //auto com = 0.5f * (point * rb->B - rb->B * point);
             // auto com2 = 0.5f * (point * !np - !np * point);
+            auto com2V2 = kln::point((point & !np).p0_);
 
-            // auto Vm = point & com;
+            //auto Vm = point & com;
             // auto j = -(1 + rho) * ( point &(Vm | np) / ((point & com2) | np));
 
-            //rb->B = rb->B + j.scalar() * !np;
+            auto Vm = point & comV2;
+
+            auto j = -(1 + rho) * ((Vm | np) / ((point & com2V2) | np));
+
+            auto vd = (kln::line)(j * (kln::motor)!np);
+            rb->B = rb->B + vd;
+
         }
 
     }
@@ -110,20 +120,7 @@ nvmath::mat4f ps::interpolate(ps::Object* a, ps::Object* b, float t) {
     return nvmath::mat4f(m.as_mat4x4().data);
 }
 
-ps::pp::Rigidbody ps::pp::rigidbodyCreate(kln::motor m, ShapeType type, void* shape, int size) {
-    void* shape_dynamic = malloc(size);
-    memcpy(shape_dynamic, shape, size);    
 
-    ps::pp::Rigidbody out = { m, kln::line(), kln::motor(), kln::line(), kln::origin(), type, shape_dynamic };
-
-    return out;
-}
-
-void ps::pp::rigidbodyDestroy(ps::pp::Rigidbody* rb) {
-    if (rb->shape != NULL) {
-        free(rb->shape);
-    }
-}
 
 namespace ps::pp {
 

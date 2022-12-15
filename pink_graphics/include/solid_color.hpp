@@ -8,7 +8,6 @@
 #include "host_device.h"
 #include "nvvk/context_vk.hpp"
 #include "pink_structs.hpp"
-#include "obj_library.hpp"
 
 
 //--------------------------------------------------------------------------------------------------
@@ -44,7 +43,7 @@ public:
     void drawFrame(ps::WordState*, ps::WordState*,float);
     void renderUI();
 
-    void init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w,const int h, ObjLibrary* objLib);
+    void init(nvvk::Context* vkctx, GLFWwindow* window, std::vector<std::string>* sp, const int w,const int h);
 
     // The OBJ model
     struct ObjModel
@@ -86,7 +85,6 @@ public:
     VkDescriptorPool            m_descPool;
     VkDescriptorSetLayout       m_descSetLayout;
     VkDescriptorSet             m_descSet;
-    ObjLibrary*                 m_objLibrary;
 
     nvvk::Buffer m_bGlobals;  // Device-Host of the camera matrices
     nvvk::Buffer m_bObjDesc;  // Device buffer of the OBJ descriptions

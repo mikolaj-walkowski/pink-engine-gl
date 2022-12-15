@@ -41,6 +41,7 @@
 
 //////////////////////////////////////////////////////////////////////////
 #define UNUSED(x) (void)(x)
+#define WC_SIZE 4
 //////////////////////////////////////////////////////////////////////////
 
 // Default search path for shaders
@@ -51,10 +52,7 @@ std::vector<std::string> defaultSearchPaths = {
       std::string(PROJECT_NAME),
 };
 
-ps::WordState wordChain[4]; // Buffer dla kolejnych stanów 
-
-//engin
-ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::eulerInterpolation);
+ps::WordState wordChain[WC_SIZE]; // Buffer dla kolejnych stanów 
 
 
 //--------------------------------------------------------------------------------------------------
@@ -65,6 +63,7 @@ int main(int argc, char** argv)
   UNUSED(argc);
 
   SolidColor graphicsEngine;
+  ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::eulerInterpolation);
 
   GLFWwindow* window = utils::glfw::setupGLFWindow();
   // setup some basic things for the sample, logging file for example
@@ -75,38 +74,63 @@ int main(int argc, char** argv)
 
   utils::nvidia::setupContext(&vkctx, { utils::glfw::getGLFWExtensions() });
 
-  ObjLibrary objLib;
+
 
   // Create example
-  graphicsEngine.init(&vkctx, window, &defaultSearchPaths, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT, &objLib);
+  graphicsEngine.init(&vkctx, window, &defaultSearchPaths, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT);
 
-  ps::Object object;
-  object.mesh = objLib.GetMesh("cube_multi");
-  object.rigidbody.M = kln::translator(1, 1, 0, 0);
+  // ps::Object object;
+  // object.mesh = objLib.GetMesh("cube_multi");
+  // object.rigidbody.M = kln::translator(1, 1, 0, 0);
 
-  ps::Object object2;
-  object2.mesh = objLib.GetMesh("sphere");
-  object2.rigidbody.M = kln::translator(-3, 1, 0, 0);
+  ps::pp::Sphere o2 = { 1.f,kln::point(0,0,0) };
+  ps::Object object2 = utils::objectCreate(kln::motor(kln::translator(-3, 1, 0, 0)), ps::pp::ST_SPHERE, &o2);
 
-  ps::Object object3;
-  object3.mesh = objLib.GetMesh("plane");
-  object3.rigidbody.M = kln::translator(-3, 0, 1, 0);
 
-  wordChain[0].simulatedObjects.push_back(object);
+  ps::pp::Plane o3 = { kln::plane(0,1,0,0) };
+  ps::Object object3 = utils::objectCreate(kln::motor(kln::translator(-3, 0, 1, 0)), ps::pp::ST_PLANE, &o3);
+
+
+  //wordChain[0].simulatedObjects.push_back(object);
   wordChain[0].simulatedObjects.push_back(object2);
-  wordChain[0].simulatedObjects.push_back(object3);
-  
+  wordChain[0].staticObjects.push_back(object3);
+
 
   graphicsEngine.setupGlfwCallbacks(window);
   ImGui_ImplGlfw_InitForVulkan(window, true);
+  int now = 0;
+  int next = 0;
+
+  static double limitFPS = 1.0 / 60.0;
+
+  double lastTime = glfwGetTime(), timer = lastTime;
+  double deltaTime = 0, nowTime = 0;
 
   // Main loop
   while (!glfwWindowShouldClose(window))
   {
+    
     glfwPollEvents();
     if (graphicsEngine.isMinimized())
       continue;
 
+
+    // TODO Zajebane z neta 
+    // - Measure time
+    nowTime = glfwGetTime();
+    deltaTime += (nowTime - lastTime) / limitFPS;
+    lastTime = nowTime;
+
+    // - Only update at 60 frames / s
+    while (deltaTime >= 1.0) {
+      next = (now + 1) % WC_SIZE;
+      physicsEngine.step(&wordChain[now], &wordChain[next]);
+      deltaTime--;
+      now = next;
+    }
+
+    // DO WYMIANY 
+    
     // Start the Dear ImGui frame
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -122,7 +146,9 @@ int main(int argc, char** argv)
       ImGuiH::Panel::End();
     }
 
-    graphicsEngine.drawFrame(&wordChain[0], &wordChain[1], 1.0f);
+    nowTime = glfwGetTime();
+    graphicsEngine.drawFrame(&wordChain[now], &wordChain[next], 1.0f);
+
   }
 
   // Cleanup

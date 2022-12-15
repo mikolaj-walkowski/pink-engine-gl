@@ -1,13 +1,13 @@
-#include "obj_library.hpp"
-#include "obj_loader.h"
+#include "pink_structs.hpp"
 #include "nvvk/commands_vk.hpp"
 #include "nvvk/buffers_vk.hpp"
 #include "nvh/fileoperations.hpp"
 #include "host_device.h"
+#include "obj_loader.h"
 
 #include <filesystem>
 
-void ObjLibrary::init(nvvk::ResourceAllocatorDma* ap_alloc, VkDevice a_device, 
+void ps::pg::ObjLibrary::init(nvvk::ResourceAllocatorDma* ap_alloc, VkDevice a_device, 
                 uint32_t a_graphicsQueueIndex, nvvk::DebugUtil& ar_debug){
 
         mp_alloc = ap_alloc;
@@ -16,7 +16,7 @@ void ObjLibrary::init(nvvk::ResourceAllocatorDma* ap_alloc, VkDevice a_device,
         mp_debug = &ar_debug;
     }
 
-void ObjLibrary::AddMesh(ps::pg::ObjMesh& ar_objMesh, const std::string a_objName){
+void ps::pg::ObjLibrary::AddMesh(ps::pg::ObjMesh& ar_objMesh, const std::string a_objName){
     ar_objMesh.objIndex = static_cast<uint32_t>(m_meshContainer.size());
     this->m_meshContainer.push_back(ar_objMesh);
     this->m_objectNames.push_back(a_objName);
@@ -24,11 +24,11 @@ void ObjLibrary::AddMesh(ps::pg::ObjMesh& ar_objMesh, const std::string a_objNam
     return;
 }
 
-ps::pg::ObjMesh* ObjLibrary::GetMesh(uint32_t index){
+ps::pg::ObjMesh* ps::pg::ObjLibrary::GetMesh(uint32_t index){
     return (m_meshContainer.size() > index ? &m_meshContainer[index] : nullptr);
 }
 
-ps::pg::ObjMesh* ObjLibrary::GetMesh(const std::string& ar_objName){
+ps::pg::ObjMesh* ps::pg::ObjLibrary::GetMesh(const std::string& ar_objName){
     uint32_t index = 0;
     for(auto name: this->m_objectNames){
         if(ar_objName == name){
@@ -39,7 +39,7 @@ ps::pg::ObjMesh* ObjLibrary::GetMesh(const std::string& ar_objName){
     return nullptr;
 }
 
-void ObjLibrary::LoadMesh(const std::string& ar_file_path, const std::string& ar_name){
+void ps::pg::ObjLibrary::LoadMesh(const std::string& ar_file_path, const std::string& ar_name){
     
     const std::string objName = ar_name.empty()? nvh::getFileName(ar_file_path) : ar_name;
 
@@ -100,7 +100,7 @@ void ObjLibrary::LoadMesh(const std::string& ar_file_path, const std::string& ar
     return;
 }
 
-void ObjLibrary::LoadDirectory(const std::string& ar_directory_path, std::vector<std::string>& ar_names){
+void ps::pg::ObjLibrary::LoadDirectory(const std::string& ar_directory_path, std::vector<std::string>& ar_names){
 
     uint32_t index = 0;
     std::string objName = "";
@@ -123,7 +123,7 @@ void ObjLibrary::LoadDirectory(const std::string& ar_directory_path, std::vector
     return;
 }
 
-void ObjLibrary::CreateObjDescriptionBuffer(){
+void ps::pg::ObjLibrary::CreateObjDescriptionBuffer(){
     nvvk::CommandPool cmdGen(m_device, m_graphicsQueueIndex);
 
     auto cmdBuf = cmdGen.createCommandBuffer();

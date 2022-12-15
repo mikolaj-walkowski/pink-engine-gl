@@ -3,19 +3,22 @@
 #include "nvmath/nvmath.h"
 #include "pink_structs.hpp"
 
+#define BM(x) (1<<(x))
 namespace ps::pp {
 
     typedef struct Manifold {
         static const int maxContactPoints= 10;
-        int count;
+        int count = 0;
         float penetration;
         kln::line normal;
         kln::point pointsOfContact[maxContactPoints];
     } Manifold;
 
     enum ShapeType {
-        SHAPE_TYPE_SPHERE = 1 << 0,
-        SHAPE_TYPE_PLANE = 1 << 1,
+        ST_SPHERE,
+        ST_PLANE,
+        ST_BOX,
+        ST_SIZE
     };
 
     struct Sphere {
@@ -24,6 +27,10 @@ namespace ps::pp {
     };
 
     struct Plane {
+        kln::plane plane;
+    };
+
+    struct Box {
         kln::plane plane;
     };
 
@@ -40,4 +47,6 @@ namespace ps::pp {
         void* shape;
     };
 
+    static int shapeSize[ST_SIZE] = {sizeof(Sphere), sizeof(Plane), sizeof(Box)};
+    static char* shapeName[ST_SIZE] = { "sphere","plane","cube" };
 } //namespace ps::pp

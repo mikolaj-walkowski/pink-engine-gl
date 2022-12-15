@@ -1,6 +1,6 @@
 #pragma once
-#include "pink_structs.hpp"
 #include "pink_physics_colliders.hpp"
+#include "pink_structs.hpp"
 #include "nvmath/nvmath.h"
 #include <stdint.h>
 #include <vector>
@@ -32,8 +32,8 @@ namespace ps::pp {
         }collision_props;
 
         struct {
-            float step;
-            int iterations;
+            float step = 0.002f;
+            int iterations =10;
         } interpolation_props;
 
         void step(ps::WordState*, ps::WordState*);
