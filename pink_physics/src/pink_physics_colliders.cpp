@@ -3,7 +3,8 @@
 void ps::pp::sphereToPlane(Rigidbody* _sphere, Rigidbody* _plane, ps::pp::Manifold* m) {
     auto plane = _plane->M(((ps::pp::Plane*)_plane->shape)->plane).normalized();
     auto sphere = (ps::pp::Sphere*)_sphere->shape;
-    
+    m->count = 0;
+
     auto center = _sphere->M(sphere->center);
 
     auto line = plane | center;
@@ -15,12 +16,19 @@ void ps::pp::sphereToPlane(Rigidbody* _sphere, Rigidbody* _plane, ps::pp::Manifo
         m->normal = line.normalized();
         m->penetration = sphere->radius - distance;
     }
-    else {
-        m->count = 0;
-    }
 }
 
-void ps::pp::cubeToPlane(Rigidbody* box, Rigidbody* plane, Manifold* m) {
-
+void ps::pp::cubeToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
+    auto box = (ps::pp::Box*)(_box->shape);
+    auto plane = (ps::pp::Plane*)(_plane->shape);
+    m->count = 0;
     
+    for (auto p : box->edges) {
+        auto i = p.first;
+        auto j = p.second;
+
+        
+    }
+
+
 }

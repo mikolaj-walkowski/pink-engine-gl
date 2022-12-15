@@ -7,7 +7,7 @@
 namespace ps::pp {
 
     typedef struct Manifold {
-        static const int maxContactPoints= 10;
+        static const int maxContactPoints = 10;
         int count = 0;
         float penetration;
         kln::line normal;
@@ -26,27 +26,35 @@ namespace ps::pp {
         kln::point center;
     };
 
-    struct Plane {
-        kln::plane plane;
+    struct Box {
+        kln::point verts[8];
+        static inline std::pair<int, int> edges[12] =
+        {
+        {0,1},{0,2},{1,3},{2,3},
+        {0,4},{2,6},{1,5},{3,7},
+        {4,5},{4,6},{5,7},{6,7}
+        };
+
+        
     };
 
-    struct Box {
+    struct Plane {
         kln::plane plane;
     };
 
     struct Rigidbody {
         kln::motor M;
         kln::line B;
-        
+
         kln::motor dM;
         kln::line dB;
-        
+
         kln::point centerOfMass;
 
         ShapeType shapeType;
         void* shape;
     };
 
-    static int shapeSize[ST_SIZE] = {sizeof(Sphere), sizeof(Plane), sizeof(Box)};
+    static int shapeSize[ST_SIZE] = { sizeof(Sphere), sizeof(Plane), sizeof(Box) };
     static char* shapeName[ST_SIZE] = { "sphere","plane","cube" };
 } //namespace ps::pp

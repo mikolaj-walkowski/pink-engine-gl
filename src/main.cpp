@@ -105,7 +105,7 @@ int main(int argc, char** argv)
   
   physicsEngine.step(&wordChain[now], &wordChain[next]);
 
-  static double limitFPS = 1.0 / 60.0;
+  static double limitFPS = 1.0 / 15.0;
 
   double lastTime = glfwGetTime(), timer = lastTime;
   double deltaTime = 0, nowTime = 0;
@@ -123,13 +123,13 @@ int main(int argc, char** argv)
     // - Measure time
     nowTime = glfwGetTime();
     deltaTime += (nowTime - lastTime) / limitFPS;
-    lastTime = nowTime;
+    
 
     // - Only update at 60 frames / s
-    while (deltaTime >= 1.0) {
+    if (deltaTime >= 1.0) {
       next = (now + 1) % WC_SIZE;
       physicsEngine.step(&wordChain[now], &wordChain[next]);
-      deltaTime--;
+      lastTime = nowTime;
       now = next;
     }
 
