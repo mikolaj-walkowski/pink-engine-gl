@@ -35,7 +35,7 @@ public:
     void onResize(int /*w*/, int /*h*/) override;
     void destroyResources();
     void rasterize(const VkCommandBuffer& cmdBuff);
-    void rasterizeHelper(const VkCommandBuffer&, std::vector<ps::Object>*);
+    void rasterizeHelper(const VkCommandBuffer&, std::pair<std::vector<ps::Object>*, std::vector<ps::Object>*>);
 
     void drawFrame(ps::WordState*, ps::WordState*,float);
     void renderUI();

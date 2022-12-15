@@ -44,6 +44,12 @@
 #define WC_SIZE 4
 //////////////////////////////////////////////////////////////////////////
 
+int euclidean_remainder(int a, int b)
+{
+  assert(b != 0);
+  int r = a % b;
+  return r >= 0 ? r : r + std::abs(b);
+}
 
 ps::WordState wordChain[WC_SIZE]; // Buffer dla kolejnych stanów 
 
@@ -95,7 +101,9 @@ int main(int argc, char** argv)
   graphicsEngine.setupGlfwCallbacks(window);
   ImGui_ImplGlfw_InitForVulkan(window, true);
   int now = 0;
-  int next = 0;
+  int next = 1;
+  
+  physicsEngine.step(&wordChain[now], &wordChain[next]);
 
   static double limitFPS = 1.0 / 60.0;
 
@@ -143,7 +151,7 @@ int main(int argc, char** argv)
     }
 
     nowTime = glfwGetTime();
-    graphicsEngine.drawFrame(&wordChain[now], &wordChain[next], 1.0f);
+    graphicsEngine.drawFrame(&wordChain[euclidean_remainder(now-1,WC_SIZE)], &wordChain[now], deltaTime);
 
   }
 

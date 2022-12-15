@@ -110,17 +110,6 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
 }
 
-nvmath::mat4f ps::interpolate(ps::Object* a, ps::Object* b, float t) {
-    if (a->interpolation_catche.obj != b->id) {
-        a->interpolation_catche.log = kln::log(b->rigidbody.M * ~a->rigidbody.M);
-        a->interpolation_catche.obj = b->id;
-    }
-
-    kln::motor m = kln::exp(a->interpolation_catche.log * t) * a->rigidbody.M;
-    return nvmath::mat4f(m.as_mat4x4().data);
-}
-
-
 
 namespace ps::pp {
 

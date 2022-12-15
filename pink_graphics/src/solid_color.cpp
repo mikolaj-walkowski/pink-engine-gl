@@ -43,11 +43,11 @@
 #include "nvvk/commands_vk.hpp"
 #include "nvvk/context_vk.hpp"
 
-//extern ps::pg::ObjLibrary m_objLibrary;
- //--------------------------------------------------------------------------------------------------
- // Keep the handle on the device
- // Initialize the tool to do all our allocations: buffers, images
- //
+ //extern ps::pg::ObjLibrary m_objLibrary;
+  //--------------------------------------------------------------------------------------------------
+  // Keep the handle on the device
+  // Initialize the tool to do all our allocations: buffers, images
+  //
 void SolidColor::setup(const VkInstance& instance, const VkDevice& device, const VkPhysicalDevice& physicalDevice, uint32_t queueFamily)
 {
     AppBaseVk::setup(instance, device, physicalDevice, queueFamily);
@@ -309,14 +309,15 @@ void SolidColor::destroyResources()
     m_alloc.deinit();
 }
 
-void SolidColor::rasterizeHelper(const VkCommandBuffer& cmdBuf, std::vector<ps::Object>* vec) {
+void SolidColor::rasterizeHelper(const VkCommandBuffer& cmdBuf, std::pair<std::vector<ps::Object>*, std::vector<ps::Object>*> vec) {
     VkDeviceSize offset{ 0 };
 
-    for (const ps::Object obj : *vec)
+    for (int i = 0; i < vec.first->size(); i++)
     {
-        auto model = obj.mesh;
+        auto model = (*vec.first)[i].mesh;
         m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
-        m_pcRaster.modelMatrix = nvmath::mat4f(obj.rigidbody.M.as_mat4x4().data);
+        m_pcRaster.modelMatrix = nvmath::mat4f((*vec.first)[i].rigidbody.M.as_mat4x4().data);
+        m_pcRaster.modelMatrix = (*vec.first)[i].interpolate(&(*vec.second)[i], dT);
 
         vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
             sizeof(PushConstantRaster), &m_pcRaster);
@@ -340,8 +341,10 @@ void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
     vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
     vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descSet, 0, nullptr);
 
-    rasterizeHelper(cmdBuf, &w1->staticObjects);
-    rasterizeHelper(cmdBuf, &w1->simulatedObjects);
+
+    // Ogólnie to to działa, ale jebać to
+    rasterizeHelper(cmdBuf, std::make_pair(&w1->staticObjects, &w2->staticObjects));
+    rasterizeHelper(cmdBuf, std::make_pair(&w1->simulatedObjects,&w2->simulatedObjects));
 
     m_debug.endLabel(cmdBuf);
 }

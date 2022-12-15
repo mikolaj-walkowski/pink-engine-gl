@@ -50,7 +50,6 @@ void utils::nvidia::setupContext(nvvk::Context* c, std::vector<utils::ExtensionL
         for (uint32_t ext_id = 0; ext_id < list[i].count; ext_id++)  // Adding required extensions (surface, win32, linux, ..)
         {
             ci.addInstanceExtension(list[i].names[ext_id]);
-            printf("[AAAAAAAAA] %s\n", list[i].names[ext_id]);
         }
     }
     ci.addInstanceLayer("VK_LAYER_LUNARG_monitor", true);              // FPS in titlebar

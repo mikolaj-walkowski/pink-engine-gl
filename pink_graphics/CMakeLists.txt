@@ -7,7 +7,7 @@ message(STATUS "[PINK] Creating compile shaders target")
 message(STATUS "++++++++++++++++++++++++++++")
 
 set(SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/res)
-set(SHADER_DST_DIR ${CMAKE_CURRENT_BINARY_DIR}/../spv )
+set(SHADER_DST_DIR ${OUTPUT_PATH}/spv )
 
 file(MAKE_DIRECTORY "${SHADER_DST_DIR}")
 

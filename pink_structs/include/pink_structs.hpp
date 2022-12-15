@@ -15,7 +15,7 @@ namespace ps {
         NVPSystem::exePath() + "../../",
         std::string(PROJECT_NAME),
   };
-  
+
   typedef long int UniqueID; // Na razie robię tak bo nie wiem co dokładnie będziemy chcieli mieć jako ID
   const UniqueID nullID = 0;
 
@@ -31,10 +31,9 @@ namespace ps {
       kln::line log;
       ps::UniqueID obj;
     }interpolation_catche;
-
+    nvmath::mat4f interpolate(ps::Object*, float);
   };
 
-  nvmath::mat4f interpolate(ps::Object* a, ps::Object* b, float t);
 
   struct WordState { // Defacto output silnika fizycznego
     std::vector<Object> staticObjects;
