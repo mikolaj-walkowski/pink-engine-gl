@@ -9,9 +9,9 @@ namespace ps {
 
   // Default search path for shaders
   static std::vector<std::string> defaultSearchPaths = {
-        NVPSystem::exePath() + PROJECT_RELDIRECTORY,
-        NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
-        NVPSystem::exePath() + "../",
+        //NVPSystem::exePath() + PROJECT_RELDIRECTORY,
+        //NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
+        NVPSystem::exePath() + "..",
         NVPSystem::exePath() + "../../",
         std::string(PROJECT_NAME),
   };

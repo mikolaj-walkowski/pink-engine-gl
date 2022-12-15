@@ -151,7 +151,7 @@ int main(int argc, char** argv)
     }
 
     nowTime = glfwGetTime();
-    graphicsEngine.drawFrame(&wordChain[euclidean_remainder(now-1,WC_SIZE)], &wordChain[now], deltaTime);
+    graphicsEngine.drawFrame(&wordChain[euclidean_remainder(now-1,WC_SIZE)], &wordChain[now], (float)deltaTime);
 
   }
 
