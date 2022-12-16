@@ -88,8 +88,11 @@ void utils::objectDestroy(ps::Object* ob) {
     }
 }
 
-ps::pp::Box utils::boxCreate(float x, float y, float z, kln::motor offset) {
+ps::pp::Box utils::boxCreate(float x, float y, float z,float mass, kln::motor offset) {
     ps::pp::Box out;
+    float a = mass / 12.f;
+    out.inertia = offset(kln::line(a * (y * y + z * z), a * (z * z + x * x), a * (x * x + y * y), 1.f, 1.f, 1.f));
+    
     x /= 2.f;
     y /= 2.f;
     z /= 2.f;
@@ -101,11 +104,28 @@ ps::pp::Box utils::boxCreate(float x, float y, float z, kln::motor offset) {
     out.verts[5] = offset(kln::point(x, -y, z));
     out.verts[6] = offset(kln::point(-x, y, z));
     out.verts[7] = offset(kln::point(x, y, z));
-
-
+    
+    
     // for (int i = 0; i < 8; i++) {
     //     auto p = out.verts[i];
     //     printf("Point: %f,%f,%f,%f\n", p.e013(), p.e021(), p.e032(), p.e123());
     // }
     return out;
 }
+
+ps::pp::Sphere utils::sphereCreate(float r, float mass, kln::motor offset) {
+    ps::pp::Sphere out;
+    float a = 0.4f * mass;
+    out.inertia = offset(kln::line(a * (r*r), a * (r*r), a * (r*r), 1.f, 1.f, 1.f));
+    out.radius = r;
+    
+    return out;
+}
+
+ps::pp::Plane utils::planeCreate(kln::plane p) {
+    ps::pp::Plane out;
+    out.plane = p;
+    out.inertia = kln::line(0.f, 0.f, 0.f, 0.f, 0.f, 0.f);
+    return out;
+}
+

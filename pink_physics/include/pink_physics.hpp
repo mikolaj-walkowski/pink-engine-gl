@@ -33,8 +33,8 @@ namespace ps::pp {
         }collision_props;
 
         struct {
-            float step = 0.000002f;
-            int iterations =10;
+            float step = 0.4f;
+            int iterations = 10;
         } interpolation_props;
 
 #ifndef NDEBUG

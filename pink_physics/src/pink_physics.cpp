@@ -17,7 +17,7 @@ void ps::pp::Engine::renderUI() {
 
 void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     int iterations = e->interpolation_props.iterations;
-    float step = (e->dT / ((float)iterations)) * e->interpolation_props.step;
+    float step = (e->dT* e->interpolation_props.step) /(float)iterations;
     for (int i = 0; i < iterations; i++)
     {
 

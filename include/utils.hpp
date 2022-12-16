@@ -36,7 +36,9 @@ namespace utils {
     }//namespace nvidia
 
     ps::Object objectCreate(kln::motor m, ps::pp::ShapeType type, void* shape);
-    ps::pp::Box boxCreate(float x, float y, float z, kln::motor offset);
+    ps::pp::Box boxCreate(float x, float y, float z, float mass, kln::motor offset);
+    ps::pp::Sphere sphereCreate(float r, float mass, kln::motor offset);
+    ps::pp::Plane planeCreate(kln::plane p);
 
     void objectDestroy(ps::Object* rb);
 }//namespace utils

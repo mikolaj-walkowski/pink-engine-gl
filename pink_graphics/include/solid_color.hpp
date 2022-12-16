@@ -24,7 +24,7 @@ public:
     ps::WordState* w1;
     ps::WordState* w2;
     float dT;
-
+    SolidColor(nvvk::Context* vkctx, GLFWwindow* window, const int w, const int h);
     void setup(const VkInstance& instance, const VkDevice& device, const VkPhysicalDevice& physicalDevice, uint32_t queueFamily) override;
     void createDescriptorSetLayout();
     void createGraphicsPipeline();
@@ -39,9 +39,6 @@ public:
 
     void drawFrame(ps::WordState*, ps::WordState*,float);
     void renderUI();
-
-    void init(nvvk::Context* vkctx, GLFWwindow* window, const int w,const int h);
-
     // Information pushed at each draw call
     PushConstantRaster m_pcRaster{
         {1},                // Identity matrix

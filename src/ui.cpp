@@ -97,7 +97,7 @@ void UI::PhysicsWindow() {
         ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
         ImGui::Begin("Physics Debug", NULL);
 #ifndef NDEBUG
-        ImGui::DragFloat("EngineSpeed", &pe->interpolation_props.step, 0.000002f, 0.0000000001f, 1.0f, "%f", 0);
+        ImGui::DragFloat("EngineSpeed", &pe->interpolation_props.step, 0.02f, 0.0000000001f, 1.0f, "%f", 0);
         if (ImGui::Button(pe->debug_data.stop ? "Start" : "Stop",{100,30})) {
             pe->debug_data.stop = !pe->debug_data.stop;
         }

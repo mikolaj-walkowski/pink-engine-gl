@@ -344,7 +344,7 @@ void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
 
     // Ogólnie to to działa, ale jebać to
     rasterizeHelper(cmdBuf, std::make_pair(&w1->staticObjects, &w2->staticObjects));
-    rasterizeHelper(cmdBuf, std::make_pair(&w1->simulatedObjects,&w2->simulatedObjects));
+    rasterizeHelper(cmdBuf, std::make_pair(&w1->simulatedObjects, &w2->simulatedObjects));
 
     m_debug.endLabel(cmdBuf);
 }
@@ -501,7 +501,7 @@ void SolidColor::drawPost(VkCommandBuffer cmdBuf)
     m_debug.endLabel(cmdBuf);
 }
 
-void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, const int w, const int h) {
+SolidColor::SolidColor(nvvk::Context* vkctx, GLFWwindow* window, const int w, const int h) {
     // Window need to be opened to get the surface on which to draw
     const VkSurfaceKHR surface = getVkSurface(vkctx->m_instance, window);
 
@@ -532,6 +532,8 @@ void SolidColor::init(nvvk::Context* vkctx, GLFWwindow* window, const int w, con
     createPostPipeline();
     updatePostDescriptorSet();
     clearColor = nvmath::vec4f(1, 0, 1, 1.00f);
+
+    setupGlfwCallbacks(window);
 }
 
 void SolidColor::drawFrame(ps::WordState* _w1, ps::WordState* _w2, float _dT) {

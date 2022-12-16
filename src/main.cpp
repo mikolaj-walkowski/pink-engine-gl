@@ -62,59 +62,58 @@ int main(int argc, char** argv)
 {
   UNUSED(argc);
 
-
-  SolidColor graphicsEngine;
-  ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::eulerInterpolation);
-
+  //Setup Glfw
   GLFWwindow* window = utils::glfw::setupGLFWindow();
-  // setup some basic things for the sample, logging file for example
+
+  // Setup some basic things for the sample, logging file for example
   NVPSystem system(PROJECT_NAME);
 
   // Creating Vulkan base application
   nvvk::Context vkctx{};
 
+  // Setup device
   utils::nvidia::setupContext(&vkctx, { utils::glfw::getGLFWExtensions() });
 
+  // Setup graphics engine + vulkan memory allocator + nvidia debug
+  SolidColor graphicsEngine(&vkctx, window, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT);
 
+  //Setup physics engine components
+  ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::eulerInterpolation);
 
-  // Create example
-  graphicsEngine.init(&vkctx, window, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT);
-
-  // ps::Object object;
-  // object.mesh = objLib.GetMesh("cube_multi");
-  // object.rigidbody.M = kln::translator(1, 1, 0, 0);'
-  //ps::pp::Sphere o1 = { 1.f,kln::point(0,0,0) };
-  //ps::Object object1 = utils::objectCreate(kln::motor(kln::translator(6, -1, 1, 0)), ps::pp::ST_SPHERE, &o1);
-
+  /// DEBUG ZONE ========
+  // CREATING objects
   ps::Object object1 = utils::objectCreate(
-    kln::translator(-9, 1, 0, 0)* kln::rotor(kln::pi_4, 1, 1, 1),
+    kln::translator(-9, 1, 0, 0) * kln::rotor(kln::pi_4, 1, 1, 1),
     ps::pp::ST_BOX,
-    &utils::boxCreate(1, 1, 1, kln::uMotor())
+    &utils::boxCreate(1, 1, 1, 1, kln::uMotor())
   );
 
+  // ps::Object object2 = utils::objectCreate(
+  //   kln::translator(-3, 1, 0, 0),
+  //   ps::pp::ST_SPHERE,
+  //   &utils::sphereCreate(1.f, 1.f, kln::uMotor())
+  // );
 
-  ps::pp::Sphere o2 = { 1.f,kln::point(0,0,0) };
-  // ps::Object object2 = utils::objectCreate(kln::motor(kln::translator(-3, 1, 0, 0)), ps::pp::ST_SPHERE, &o2);
-
-
-  ps::pp::Plane o3 = { kln::plane(0,1,0,0) };
-  ps::Object object3 = utils::objectCreate(kln::motor(kln::translator(-3, 0, 1, 0)), ps::pp::ST_PLANE, &o3);
+  ps::Object object3 = utils::objectCreate(
+    kln::translator(-3, 0, 1, 0),
+    ps::pp::ST_PLANE,
+    &utils::planeCreate(kln::plane(0, 1, 0, 0))
+  );
 
 
   wordChain[0].simulatedObjects.push_back(object1);
   // wordChain[0].simulatedObjects.push_back(object2);
   wordChain[0].staticObjects.push_back(object3);
 
+  //  
 
-  graphicsEngine.setupGlfwCallbacks(window);
-
-
+  // Init imgui
   UI::D().init(window, true, &physicsEngine, &graphicsEngine);
   int now = 0;
   int next = 1;
 
 
-  static float limitFPS = 1.0f / 5.0f;
+  static float limitFPS = 1.0f / 15.0f;
 
   static float dT = 1000 * limitFPS;
 
@@ -139,7 +138,7 @@ int main(int argc, char** argv)
     // - Only update at 60 frames / s
     if (deltaTime >= 1.0) {
       next = (now + 1) % WC_SIZE;
-      physicsEngine.step(&wordChain[now], &wordChain[next], dT);
+      physicsEngine.step(&wordChain[now], &wordChain[next], (float)(nowTime - lastTime));
       lastTime = nowTime;
       now = next;
     }

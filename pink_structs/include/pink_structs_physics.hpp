@@ -23,11 +23,13 @@ namespace ps::pp {
     };
 
     struct Sphere {
+        kln::line inertia;
         float radius;
         kln::point center;
     };
 
     struct Box {
+        kln::line inertia;
         kln::point verts[8];
         static inline std::pair<int, int> edges[12] =
         {
@@ -35,11 +37,11 @@ namespace ps::pp {
         {0,4},{2,6},{1,5},{3,7},
         {4,5},{4,6},{5,7},{6,7}
         };
-
-        // To od add precalculated lines and constructor
+        // TODO add precalculated lines and constructor
     };
 
     struct Plane {
+        kln::line inertia;
         kln::plane plane;
     };
 
