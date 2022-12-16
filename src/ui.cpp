@@ -1,0 +1,163 @@
+#include "ui.hpp"
+
+#include "backends/imgui_impl_glfw.h"
+
+UI::UI() {}
+
+void UI::show() {
+    if (ImGui::BeginMainMenuBar()) {
+        ImGui::MenuItem("Graphics", "", &showGraphics);
+        ImGui::MenuItem("Physics", "", &showPhysics);
+        ImGui::EndMainMenuBar();
+    }
+    PhysicsWindow();
+    GraphicsWindow();
+}
+
+void UI::init(GLFWwindow* w, bool b, ps::pp::Engine* _p, SolidColor* _g) {
+    pe = _p;
+    ge = _g;
+    ImGui_ImplGlfw_InitForVulkan(w, b);
+}
+
+void klnPointToTable(kln::point& p) {
+    ImGui::TableNextRow();
+
+    ImGui::TableNextColumn();
+    ImGui::Text("%f", p.e013());
+
+    ImGui::TableNextColumn();
+    ImGui::Text("%f", p.e021());
+
+    ImGui::TableNextColumn();
+    ImGui::Text("%f", p.e032());
+
+    ImGui::TableNextColumn();
+    ImGui::Text("%f", p.e123());
+}
+
+void klnPointTableHeader() {
+    ImGui::TableNextColumn();
+    ImGui::Text("e013");
+
+    ImGui::TableNextColumn();
+    ImGui::Text("e021");
+
+    ImGui::TableNextColumn();
+    ImGui::Text("e032");
+
+    ImGui::TableNextColumn();
+    ImGui::Text("e123");
+}
+
+void klnLineTableHeader() {
+    ImGui::TableNextColumn();
+    ImGui::Text("e23");
+
+    ImGui::TableNextColumn();
+    ImGui::Text("e31");
+
+    ImGui::TableNextColumn();
+    ImGui::Text("e12");
+
+    ImGui::TableNextColumn();
+    ImGui::Text("e01");
+
+    ImGui::TableNextColumn();
+    ImGui::Text("e02");
+
+    ImGui::TableNextColumn();
+    ImGui::Text("e03");
+}
+
+void klnLine(std::string name, kln::line l) {
+    if (ImGui::BeginTable(name.c_str(), 6)) {
+        klnLineTableHeader();
+        ImGui::TableNextRow();
+
+        ImGui::TableNextColumn();
+        ImGui::Text("%f", l.e23());
+        ImGui::TableNextColumn();
+        ImGui::Text("%f", l.e31());
+        ImGui::TableNextColumn();
+        ImGui::Text("%f", l.e12());
+        ImGui::TableNextColumn();
+        ImGui::Text("%f", l.e01());
+        ImGui::TableNextColumn();
+        ImGui::Text("%f", l.e02());
+        ImGui::TableNextColumn();
+        ImGui::Text("%f", l.e03());
+        ImGui::EndTable();
+    }
+}
+
+void UI::PhysicsWindow() {
+    if (showPhysics) {
+        ImGui::SetNextWindowPos(ImVec2(20, 30), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Physics Debug", NULL);
+#ifndef NDEBUG
+        ImGui::DragFloat("EngineSpeed", &pe->interpolation_props.step, 0.000002f, 0.0000000001f, 1.0f, "%f", 0);
+        if (ImGui::Button(pe->debug_data.stop ? "Start" : "Stop",{100,30})) {
+            pe->debug_data.stop = !pe->debug_data.stop;
+        }
+        // Add Obj 
+        // Object Starting Coords
+
+        // Object Starting Vel 
+
+        //Object Type
+            //Object props
+
+        //Collisions
+
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("Collisions")) {
+            for (int n = 0; n < pe->debug_data.collisions.size(); n++)
+            {
+                auto label = pe->debug_data.collisions[n];
+                ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+                if (ImGui::TreeNode(label.c_str())) {
+                    // auto rb = pe->debug_data.collisions[n];
+                    auto m = pe->debug_data.collisionData[n];
+                    auto nl = m.normal;
+
+                    ImGui::BeginGroup();
+                    klnLine("Normal", nl);
+                    if (ImGui::BeginTable("Points of contact", 4))
+                    {
+                        klnPointTableHeader();
+                        for (int c = 0; c < m.count; c++) {
+                            auto p = m.pointsOfContact[c];
+                            klnPointToTable(p);
+                        }
+                        ImGui::EndTable();
+                    }
+                    ImGui::EndGroup();
+                    ImGui::TreePop();
+                }
+            }
+            ImGui::TreePop();
+        }
+#endif
+        ImGui::End();
+    }
+}
+
+void UI::GraphicsWindow() {
+    if (showGraphics) {
+        ImGui::SetNextWindowPos(ImVec2(20, 340), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Graphics Debug", NULL);
+        ImGui::ColorEdit3("Clear color", reinterpret_cast<float*>(&(ge->clearColor)));
+        ge->renderUI();
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGuiH::Control::Info("", "", "(F10) Toggle Pane", ImGuiH::Control::Flags::Disabled);
+        ImGui::End();
+    }
+}
+
+void UI::newFrame() {
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}

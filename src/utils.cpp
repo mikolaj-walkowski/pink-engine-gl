@@ -7,7 +7,7 @@
 #include "nvvk/context_vk.hpp"
 
 
-static void utils::glfw::onErrorCallback(int error, const char* description)
+void utils::glfw::onErrorCallback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
@@ -86,4 +86,26 @@ void utils::objectDestroy(ps::Object* ob) {
     if (ob->rigidbody.shape != NULL) {
         free(ob->rigidbody.shape);
     }
+}
+
+ps::pp::Box utils::boxCreate(float x, float y, float z, kln::motor offset) {
+    ps::pp::Box out;
+    x /= 2.f;
+    y /= 2.f;
+    z /= 2.f;
+    out.verts[0] = offset(kln::point(-x, -y, -z));
+    out.verts[1] = offset(kln::point(x, -y, -z));
+    out.verts[2] = offset(kln::point(-x, y, -z));
+    out.verts[3] = offset(kln::point(x, y, -z));
+    out.verts[4] = offset(kln::point(-x, -y, z));
+    out.verts[5] = offset(kln::point(x, -y, z));
+    out.verts[6] = offset(kln::point(-x, y, z));
+    out.verts[7] = offset(kln::point(x, y, z));
+
+
+    // for (int i = 0; i < 8; i++) {
+    //     auto p = out.verts[i];
+    //     printf("Point: %f,%f,%f,%f\n", p.e013(), p.e021(), p.e032(), p.e123());
+    // }
+    return out;
 }

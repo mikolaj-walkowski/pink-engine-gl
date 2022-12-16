@@ -3,7 +3,8 @@
 #include "nvmath/nvmath.h"
 #include "pink_structs.hpp"
 
-#define BM(x) (1<<(x))
+#define BM(x) (int)(1<<((int)(x)))
+
 namespace ps::pp {
 
     typedef struct Manifold {
@@ -35,7 +36,7 @@ namespace ps::pp {
         {4,5},{4,6},{5,7},{6,7}
         };
 
-        
+        // To od add precalculated lines and constructor
     };
 
     struct Plane {

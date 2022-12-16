@@ -14,6 +14,6 @@ namespace ps::pp {
     // CollisionFunction capsuleToHeightMap;
 
     void sphereToPlane(Rigidbody* sphere, Rigidbody* plane, Manifold* m);
-    void cubeToPlane(Rigidbody* box, Rigidbody* plane, Manifold* m);
+    void boxToPlane(Rigidbody* box, Rigidbody* plane, Manifold* m);
     
 }//namespace ps::pp

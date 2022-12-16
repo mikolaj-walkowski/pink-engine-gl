@@ -18,6 +18,7 @@ namespace ps::pp {
     public:
         ps::WordState* in;
         ps::WordState* out;
+        float dT;
 
         SimulateFunc simulate;
         ColliderFunc collide;
@@ -32,11 +33,21 @@ namespace ps::pp {
         }collision_props;
 
         struct {
-            float step = 0.002f;
+            float step = 0.000002f;
             int iterations =10;
         } interpolation_props;
 
-        void step(ps::WordState*, ps::WordState*);
+#ifndef NDEBUG
+        struct {
+            bool stop = true;
+            std::vector<std::string> collisions;
+            std::vector<Manifold> collisionData;
+            
+        }debug_data;
+#endif
+
+        void step(ps::WordState*, ps::WordState*, float);
+        void renderUI();
         Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, InterpolationFunc iF);
     };
 

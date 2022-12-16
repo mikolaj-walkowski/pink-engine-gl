@@ -19,6 +19,7 @@ target_link_libraries(${PROJECT_NAME}
     pink::structs
     klein::klein
     nvpro_core
+    imgui
 )
 
 target_include_directories( ${PROJECT_NAME}
