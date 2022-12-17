@@ -71,7 +71,9 @@ void klnLineTableHeader() {
 }
 
 void klnLine(std::string name, kln::line l) {
-    if (ImGui::BeginTable(name.c_str(), 6)) {
+    ImGui::Text(name.c_str());
+
+    if (ImGui::BeginTable(name.c_str(), 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
         klnLineTableHeader();
         ImGui::TableNextRow();
 
@@ -98,7 +100,7 @@ void UI::PhysicsWindow() {
         ImGui::Begin("Physics Debug", NULL);
 #ifndef NDEBUG
         ImGui::DragFloat("EngineSpeed", &pe->interpolation_props.step, 0.02f, 0.0000000001f, 1.0f, "%f", 0);
-        if (ImGui::Button(pe->debug_data.stop ? "Start" : "Stop",{100,30})) {
+        if (ImGui::Button(pe->debug_data.stop ? "Start" : "Stop", { 100,30 })) {
             pe->debug_data.stop = !pe->debug_data.stop;
         }
         // Add Obj 
@@ -118,11 +120,9 @@ void UI::PhysicsWindow() {
                 auto label = pe->debug_data.collisions[n];
                 ImGui::SetNextItemOpen(true, ImGuiCond_Once);
                 if (ImGui::TreeNode(label.c_str())) {
-                    // auto rb = pe->debug_data.collisions[n];
                     auto m = pe->debug_data.collisionData[n];
                     auto nl = m.normal;
 
-                    ImGui::BeginGroup();
                     klnLine("Normal", nl);
                     if (ImGui::BeginTable("Points of contact", 4))
                     {
@@ -133,7 +133,22 @@ void UI::PhysicsWindow() {
                         }
                         ImGui::EndTable();
                     }
-                    ImGui::EndGroup();
+                    ImGui::TreePop();
+                }
+            }
+            ImGui::TreePop();
+        }
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("RigidBody props")) {
+            auto sim = pe->out->simulatedObjects;
+            for (int i = 0; i < sim.size(); i++) {
+                ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+                if (ImGui::TreeNode((std::to_string(sim[i].id) + "<" + ps::pp::shapeName[sim[i].rigidbody.shapeType] + ">").c_str())) {
+                    klnLine("dB", sim[i].rigidbody.dB);
+                    klnLine("B", sim[i].rigidbody.B);
+
+                    klnLine("dM", sim[i].rigidbody.dM);
+                    klnLine("M", sim[i].rigidbody.B);
                     ImGui::TreePop();
                 }
             }

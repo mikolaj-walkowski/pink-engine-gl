@@ -118,7 +118,8 @@ ps::pp::Sphere utils::sphereCreate(float r, float mass, kln::motor offset) {
     float a = 0.4f * mass;
     out.inertia = offset(kln::line(a * (r*r), a * (r*r), a * (r*r), 1.f, 1.f, 1.f));
     out.radius = r;
-    
+    out.center = offset(kln::point(0, 0, 0));
+
     return out;
 }
 

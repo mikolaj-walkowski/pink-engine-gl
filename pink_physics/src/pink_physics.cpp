@@ -17,7 +17,7 @@ void ps::pp::Engine::renderUI() {
 
 void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     int iterations = e->interpolation_props.iterations;
-    float step = (e->dT* e->interpolation_props.step) /(float)iterations;
+    float step = (e->dT * e->interpolation_props.step) / (float)iterations;
     for (int i = 0; i < iterations; i++)
     {
 
@@ -32,13 +32,21 @@ void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 }
 
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
-    kln::line G = (~(rb->M))(kln::ideal_line(0.f, -9.81f, 0.f));
-    kln::line Damp = (-0.25f * rb->B);
+    kln::line G = (~(rb->M))(kln::ideal_line(0.f, 9.81f, 0.f));
+    kln::line Damp = (-0.35f * rb->B);
 
     kln::line F = kln::line() + G + Damp; // + wszystkie siły
-    // TODO inertia 
+
+
     rb->dM = -0.5f * (rb->M * ((kln::motor)(rb->B)));
-    rb->dB = F - 0.5f * !(kln::line(!rb->B * rb->B - rb->B * !rb->B));
+
+
+    auto I = ((ps::pp::Plane*)rb->shape)->inertia;
+    auto I_1 = ~I;
+
+    auto comBIB = kln::line(rb->B * I.mult(rb->B) - I.mult(rb->B) * rb->B);
+
+    rb->dB = I_1.mult(comBIB + F);
 }
 
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
@@ -92,28 +100,31 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
         for (int ii = 0; ii < data.count; ii++)
         {
-            auto point = (~rb->M)(data.pointsOfContact[ii]);
+            auto Q = (~rb->M)(data.pointsOfContact[ii]);
+            
+            auto B_p = rb->B;
+            auto B_m = kln::line(0, 0, 0, 0, 0, 0);//TODO 2nd rigidbody
 
-            auto np = kln::project(normal, point);
+            auto N = kln::project(normal, Q).normalized();
 
-            auto comV2 = kln::point((point & rb->B).p0_);
-            //auto com = 0.5f * (point * rb->B - rb->B * point);
-            // auto com2 = 0.5f * (point * !np - !np * point);
-            auto com2V2 = kln::point((point & !np).p0_);
+            auto aaa = (((ps::pp::Plane*)rb->shape)->inertia);
 
-            //auto Vm = point & com;
-            // auto j = -(1 + rho) * ( point &(Vm | np) / ((point & com2) | np));
+            auto I_pN = !(((ps::pp::Plane*)rb->shape)->inertia).mult(N);
+            auto I_mN = kln::line(0, 0, 0, 0, 0, 0);//(~(2nd rigidbody->shape)->inertia).mult(N);
 
-            auto Vm = point & comV2;
+            auto QxB = kln::point((Q & (B_p - B_m)).p0_);
+            auto QxI = kln::point((Q & (I_pN - I_mN)).p0_);
 
-            auto j = -(1 + rho) * ((Vm | np) / ((point & com2V2) | np));
-            j /= (float)data.count;
+            auto top = Q & QxB | ~N;
+            auto bottom = Q & QxI | ~N;
 
-            auto vd = (kln::line)(j * (kln::motor)!np);
-            rb->B = rb->B + vd;
+            auto j = -(1 + rho) * (top/ bottom);
 
+            //j /= (float)data.count;
+
+            rb->B = rb->B + j * I_pN;
+            //2nd rigidbody->B = 2nd rigidbody->B - j* I_mN
         }
-
     }
 
 }
@@ -143,14 +154,14 @@ namespace ps::pp {
 
         for (int i = 0; i < in->simulatedObjects.size(); i++) {
             this->interpolation(this, &out->simulatedObjects[i].rigidbody);
-            
+
 #ifndef NDEBUG
             debug_data.collisionData.insert(debug_data.collisionData.end(), collision_props.collisionData, collision_props.collisionData + collision_props.size);
             for (int j = 0; j < collision_props.size; j++)
             {
                 std::string name = "Id:" + std::to_string(out->simulatedObjects[j].id) + "<" + shapeName[out->simulatedObjects[j].rigidbody.shapeType] + "> and ";//+ shapeName[collision_props.collisions[i]->shapeType];
                 debug_data.collisions.push_back(name);
-            }            
+            }
 #endif
         }
 

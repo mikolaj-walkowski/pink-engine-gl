@@ -88,11 +88,11 @@ int main(int argc, char** argv)
     &utils::boxCreate(1, 1, 1, 1, kln::uMotor())
   );
 
-  // ps::Object object2 = utils::objectCreate(
-  //   kln::translator(-3, 1, 0, 0),
-  //   ps::pp::ST_SPHERE,
-  //   &utils::sphereCreate(1.f, 1.f, kln::uMotor())
-  // );
+  ps::Object object2 = utils::objectCreate(
+    kln::translator(-3, 1, 0, 0),
+    ps::pp::ST_SPHERE,
+    &utils::sphereCreate(1.f, 1.f, kln::uMotor())
+  );
 
   ps::Object object3 = utils::objectCreate(
     kln::translator(-3, 0, 1, 0),
@@ -102,10 +102,10 @@ int main(int argc, char** argv)
 
 
   wordChain[0].simulatedObjects.push_back(object1);
-  // wordChain[0].simulatedObjects.push_back(object2);
+  wordChain[0].simulatedObjects.push_back(object2);
   wordChain[0].staticObjects.push_back(object3);
 
-  //  
+  ///  DEBUG ZONE ======== 
 
   // Init imgui
   UI::D().init(window, true, &physicsEngine, &graphicsEngine);

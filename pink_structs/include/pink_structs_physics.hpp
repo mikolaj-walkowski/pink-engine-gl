@@ -40,6 +40,8 @@ namespace ps::pp {
         // TODO add precalculated lines and constructor
     };
 
+    //TODO unfuck inertia
+
     struct Plane {
         kln::line inertia;
         kln::plane plane;
