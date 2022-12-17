@@ -15,7 +15,8 @@ void ps::pp::Engine::renderUI() {
 
 }
 
-void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
+// RK baby lets gooo
+void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     int iterations = e->interpolation_props.iterations;
     float step = (e->dT * e->interpolation_props.step) / (float)iterations;
     for (int i = 0; i < iterations; i++)
@@ -31,11 +32,25 @@ void ps::pp::eulerInterpolation(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     rb->M.normalize();
 }
 
+void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
+    float step = e->dT * e->interpolation_props.step;
+
+    auto old_dM = rb->dM;
+    e->simulate(rb);
+    rb->M = rb->M + (rb->dM+ old_dM)*(step/2.f);
+    rb->B = rb->B + (step * rb->dB);
+
+    e->collide(e, rb);
+    e->resolve(e, rb);
+    rb->M.normalize();
+}
+
+// TODO Upgrade Box collision
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     kln::line G = (~(rb->M))(kln::ideal_line(0.f, 9.81f, 0.f));
     kln::line Damp = (-0.35f * rb->B);
 
-    kln::line F = kln::line() + G + Damp; // + wszystkie siły
+    kln::line F = kln::line() + G;// +Damp; // + wszystkie siły
 
 
     rb->dM = -0.5f * (rb->M * ((kln::motor)(rb->B)));
@@ -101,7 +116,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         for (int ii = 0; ii < data.count; ii++)
         {
             auto Q = (~rb->M)(data.pointsOfContact[ii]);
-            
+
             auto B_p = rb->B;
             auto B_m = kln::line(0, 0, 0, 0, 0, 0);//TODO 2nd rigidbody
 
@@ -118,7 +133,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
             auto top = Q & QxB | ~N;
             auto bottom = Q & QxI | ~N;
 
-            auto j = -(1 + rho) * (top/ bottom);
+            auto j = -(1 + rho) * (top / bottom);
 
             //j /= (float)data.count;
 
@@ -132,7 +147,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
 namespace ps::pp {
 
-    Engine::Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, InterpolationFunc iF): simulate(sF), collide(cF), resolve(rF), interpolation(iF) {
+    Engine::Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF): simulate(sF), collide(cF), resolve(rF), integrator(iF) {
 
     }
 
@@ -153,7 +168,7 @@ namespace ps::pp {
 #endif
 
         for (int i = 0; i < in->simulatedObjects.size(); i++) {
-            this->interpolation(this, &out->simulatedObjects[i].rigidbody);
+            this->integrator(this, &out->simulatedObjects[i].rigidbody);
 
 #ifndef NDEBUG
             debug_data.collisionData.insert(debug_data.collisionData.end(), collision_props.collisionData, collision_props.collisionData + collision_props.size);

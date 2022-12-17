@@ -12,7 +12,7 @@ namespace ps::pp {
     typedef void (*SimulateFunc)(Rigidbody*);
     typedef void (*ColliderFunc)(Engine*, Rigidbody*);
     typedef void (*ResolverFunc)(Engine*, Rigidbody*);
-    typedef void (*InterpolationFunc)(Engine*, Rigidbody*);
+    typedef void (*IntegrationFunc)(Engine*, Rigidbody*);
 
     class Engine {
     public:
@@ -23,7 +23,7 @@ namespace ps::pp {
         SimulateFunc simulate;
         ColliderFunc collide;
         ResolverFunc resolve;
-        InterpolationFunc interpolation;
+        IntegrationFunc integrator;
 
         static const int maxNumber = 10;
         struct {
@@ -42,13 +42,13 @@ namespace ps::pp {
             bool stop = true;
             std::vector<std::string> collisions;
             std::vector<Manifold> collisionData;
-            
+
         }debug_data;
 #endif
 
         void step(ps::WordState*, ps::WordState*, float);
         void renderUI();
-        Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, InterpolationFunc iF);
+        Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF);
     };
 
     Rigidbody rigidbodyCreate(kln::motor, ShapeType, void*, int);
@@ -58,6 +58,6 @@ namespace ps::pp {
     void basicSimulate(Rigidbody*);
     void basicCollider(Engine*, Rigidbody*);
     void basicResolver(Engine*, Rigidbody*);
-    void eulerInterpolation(Engine*, Rigidbody*);
-
+    void eulerIntegration(Engine*, Rigidbody*);
+    void verletIntegration(Engine*, Rigidbody*);
 } // namespace ps::pp
