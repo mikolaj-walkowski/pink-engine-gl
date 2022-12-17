@@ -1,5 +1,21 @@
 #pragma once
 
+#define ALLOC_DMA
+//#define ALLOC_DEDICATED
+//#define ALLOC_VMA
+#include <nvvk/resourceallocator_vk.hpp>
+
+#include <memory>
+#if defined(ALLOC_DMA)
+#include <nvvk/memallocator_dma_vk.hpp>
+using Allocator = nvvk::ResourceAllocatorDma;
+#elif defined(ALLOC_VMA)
+#include <nvvk/memallocator_vma_vk.hpp>
+using Allocator = nvvk::ResourceAllocatorVma;
+#else
+using Allocator = nvvk::ResourceAllocatorDedicated;
+#endif
+
 #include "nvvkhl/appbase_vk.hpp"
 #include "nvvk/debug_util_vk.hpp"
 #include "nvvk/descriptorsets_vk.hpp"
@@ -8,7 +24,10 @@
 #include "host_device.h"
 #include "nvvk/context_vk.hpp"
 #include "pink_structs.hpp"
-
+#include "nvvk/raytraceKHR_vk.hpp"
+#include "offscreen.hpp"
+#include "obj.hpp"
+#include "raytracer.hpp"
 
 //--------------------------------------------------------------------------------------------------
 // Simple rasterizer of OBJ objects
@@ -39,13 +58,20 @@ public:
 
     void drawFrame(ps::WordState*, ps::WordState*,float);
     void renderUI();
+
+    Offscreen& offscreen() { return m_offscreen; }
+    Raytracer& raytracer() { return m_raytrace; }
+
     // Information pushed at each draw call
     PushConstantRaster m_pcRaster{
-        {1},                // Identity matrix
-        {10.f, 15.f, 8.f},  // light position
-        0,                  // instance Id
-        100.f,              // light intensity
-        0                   // light type
+        {1},                 // Identity matrix
+        {10.f, 15.f, 8.f},   // light position
+        0,                   // instance Id
+        {-1.f, -1.f, -.4f},  // lightDirection;
+        0.939692621f,        // {cos(deg2rad(20.0f))},  // lightSpotCutoff;
+        0.866025404f,        // {cos(deg2rad(30.0f))},  // lightSpotOuterCutoff;
+        100.f,               // light intensity
+        0                    // light type
     };
 
     // Graphic pipeline
@@ -85,4 +111,24 @@ public:
     nvvk::Texture               m_offscreenDepth;
     VkFormat                    m_offscreenColorFormat{ VK_FORMAT_R32G32B32A32_SFLOAT };
     VkFormat                    m_offscreenDepthFormat{ VK_FORMAT_X8_D24_UNORM_PACK32 };
+
+
+    // #Post
+    Offscreen m_offscreen;
+    void initOffscreen();
+
+
+    // #VKRay
+    Raytracer m_raytrace;
+
+    void initRayTracing();
+    void raytrace(const VkCommandBuffer& cmdBuf, const nvmath::vec4f& clearColor);
+
+    // Implicit
+    ImplInst m_implObjects;
+
+    void addImplSphere(nvmath::vec3f center, float radius, int matId);
+    void addImplCube(nvmath::vec3f minumum, nvmath::vec3f maximum, int matId);
+    void addImplMaterial(const MaterialObj& mat);
+    void createImplictBuffers();
 };
