@@ -1,3 +1,4 @@
+#pragma once 
 #include "nvmath/nvmath.h"
 #include "nvvk/descriptorsets_vk.hpp"
 #include "nvvk/raytraceKHR_vk.hpp"

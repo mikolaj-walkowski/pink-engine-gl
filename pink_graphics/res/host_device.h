@@ -41,9 +41,10 @@ using uint = unsigned int;
 #endif
 
 START_BINDING(SceneBindings)
-  eGlobals  = 0,  // Global uniform containing camera matrices
-  eObjDescs = 1,  // Access to the object descriptions
-  eTextures = 2   // Access to textures
+  eGlobals   = 0,  // Global uniform containing camera matrices
+  eObjDescs  = 1,  // Access to the object descriptions
+  eTextures  = 2,  // Access to textures
+  eImplicits = 3   // Implicit objects
 END_BINDING();
 
 START_BINDING(RtxBindings)
@@ -51,7 +52,6 @@ START_BINDING(RtxBindings)
   eOutImage = 1   // Ray tracer output image
 END_BINDING();
 // clang-format on
-
 
 // Information of a obj model when referenced in a shader
 struct ObjDesc
@@ -77,8 +77,12 @@ struct PushConstantRaster
   mat4  modelMatrix;  // matrix of the instance
   vec3  lightPosition;
   uint  objIndex;
+  vec3  lightDirection;
+  float lightSpotCutoff;
+  float lightSpotOuterCutoff;
   float lightIntensity;
   int   lightType;
+  int   frame;
 };
 
 

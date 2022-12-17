@@ -1,3 +1,4 @@
+#pragma once
 #include "nvvk/debug_util_vk.hpp"
 #include "nvvk/descriptorsets_vk.hpp"
 #include "nvvk/resourceallocator_vk.hpp"
