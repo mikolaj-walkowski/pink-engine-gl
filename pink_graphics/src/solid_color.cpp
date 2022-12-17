@@ -20,6 +20,7 @@
 
 #include <sstream>
 
+#define VMA_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #include "pink_graphics.hpp"
 #include "stb_image.h"
@@ -54,6 +55,9 @@ void SolidColor::setup(const VkInstance& instance, const VkDevice& device, const
     m_alloc.init(instance, device, physicalDevice);
     m_debug.setup(m_device);
     m_offscreenDepthFormat = nvvk::findDepthFormat(physicalDevice);
+
+    m_offscreen.setup(device, physicalDevice, &m_alloc, queueFamily);
+    m_raytrace.setup(device, physicalDevice, &m_alloc, queueFamily);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -281,6 +285,9 @@ void SolidColor::destroyResources()
     vkDestroyDescriptorSetLayout(m_device, m_descSetLayout, nullptr);
 
     m_alloc.destroy(m_bGlobals);
+    m_alloc.destroy(m_bObjDesc);
+    m_alloc.destroy(m_implObjects.implBuf);
+    m_alloc.destroy(m_implObjects.implMatBuf);
     m_alloc.destroy(ps::pg::ObjLibrary::getObjLibrary().m_bObjDesc);
 
     for (auto& m : ps::pg::ObjLibrary::getObjLibrary().m_meshContainer)
@@ -612,4 +619,35 @@ void SolidColor::renderUI()
         ImGui::SliderFloat3("Position", &m_pcRaster.lightPosition.x, -20.f, 20.f);
         ImGui::SliderFloat("Intensity", &m_pcRaster.lightIntensity, 0.f, 150.f);
     }
+}
+
+//--------------------------------------------------------------------------------------------------
+// Initialize offscreen rendering
+//
+void SolidColor::initOffscreen()
+{
+  m_offscreen.createFramebuffer(m_size);
+  m_offscreen.createDescriptor();
+  m_offscreen.createPipeline(m_renderPass);
+  m_offscreen.updateDescriptorSet();
+}
+
+//--------------------------------------------------------------------------------------------------
+// Initialize Vulkan ray tracing
+//
+void SolidColor::initRayTracing()
+{
+  m_raytrace.createBottomLevelAS(m_objModel, m_implObjects);
+  m_raytrace.createTopLevelAS(m_instances, m_implObjects);
+  m_raytrace.createRtDescriptorSet(m_offscreen.colorTexture().descriptor.imageView);
+  m_raytrace.createRtPipeline(m_descSetLayout);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Ray trace the scene
+//
+void SolidColor::raytrace(const VkCommandBuffer& cmdBuf, const nvmath::vec4f& clearColor)
+{
+  drawFrame();
+  m_raytrace.raytrace(cmdBuf, clearColor, m_descSet, m_size, m_pcRaster);
 }
