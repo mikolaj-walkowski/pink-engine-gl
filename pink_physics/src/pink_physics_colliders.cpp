@@ -53,7 +53,7 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
         auto line = i & j;
         //line.normalize();
 
-        m->normal = plane | kln::origin();
+        m->normal = kln::origin() | plane;
         m->normal.normalize();
 
         auto point = line ^ plane;
@@ -63,7 +63,7 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
 
         //Line parallel
         if (point.e123() == 0.f) {
-            if (eCmp(point.e013(), 0) && eCmp(point.e021(), 0) && eCmp(point.e032(), 0)) {
+            if (eCmp(sumCoords(point), 0.001f) ) {
                 kln::point* p = (kln::point*)find(m->pointsOfContact, m->pointsOfContact + m->count, &i, sizeof(kln::point));
                 if (p == NULL && m->count < m->maxContactPoints) {
                     m->pointsOfContact[m->count] = i;

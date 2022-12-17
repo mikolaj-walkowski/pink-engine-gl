@@ -82,28 +82,28 @@ int main(int argc, char** argv)
 
   /// DEBUG ZONE ========
   // CREATING objects
-  ps::Object object1 = utils::objectCreate(
+  ps::Object boxObj = utils::objectCreate(
     kln::translator(-9, 1, 0, 0) * kln::rotor(kln::pi_4, 1, 1, 1),
     ps::pp::ST_BOX,
     &utils::boxCreate(1, 1, 1, 2, kln::uMotor())
   );
 
-  ps::Object object2 = utils::objectCreate(
+  ps::Object sphereObj = utils::objectCreate(
     kln::translator(-3, 1, 0, 0),
     ps::pp::ST_SPHERE,
     &utils::sphereCreate(1.f, 2.f, kln::uMotor())
   );
 
-  ps::Object object3 = utils::objectCreate(
+  ps::Object planeObj = utils::objectCreate(
     kln::translator(-3, 0, 1, 0),
     ps::pp::ST_PLANE,
     &utils::planeCreate(kln::plane(0, 1, 0, 0))
   );
 
 
-  wordChain[0].simulatedObjects.push_back(object1);
-  wordChain[0].simulatedObjects.push_back(object2);
-  wordChain[0].staticObjects.push_back(object3);
+  wordChain[0].simulatedObjects.push_back(boxObj);
+  // wordChain[0].simulatedObjects.push_back(sphereObj);
+  wordChain[0].staticObjects.push_back(planeObj);
 
   ///  DEBUG ZONE ======== 
 

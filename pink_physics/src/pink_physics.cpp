@@ -50,14 +50,14 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 //     auto k1dM = rb->dM;
 //     auto k1dB = rb->dB;
 
-    
-    
+
+
 //     e->simulate(rb);
 //     auto k1dM = rb->dM;
 //     auto k1dB = rb->dB;
 
 
-    
+
 // }
 
 // TODO Upgrade Box collision
@@ -72,11 +72,11 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
 
 
     auto I = ((ps::pp::Plane*)rb->shape)->inertia;
-    auto I_1 = I;
+    auto I_1 = ~I;
 
     auto comBIB = kln::line(rb->B * I.mult(rb->B) - I.mult(rb->B) * rb->B);
 
-    rb->dB = ~I_1.mult(comBIB + F);
+    rb->dB = I_1.mult(comBIB + F);
 }
 
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
@@ -112,15 +112,15 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
         if (collisionData[*collisionSize].count != 0) {
             collisions[*collisionSize] = &i.rigidbody;
-            
+
 #ifndef NDEBUG
             for (int di = 0; di < collisionData[*collisionSize].count; di++)
             {
                 auto p = collisionData[*collisionSize].pointsOfContact[di];
                 nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
                 nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
-                e->out->points.push_back(t*s);
-            }       
+                e->out->points.push_back(t * s);
+            }
 #endif
             ++(*collisionSize);
         }
@@ -129,38 +129,36 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
 //BUG main nest
 void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
+    auto I_p = ((ps::pp::Plane*)rb->shape)->inertia;
+    auto B_p = rb->B;
+
     for (int i = 0; i < e->collision_props.size; i++)
     {
-        auto rb2 = e->collision_props.collisions[i];
-        auto data = e->collision_props.collisionData[i];
-        auto normal = (~rb->M)(data.normal);
-
-
         float rho = 0.5;
+        auto rb2 = e->collision_props.collisions[i];
+        auto B_m = kln::line(0, 0, 0, 0, 0, 0);//TODO 2nd rigidbody
+
+        auto data = e->collision_props.collisionData[i];
+        auto normal = (data.normal);
 
         for (int ii = 0; ii < data.count; ii++)
         {
-            auto Q = (~rb->M)(data.pointsOfContact[ii]);
-
-            auto B_p = rb->B;
-            auto B_m = kln::line(0, 0, 0, 0, 0, 0);//TODO 2nd rigidbody
+            auto Q = (data.pointsOfContact[ii]);
 
             auto N = kln::project(normal, Q).normalized();
-
-            auto aaa = (((ps::pp::Plane*)rb->shape)->inertia);
-
-            auto I_pN = !(((ps::pp::Plane*)rb->shape)->inertia).mult(N);
+            
+            auto I_pN = !I_p.mult(N);
             auto I_mN = kln::line(0, 0, 0, 0, 0, 0);//(~(2nd rigidbody->shape)->inertia).mult(N);
 
             auto QxB = kln::point((Q & (B_p - B_m)).p0_);
             auto QxI = kln::point((Q & (I_pN - I_mN)).p0_);
 
-            auto top = Q & QxB | ~N;
-            auto bottom = Q & QxI | ~N;
+            auto num = Q & QxB | ~N;
+            auto den = Q & QxI | ~N;
 
-            auto j = -(1 + rho) * (top / bottom);
+            auto j = -(1 + rho) * (num / den);
 
-            //j /= (float)data.count;
+            j /= (float)data.count;
 
             rb->B = rb->B + j * I_pN;
             //2nd rigidbody->B = 2nd rigidbody->B - j* I_mN

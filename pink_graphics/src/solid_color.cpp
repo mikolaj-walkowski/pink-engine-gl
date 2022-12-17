@@ -546,7 +546,7 @@ SolidColor::SolidColor(nvvk::Context* vkctx, GLFWwindow* window, const int w, co
     createPostDescriptor();
     createPostPipeline();
     updatePostDescriptorSet();
-    clearColor = nvmath::vec4f(1, 0, 1, 1.00f);
+    clearColor = nvmath::vec4f(1, 1, 1, 1.00f);
 
     setupGlfwCallbacks(window);
 }
