@@ -78,19 +78,19 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
         }
         else {
             bool x = between(
-                std::max(i.e013(), j.e013()),
-                std::min(i.e013(), j.e013()),
-                point.e013()
+                std::max(i.x(), j.x()),
+                std::min(i.x(), j.x()),
+                point.x()
             );
             bool y = between(
-                std::max(i.e021(), j.e021()),
-                std::min(i.e021(), j.e021()),
-                point.e021()
+                std::max(i.y(), j.y()),
+                std::min(i.y(), j.y()),
+                point.y()
             );
             bool z = between(
-                std::max(i.e032(), j.e032()),
-                std::min(i.e032(), j.e032()),
-                point.e032()
+                std::max(i.z(), j.z()),
+                std::min(i.z(), j.z()),
+                point.z()
             );
 
             // printf("%d, %d , %d\n", x, y, z);
@@ -104,6 +104,19 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
                     ++(m->count);
                 }
             }
+
+            // bool min = std::min(sumCoords(i), sumCoords(j));
+            // bool max = std::max(sumCoords(i), sumCoords(j));
+            // bool p = sumCoords(point);
+
+            //  if (!between(max,min,p)) {
+            //     kln::point* p = (kln::point*)find(m->pointsOfContact, m->pointsOfContact + m->count, &point, sizeof(kln::point));
+            //     if (p == NULL && m->count < m->maxContactPoints) {
+            //         m->pointsOfContact[m->count] = point;
+            //         ++(m->count);
+            //     }
+            // }
+
         }
 
     }

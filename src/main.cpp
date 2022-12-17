@@ -85,13 +85,13 @@ int main(int argc, char** argv)
   ps::Object object1 = utils::objectCreate(
     kln::translator(-9, 1, 0, 0) * kln::rotor(kln::pi_4, 1, 1, 1),
     ps::pp::ST_BOX,
-    &utils::boxCreate(1, 1, 1, 1, kln::uMotor())
+    &utils::boxCreate(1, 1, 1, 2, kln::uMotor())
   );
 
   ps::Object object2 = utils::objectCreate(
     kln::translator(-3, 1, 0, 0),
     ps::pp::ST_SPHERE,
-    &utils::sphereCreate(1.f, 1.f, kln::uMotor())
+    &utils::sphereCreate(1.f, 2.f, kln::uMotor())
   );
 
   ps::Object object3 = utils::objectCreate(
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
   int next = 1;
 
 
-  static float limitFPS = 1.0f / 15.0f;
+  static float limitFPS = 1.0f / 5.0f;
 
   static float dT = 1000 * limitFPS;
 
