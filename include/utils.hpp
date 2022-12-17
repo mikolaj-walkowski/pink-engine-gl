@@ -35,6 +35,8 @@ namespace utils {
         void setupContext(nvvk::Context*, std::vector<utils::ExtensionList>);
     }//namespace nvidia
 
+    ps::UniqueID newID();
+
     ps::Object objectCreate(kln::motor m, ps::pp::ShapeType type, void* shape);
     ps::pp::Box boxCreate(float x, float y, float z, float mass, kln::motor offset);
     ps::pp::Sphere sphereCreate(float r, float mass, kln::motor offset);

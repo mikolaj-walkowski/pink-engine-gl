@@ -9,11 +9,9 @@ namespace ps {
 
   // Default search path for shaders
   static std::vector<std::string> defaultSearchPaths = {
-        //NVPSystem::exePath() + PROJECT_RELDIRECTORY,
-        //NVPSystem::exePath() + PROJECT_RELDIRECTORY "..",
-        NVPSystem::exePath() + "..",
-        NVPSystem::exePath() + "../../",
-        std::string(PROJECT_NAME),
+    NVPSystem::exePath() + "..",
+    NVPSystem::exePath() + "../../",
+    std::string(PROJECT_NAME),
   };
 
   typedef long int UniqueID; // Na razie robię tak bo nie wiem co dokładnie będziemy chcieli mieć jako ID
@@ -29,7 +27,7 @@ namespace ps {
     pg::MeshRenderer meshRenderer;
     struct Interpolation_catche {
       kln::line log;
-      ps::UniqueID obj;
+      kln::motor obj;
     }interpolation_catche;
     nvmath::mat4f interpolate(ps::Object*, float);
   };
@@ -38,6 +36,9 @@ namespace ps {
   struct WordState { // Defacto output silnika fizycznego
     std::vector<Object> staticObjects;
     std::vector<Object> simulatedObjects;
+#ifndef NDEBUG
+    std::vector<nvmath::mat4f> points;
+#endif
   };
 
 }  // namespace ps

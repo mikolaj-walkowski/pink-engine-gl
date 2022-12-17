@@ -316,7 +316,6 @@ void SolidColor::rasterizeHelper(const VkCommandBuffer& cmdBuf, std::pair<std::v
     {
         auto model = (*vec.first)[i].mesh;
         m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
-        m_pcRaster.modelMatrix = nvmath::mat4f((*vec.first)[i].rigidbody.M.as_mat4x4().data);
         m_pcRaster.modelMatrix = (*vec.first)[i].interpolate(&(*vec.second)[i], dT);
 
         vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
@@ -346,6 +345,22 @@ void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
     rasterizeHelper(cmdBuf, std::make_pair(&w1->staticObjects, &w2->staticObjects));
     rasterizeHelper(cmdBuf, std::make_pair(&w1->simulatedObjects, &w2->simulatedObjects));
 
+#ifndef NDEBUG
+    VkDeviceSize offset{ 0 };
+    
+    for (int i = 0; i < w2->points.size(); i++)
+    {
+        auto model = ps::pg::ObjLibrary::getObjLibrary().GetMesh("sphere");
+        m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
+        m_pcRaster.modelMatrix = w2->points[i];
+
+        vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+            sizeof(PushConstantRaster), &m_pcRaster);
+        vkCmdBindVertexBuffers(cmdBuf, 0, 1, &model->vertexBuffer.buffer, &offset);
+        vkCmdBindIndexBuffer(cmdBuf, model->indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmdBuf, model->nbIndices, 1, 0, 0, 0);
+    }
+#endif
     m_debug.endLabel(cmdBuf);
 }
 

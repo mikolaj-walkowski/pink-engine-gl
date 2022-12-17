@@ -12,6 +12,11 @@ void utils::glfw::onErrorCallback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+ps::UniqueID utils::newID() {
+    static ps::UniqueID id = ps::nullID;
+    return ++id;
+}
+
 GLFWwindow* utils::glfw::setupGLFWindow() {
     glfwSetErrorCallback(utils::glfw::onErrorCallback);
     if (!glfwInit())
@@ -76,6 +81,7 @@ ps::Object utils::objectCreate(kln::motor m, ps::pp::ShapeType type, void* shape
 
     ps::Object out = {};
 
+    out.id = newID();
     out.rigidbody = rb;
     out.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh(ps::pp::shapeName[type]);
 

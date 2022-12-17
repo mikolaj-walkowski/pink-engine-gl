@@ -37,13 +37,28 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
     auto old_dM = rb->dM;
     e->simulate(rb);
-    rb->M = rb->M + (rb->dM+ old_dM)*(step/2.f);
+    rb->M = rb->M + (rb->dM + old_dM) * (step / 2.f);
     rb->B = rb->B + (step * rb->dB);
 
     e->collide(e, rb);
     e->resolve(e, rb);
     rb->M.normalize();
 }
+
+// void ps::pp::RK4(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
+//     e->simulate(rb);
+//     auto k1dM = rb->dM;
+//     auto k1dB = rb->dB;
+
+    
+    
+//     e->simulate(rb);
+//     auto k1dM = rb->dM;
+//     auto k1dB = rb->dB;
+
+
+    
+// }
 
 // TODO Upgrade Box collision
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
@@ -57,11 +72,11 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
 
 
     auto I = ((ps::pp::Plane*)rb->shape)->inertia;
-    auto I_1 = ~I;
+    auto I_1 = I;
 
     auto comBIB = kln::line(rb->B * I.mult(rb->B) - I.mult(rb->B) * rb->B);
 
-    rb->dB = I_1.mult(comBIB + F);
+    rb->dB = ~I_1.mult(comBIB + F);
 }
 
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
@@ -97,6 +112,16 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
         if (collisionData[*collisionSize].count != 0) {
             collisions[*collisionSize] = &i.rigidbody;
+            
+#ifndef NDEBUG
+            for (int di = 0; di < collisionData[*collisionSize].count; di++)
+            {
+                auto p = collisionData[*collisionSize].pointsOfContact[di];
+                nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
+                nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
+                e->out->points.push_back(t*s);
+            }       
+#endif
             ++(*collisionSize);
         }
     }
@@ -164,6 +189,7 @@ namespace ps::pp {
         debug_data.collisions.clear();
         debug_data.collisionData.clear();
 
+        out->points.clear();
         //if(debug_data.oneStep)
 #endif
 
