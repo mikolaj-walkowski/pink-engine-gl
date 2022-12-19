@@ -306,6 +306,7 @@ void SolidColor::destroyResources()
     //#Post
     m_alloc.destroy(m_offscreenColor);
     m_alloc.destroy(m_offscreenDepth);
+    ps::pg::ObjLibrary::getObjLibrary().m_cmdPool.deinit();
     vkDestroyPipeline(m_device, m_postPipeline, nullptr);
     vkDestroyPipelineLayout(m_device, m_postPipelineLayout, nullptr);
     vkDestroyDescriptorPool(m_device, m_postDescPool, nullptr);
