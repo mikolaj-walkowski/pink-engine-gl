@@ -24,7 +24,6 @@ namespace ps {
     std::vector<Object*> children;  // OPT można zmienić na tab albo zrobić własną klasę/struct pod tablice o jednolitym rozmiarze
     pp::Rigidbody rigidbody;  // Mogę dać funkcje getInterpolatedTransform(RigidBody previousState, float blend (0.0 ... 1.0 )) zamiast transform i rotation 
     pg::ObjMesh* mesh;
-    pg::MeshRenderer meshRenderer;
     struct Interpolation_catche {
       kln::line log;
       kln::motor obj;

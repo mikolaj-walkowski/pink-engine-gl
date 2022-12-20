@@ -62,13 +62,13 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
 // TODO Upgrade Box collision
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
-    kln::line G = (~(rb->M))(kln::ideal_line(0.f, 9.81f, 0.f));
+    kln::line G = (~(rb->M))(kln::line(0.f, 9.81f, 0.f, 0.f, 0.f, 0.f));
     kln::line Damp = (-0.35f * rb->B);
 
-    kln::line F = kln::line() + G;// +Damp; // + wszystkie siły
+    kln::line F = kln::line() + G + Damp;
+    //F = rb->M(F);
 
-
-    rb->dM = -0.5f * (rb->M * ((kln::motor)(rb->B)));
+    rb->dM = (-0.5f * (rb->M * ((kln::motor)(rb->B))));
 
 
     auto I = ((ps::pp::Plane*)rb->shape)->inertia;
@@ -76,11 +76,11 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
 
     auto comBIB = kln::line(rb->B * I.mult(rb->B) - I.mult(rb->B) * rb->B);
 
-    rb->dB = I_1.mult(comBIB + F);
+    rb->dB = (I_1.mult(comBIB + F));
 }
 
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
-    auto staticObjects = e->out->staticObjects;
+    auto& staticObjects = e->out->staticObjects;
 
     auto collisions = e->collision_props.collisions;
     auto collisionData = e->collision_props.collisionData;
@@ -90,8 +90,9 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     *collisionSize = 0;
 
 
-    for (auto i : staticObjects)
+    for (int n = 0; n < staticObjects.size(); n++)
     {
+        auto& i = staticObjects[n];
         if (*collisionSize >= collisionMaxSize) break;
         if (rb == &i.rigidbody) continue;
 
@@ -111,7 +112,7 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         }
 
         if (collisionData[*collisionSize].count != 0) {
-            collisions[*collisionSize] = &i.rigidbody;
+            collisionData[*collisionSize].rb = &(staticObjects[n].rigidbody);
 
 #ifndef NDEBUG
             for (int di = 0; di < collisionData[*collisionSize].count; di++)
@@ -129,40 +130,46 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
 //BUG main nest
 void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
-    auto I_p = ((ps::pp::Plane*)rb->shape)->inertia;
-    auto B_p = rb->B;
+    float rho = 0.5f;
+
+    auto I_p = (~rb->M)(((ps::pp::Plane*)rb->shape)->inertia);
+    auto B_p = (~rb->M)(rb->B);
 
     for (int i = 0; i < e->collision_props.size; i++)
     {
-        float rho = 0.5;
-        auto rb2 = e->collision_props.collisions[i];
-        auto B_m = kln::line(0, 0, 0, 0, 0, 0);//TODO 2nd rigidbody
-
         auto data = e->collision_props.collisionData[i];
+
+        auto rb2 = data.rb;
+
+        auto I_m = (~rb2->M)(((ps::pp::Plane*)rb2->shape)->inertia);
+        auto B_m = (~rb2->M)(rb2->B);
+
         auto normal = (data.normal);
 
         for (int ii = 0; ii < data.count; ii++)
         {
-            auto Q = (data.pointsOfContact[ii]);
+            auto Q = (data.pointsOfContact[ii]).normalized();
 
             auto N = kln::project(normal, Q).normalized();
-            
-            auto I_pN = !I_p.mult(N);
-            auto I_mN = kln::line(0, 0, 0, 0, 0, 0);//(~(2nd rigidbody->shape)->inertia).mult(N);
+
+            auto I_pN = I_p.mult(N);
+            auto I_mN = I_m.mult(N);//(~(2nd rigidbody->shape)->inertia).mult(N);
 
             auto QxB = kln::point((Q & (B_p - B_m)).p0_);
             auto QxI = kln::point((Q & (I_pN - I_mN)).p0_);
 
-            auto num = Q & QxB | ~N;
-            auto den = Q & QxI | ~N;
+            auto num = (Q & QxB) | ~N;
+            auto den = (Q & QxI) | ~N;
 
             auto j = -(1 + rho) * (num / den);
 
             j /= (float)data.count;
+            auto I_pNb = (j * I_pN);
 
-            rb->B = rb->B + j * I_pN;
-            //2nd rigidbody->B = 2nd rigidbody->B - j* I_mN
+            B_p = (B_p + (j * I_pN));
+            //rb2->B = rb2->B;// -j * (~rb2->M)(I_mN);
         }
+        rb->B = rb->M(B_p);
     }
 
 }
@@ -182,7 +189,14 @@ namespace ps::pp {
         *out = *in;
 
 #ifndef NDEBUG
+        if (debug_data.stepped) {
+            this->dT = debug_data.dT;
+            debug_data.stop = false;
+            if (debug_data.step <= 0) return;
+            debug_data.step--;
+        }
         if (debug_data.stop) return;
+
 
         debug_data.collisions.clear();
         debug_data.collisionData.clear();

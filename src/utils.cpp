@@ -77,7 +77,7 @@ ps::Object utils::objectCreate(kln::motor m, ps::pp::ShapeType type, void* shape
     void* shape_dynamic = malloc(ps::pp::shapeSize[type]);
     memcpy(shape_dynamic, shape, ps::pp::shapeSize[type]);
 
-    ps::pp::Rigidbody rb = { m, kln::line(), kln::motor(), kln::line(), kln::origin(), type, shape_dynamic };
+    ps::pp::Rigidbody rb = { m, kln::line(0,0,0,0,0,0), kln::uMotor(), kln::line(0,0,0,0,0,0), kln::origin(), type, shape_dynamic };
 
     ps::Object out = {};
 

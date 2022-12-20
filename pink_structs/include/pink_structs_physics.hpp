@@ -6,6 +6,7 @@
 #define BM(x) (int)(1<<((int)(x)))
 
 namespace ps::pp {
+    struct Rigidbody;
 
     typedef struct Manifold {
         static const int maxContactPoints = 10;
@@ -13,6 +14,7 @@ namespace ps::pp {
         float penetration;
         kln::line normal;
         kln::point pointsOfContact[maxContactPoints];
+        Rigidbody* rb;
     } Manifold;
 
     enum ShapeType {

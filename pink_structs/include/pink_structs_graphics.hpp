@@ -53,9 +53,4 @@ namespace ps::pg {
         void CreateObjDescriptionBuffer();
     };
 
-
-    struct MeshRenderer {
-        //TODO MeshRenderer
-    };
-
 } //namespace pg

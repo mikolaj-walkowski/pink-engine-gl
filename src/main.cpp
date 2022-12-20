@@ -36,6 +36,7 @@
 #include "nvvk/commands_vk.hpp"
 #include "nvvk/context_vk.hpp"
 #include "ui.hpp"
+#include "algorithm"
 
 #include "pink_physics.hpp"
 #include "pink_graphics.hpp"
@@ -78,7 +79,7 @@ int main(int argc, char** argv)
   SolidColor graphicsEngine(&vkctx, window, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT);
 
   //Setup physics engine components
-  ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::verletIntegration);
+  ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::eulerIntegration);
 
   /// DEBUG ZONE ========
   // CREATING objects
@@ -102,7 +103,7 @@ int main(int argc, char** argv)
 
 
   wordChain[0].simulatedObjects.push_back(boxObj);
-  // wordChain[0].simulatedObjects.push_back(sphereObj);
+  //wordChain[0].simulatedObjects.push_back(sphereObj);
   wordChain[0].staticObjects.push_back(planeObj);
 
   ///  DEBUG ZONE ======== 
@@ -119,8 +120,8 @@ int main(int argc, char** argv)
 
   physicsEngine.step(&wordChain[now], &wordChain[next], dT);
 
-  double lastTime = glfwGetTime(), timer = lastTime;
-  double deltaTime = 0, nowTime = 0;
+  float lastTime = (float)glfwGetTime(), timer = lastTime;
+  float deltaTime = 0, nowTime = 0;
 
   // Main loop
   while (!glfwWindowShouldClose(window))
@@ -131,14 +132,14 @@ int main(int argc, char** argv)
 
 
     // TODO Zajebane z neta 
-    // - Measure time
-    nowTime = glfwGetTime();
+    //- Measure time 
+    nowTime = (float)glfwGetTime();
     deltaTime += (nowTime - lastTime) / limitFPS;
 
     // - Only update at 60 frames / s
     if (deltaTime >= 1.0) {
       next = (now + 1) % WC_SIZE;
-      physicsEngine.step(&wordChain[now], &wordChain[next], (float)(nowTime - lastTime));
+      physicsEngine.step(&wordChain[now], &wordChain[next], (nowTime - lastTime));
       lastTime = nowTime;
       now = next;
     }
@@ -155,8 +156,8 @@ int main(int argc, char** argv)
       //ImGui::ShowDemoWindow(NULL);
     }
 
-    nowTime = glfwGetTime();
-    graphicsEngine.drawFrame(&wordChain[euclidean_remainder(now - 1, WC_SIZE)], &wordChain[now], (float)deltaTime);
+    nowTime = (float)glfwGetTime();
+    graphicsEngine.drawFrame(&wordChain[euclidean_remainder(now - 1, WC_SIZE)], &wordChain[now], std::min(deltaTime,1.0f));
   }
 
   // Cleanup

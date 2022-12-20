@@ -100,6 +100,6 @@ void main()
   vec3 specular = computeSpecular(mat, i_viewDir, L, N);
 
   // Result
-  o_color = vec4(lightIntensity * (diffuse + specular), 1);
+  o_color = vec4(lightIntensity * (diffuse + specular), 0.6);
   //o_color = vec4(clamp((color*0.3),vec3(0,0,0),vec3(1,1,1)), 1);
 }

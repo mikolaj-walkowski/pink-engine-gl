@@ -42,6 +42,9 @@ namespace ps::pp {
             bool stop = true;
             std::vector<std::string> collisions;
             std::vector<Manifold> collisionData;
+            long step = -1;
+            bool stepped = false;
+            float dT = 1.0f / 5.0f;
 
         }debug_data;
 #endif

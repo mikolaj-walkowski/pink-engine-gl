@@ -53,7 +53,7 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
         auto line = i & j;
         //line.normalize();
 
-        m->normal = kln::origin() | plane;
+        m->normal =  plane | kln::origin();
         m->normal.normalize();
 
         auto point = line ^ plane;

@@ -8,6 +8,19 @@ void UI::show() {
     if (ImGui::BeginMainMenuBar()) {
         ImGui::MenuItem("Graphics", "", &showGraphics);
         ImGui::MenuItem("Physics", "", &showPhysics);
+#ifndef NDEBUG
+        ImGui::PushItemWidth(150);
+        ImGui::DragFloat("##", &pe->interpolation_props.step, 0.02f, 0.0000000001f, 1.0f, "Engine Speed: %.4f", 0);
+        if (ImGui::Button(pe->debug_data.stop ? "Start" : "Stop")) {
+            pe->debug_data.stop = !pe->debug_data.stop;
+            pe->debug_data.stepped = false;
+        }
+        ImGui::Checkbox("Stepped", &pe->debug_data.stepped);
+        if (ImGui::Button("Step")) {
+            pe->debug_data.step = 1;
+        }
+
+#endif
         ImGui::EndMainMenuBar();
     }
     PhysicsWindow();
@@ -96,13 +109,27 @@ void klnLine(std::string name, kln::line l) {
 void UI::PhysicsWindow() {
     if (showPhysics) {
         ImGui::SetNextWindowPos(ImVec2(20, 30), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(450, 300), ImGuiCond_FirstUseEver);
         ImGui::Begin("Physics Debug", NULL);
 #ifndef NDEBUG
-        ImGui::DragFloat("EngineSpeed", &pe->interpolation_props.step, 0.02f, 0.0000000001f, 1.0f, "%f", 0);
-        if (ImGui::Button(pe->debug_data.stop ? "Start" : "Stop", { 100,30 })) {
-            pe->debug_data.stop = !pe->debug_data.stop;
-        }
+        // ImGui::BeginGroup();
+        // {
+        //     ImGui::PushItemWidth(100);
+        //     ImGui::DragFloat("##", &pe->interpolation_props.step, 0.02f, 0.0000000001f, 1.0f, "Engine Speed: %.4f", 0);
+        //     ImGui::SameLine();
+
+        //     if (ImGui::Button(pe->debug_data.stop ? "Start" : "Stop", { 100,30 })) {
+        //         pe->debug_data.stop = !pe->debug_data.stop;
+        //     }
+        //     ImGui::SameLine();
+        //     ImGui::Checkbox("Stepped", &pe->debug_data.stepped);
+        //     ImGui::SameLine();
+
+        //     if (ImGui::Button("Step", { 100,30 })) {
+        //         pe->debug_data.step = 1;
+        //     }
+        //     ImGui::EndGroup();
+        // }
         // Add Obj 
         // Object Starting Coords
 
