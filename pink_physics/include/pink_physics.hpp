@@ -63,4 +63,5 @@ namespace ps::pp {
     void basicResolver(Engine*, Rigidbody*);
     void eulerIntegration(Engine*, Rigidbody*);
     void verletIntegration(Engine*, Rigidbody*);
+    void print(const char*,kln::point);
 } // namespace ps::pp

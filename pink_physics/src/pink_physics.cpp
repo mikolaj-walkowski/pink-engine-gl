@@ -15,7 +15,44 @@ void ps::pp::Engine::renderUI() {
 
 }
 
-// RK baby lets gooo
+void ps::pp::print(const char* name, kln::point point) {
+    std::string n = name + std::string(" : %fe013, %fe021,%fe032,%fe123\n");
+    printf(n.c_str(), point.e013(), point.e021(), point.e032(), point.e123());
+}
+
+kln::point klnTestCross(kln::point a, kln::line b) {
+    kln::point p;
+    float out[4] = {
+        0.f, // 14? e123
+        -(b.e31() * a.e021() - b.e12() * a.e013() + b.e01() * a.e123()), //13  e032
+        -b.e23() * a.e021() + b.e12() * a.e032() + b.e02() * a.e123() , //12 e013
+        -(b.e23() * a.e021() - b.e31() * a.e032() - b.e03() * a.e123())//11 e021
+    };
+    p.load(out);
+    return p;
+}
+
+
+kln::line klnTestCross(kln::line a, kln::line b) {
+    //// Direct initialization from components. A more common way of creating a
+        /// motor is to take a product between a rotor and a translator.
+        /// The arguments coorespond to the multivector
+        /// $a + b\mathbf{e}_{23} + c\mathbf{e}_{31} + d\mathbf{e}_{12} +\
+        /// e\mathbf{e}_{01} + f\mathbf{e}_{02} + g\mathbf{e}_{03} +\
+        /// h\mathbf{e}_{0123}$.
+    kln::line out = kln::motor(
+        -b.e12() * a.e12() - b.e31() * a.e31() - b.e23() * a.e23(),//scalar
+        b.e31() * a.e12() - b.e12() * a.e31(),//e23
+        -b.e23() * a.e12() + b.e12() * a.e23(),//e31
+        b.e23() * a.e31() - b.e31() * a.e23(),//e12
+        -b.e12() * a.e02() + b.e31() * a.e03() + b.e02() * a.e12() - b.e03() * a.e31(),//e01
+        b.e12() * a.e01() - b.e23() * a.e03() - b.e01() * a.e12() + b.e03() * a.e23(),//e02
+        b.e31() * a.e01() + b.e23() * a.e02() + b.e01() * a.e31() - b.e02() * a.e23(),//e02
+        b.e23() * a.e01() + b.e31() * a.e02() + b.e12() * a.e03() + b.e03() * a.e12() + b.e02() * a.e31() + b.e01() * a.e23() // e0123
+    );
+    return out;
+}
+
 void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     int iterations = e->interpolation_props.iterations;
     float step = (e->dT * e->interpolation_props.step) / (float)iterations;
@@ -25,11 +62,11 @@ void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         e->simulate(rb);
         rb->M = rb->M + (step * rb->dM);
         rb->B = rb->B + (step * rb->dB);
+        rb->M.normalize();
 
         e->collide(e, rb);
         e->resolve(e, rb);
     }
-    rb->M.normalize();
 }
 
 void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
@@ -39,10 +76,11 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     e->simulate(rb);
     rb->M = rb->M + (rb->dM + old_dM) * (step / 2.f);
     rb->B = rb->B + (step * rb->dB);
+    rb->M.normalize();
+    rb->B.grade2();
 
     e->collide(e, rb);
     e->resolve(e, rb);
-    rb->M.normalize();
 }
 
 // void ps::pp::RK4(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
@@ -62,21 +100,20 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
 // TODO Upgrade Box collision
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
-    kln::line G = (~(rb->M))(kln::line(0.f, 9.81f, 0.f, 0.f, 0.f, 0.f));
-    kln::line Damp = (-0.35f * rb->B);
+    kln::line G(0.f, -9.81f, 0.f, 0.f, 0.f, 0.f);
+    G = !~((~rb->M)(G));
+    kln::line Damp = !(-0.35f * rb->B);
 
-    kln::line F = kln::line() + G + Damp;
-    //F = rb->M(F);
+    kln::line F = G;// +Damp;
 
-    rb->dM = (-0.5f * (rb->M * ((kln::motor)(rb->B))));
+    rb->dM = -0.5f * (rb->M * (kln::motor)(rb->B));
 
+    auto I = *((kln::line*)rb->shape);
 
-    auto I = ((ps::pp::Plane*)rb->shape)->inertia;
-    auto I_1 = ~I;
+    auto I_B = (!rb->B).mult(I);
+    auto helper = !~((F - klnTestCross(I_B, rb->B)).div(I));
 
-    auto comBIB = kln::line(rb->B * I.mult(rb->B) - I.mult(rb->B) * rb->B);
-
-    rb->dB = (I_1.mult(comBIB + F));
+    rb->dB = (helper);
 }
 
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
@@ -132,44 +169,46 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     float rho = 0.5f;
 
-    auto I_p = (~rb->M)(((ps::pp::Plane*)rb->shape)->inertia);
-    auto B_p = (~rb->M)(rb->B);
+    auto& I_p = *((kln::line*)rb->shape);
+    auto B_p = (rb->M)(rb->B);
 
     for (int i = 0; i < e->collision_props.size; i++)
     {
-        auto data = e->collision_props.collisionData[i];
-
+        auto& data = e->collision_props.collisionData[i];
         auto rb2 = data.rb;
 
-        auto I_m = (~rb2->M)(((ps::pp::Plane*)rb2->shape)->inertia);
-        auto B_m = (~rb2->M)(rb2->B);
+        auto& I_m = *((kln::line*)rb2->shape);
+        auto B_m = (rb2->M)(rb2->B);
 
-        auto normal = (data.normal);
+        auto normal = (data.normal).normalized();
+        kln::point Q = kln::origin();
 
         for (int ii = 0; ii < data.count; ii++)
         {
-            auto Q = (data.pointsOfContact[ii]).normalized();
-
-            auto N = kln::project(normal, Q).normalized();
-
-            auto I_pN = I_p.mult(N);
-            auto I_mN = I_m.mult(N);//(~(2nd rigidbody->shape)->inertia).mult(N);
-
-            auto QxB = kln::point((Q & (B_p - B_m)).p0_);
-            auto QxI = kln::point((Q & (I_pN - I_mN)).p0_);
-
-            auto num = (Q & QxB) | ~N;
-            auto den = (Q & QxI) | ~N;
-
-            auto j = -(1 + rho) * (num / den);
-
-            j /= (float)data.count;
-            auto I_pNb = (j * I_pN);
-
-            B_p = (B_p + (j * I_pN));
-            //rb2->B = rb2->B;// -j * (~rb2->M)(I_mN);
+            Q += data.pointsOfContact[ii];
         }
-        rb->B = rb->M(B_p);
+        Q /= (float)data.count;
+        Q.normalize();
+
+        auto N = kln::project(normal, Q);
+
+        auto I_pN = (rb->M)(!~(((~rb->M)(N)).div(I_p)));
+        auto I_mN = (rb2->M)(!~(((~rb2->M)(N)).div(I_m)));
+
+        // auto h1 = Q & (B_p - B_m);
+        // auto h2 = Q & (I_pN - I_mN);
+        auto QxB = klnTestCross(Q, B_p - B_m);
+        auto QxI = klnTestCross(Q, I_pN);
+
+        auto num = (Q & QxB) | N;
+        auto den = (Q & QxI) | N;
+
+        auto j = -(1 + rho) * num / den;
+        auto I_pNb = (~rb->M)( j * I_pN);
+
+        //I_pNb = I_pNb.mult(kln::line({1.f,1.f,1.f,0.f},{1.f,1.f,1.f,0.f}));
+        rb->B += I_pNb;
+        //rb2->B = rb2->B;// -j * (~rb2->M)(I_mN);
     }
 
 }

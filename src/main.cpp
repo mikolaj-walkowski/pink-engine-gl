@@ -79,15 +79,17 @@ int main(int argc, char** argv)
   SolidColor graphicsEngine(&vkctx, window, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT);
 
   //Setup physics engine components
-  ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::eulerIntegration);
+  ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::verletIntegration);
 
   /// DEBUG ZONE ========
-  // CREATING objects
+  // CREATING objects kln::rotor(kln::pi_4, 1, 1, 1)
   ps::Object boxObj = utils::objectCreate(
-    kln::translator(-9, 1, 0, 0) * kln::rotor(kln::pi_4, 1, 1, 1),
+    ((kln::motor) kln::uMotor()).normalized() ,
     ps::pp::ST_BOX,
     &utils::boxCreate(1, 1, 1, 2, kln::uMotor())
   );
+
+  ps::pp::print("Origin", ((kln::motor)kln::rotor(kln::pi_4, 1, 1, 1).normalized())(kln::origin()));
 
   ps::Object sphereObj = utils::objectCreate(
     kln::translator(-3, 1, 0, 0),
@@ -102,8 +104,8 @@ int main(int argc, char** argv)
   );
 
 
-  wordChain[0].simulatedObjects.push_back(boxObj);
-  //wordChain[0].simulatedObjects.push_back(sphereObj);
+  //wordChain[0].simulatedObjects.push_back(boxObj);
+  wordChain[0].simulatedObjects.push_back(sphereObj);
   wordChain[0].staticObjects.push_back(planeObj);
 
   ///  DEBUG ZONE ======== 
@@ -114,7 +116,7 @@ int main(int argc, char** argv)
   int next = 1;
 
 
-  static float limitFPS = 1.0f / 5.0f;
+  static float limitFPS = 1.0f / 30.0f;
 
   static float dT = 1000 * limitFPS;
 
