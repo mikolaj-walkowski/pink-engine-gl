@@ -37,7 +37,7 @@ namespace utils {
 
     ps::UniqueID newID();
 
-    ps::Object objectCreate(kln::motor m, ps::pp::ShapeType type, void* shape);
+    ps::Object objectCreate(kln::motor m, ps::pp::BodyType, ps::pp::ShapeType type, void* shape);
     ps::pp::Box boxCreate(float x, float y, float z, float mass, kln::motor offset);
     ps::pp::Sphere sphereCreate(float r, float mass, kln::motor offset);
     ps::pp::Plane planeCreate(kln::plane p);

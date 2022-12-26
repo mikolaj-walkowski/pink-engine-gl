@@ -24,6 +24,11 @@ namespace ps::pp {
         ST_SIZE
     };
 
+    enum BodyType {
+        BT_STATIC = 0,
+        BT_DYNAMIC = 1
+    };
+    
     struct Sphere {
         kln::line inertia;
         float radius;
@@ -58,6 +63,7 @@ namespace ps::pp {
 
         kln::point centerOfMass;
 
+        BodyType bodyType;
         ShapeType shapeType;
         void* shape;
     };

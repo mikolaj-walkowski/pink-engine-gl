@@ -72,12 +72,12 @@ void utils::nvidia::setupContext(nvvk::Context* c, std::vector<utils::ExtensionL
 
 }
 
-ps::Object utils::objectCreate(kln::motor m, ps::pp::ShapeType type, void* shape) {
+ps::Object utils::objectCreate(kln::motor m, ps::pp::BodyType bt_type, ps::pp::ShapeType type, void* shape) {
     m.normalize();
     void* shape_dynamic = malloc(ps::pp::shapeSize[type]);
     memcpy(shape_dynamic, shape, ps::pp::shapeSize[type]);
 
-    ps::pp::Rigidbody rb = { m, ~m(kln::line(0,0,0,0,0,0)), kln::uMotor(), kln::line(), kln::origin(), type, shape_dynamic };
+    ps::pp::Rigidbody rb = { m, ~m(kln::line(0,0,0,0,0,0)), kln::uMotor(), kln::line(), kln::origin(), bt_type, type, shape_dynamic };
 
     ps::Object out = {};
 
@@ -129,7 +129,7 @@ ps::pp::Sphere utils::sphereCreate(float r, float mass, kln::motor offset) {
     ps::pp::Sphere out;
     float a = 0.4f * mass;
     out.inertia = kln::motor(
-        1.f, 1.f, 1.f ,1.f,
+        1.f, 1.f, 1.f, 1.f,
         a * (r * r),
         a * (r * r),
         a * (r * r),

@@ -63,7 +63,7 @@ void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         rb->M = rb->M + (step * rb->dM);
         rb->B = rb->B + (step * rb->dB);
         rb->M.normalize();
-
+        rb->B.grade2();
         e->collide(e, rb);
         e->resolve(e, rb);
     }
@@ -102,9 +102,9 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     kln::line G(0.f, -9.81f, 0.f, 0.f, 0.f, 0.f);
     G = !~((~rb->M)(G));
-    kln::line Damp = !(-0.35f * rb->B);
+    kln::line Damp = !~(-0.35f * rb->B);
 
-    kln::line F = G;// +Damp;
+    kln::line F = G +Damp;
 
     rb->dM = -0.5f * (rb->M * (kln::motor)(rb->B));
 
@@ -180,35 +180,37 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         auto& I_m = *((kln::line*)rb2->shape);
         auto B_m = (rb2->M)(rb2->B);
 
-        auto normal = (data.normal).normalized();
-        kln::point Q = kln::origin();
+        auto normal = (data.normal);
+        kln::point Q = kln::point({0.f,0.f,0.f,0.f});
 
         for (int ii = 0; ii < data.count; ii++)
         {
             Q += data.pointsOfContact[ii];
         }
         Q /= (float)data.count;
-        Q.normalize();
 
-        auto N = kln::project(normal, Q);
+        auto N = (normal | Q) | Q;
+        
+        // N.normalize();
 
-        auto I_pN = (rb->M)(!~(((~rb->M)(N)).div(I_p)));
-        auto I_mN = (rb2->M)(!~(((~rb2->M)(N)).div(I_m)));
+        auto I_pN = (rb->M)(!~(((~rb->M)(N)).div(I_p))) * rb->bodyType;
+        auto I_mN = (rb2->M)(!~(((~rb2->M)(N)).div(I_m)))*rb2->bodyType;
 
-        // auto h1 = Q & (B_p - B_m);
-        // auto h2 = Q & (I_pN - I_mN);
+        //IMPULSE
         auto QxB = klnTestCross(Q, B_p - B_m);
-        auto QxI = klnTestCross(Q, I_pN);
+        auto QxI = klnTestCross(Q, I_pN - I_mN);
 
-        auto num = (Q & QxB) | N;
-        auto den = (Q & QxI) | N;
+        auto num = (Q & QxB) | ~N;
+        auto den = (Q & QxI) | ~N;
 
         auto j = -(1 + rho) * num / den;
-        auto I_pNb = (~rb->M)( j * I_pN);
+        
+        auto I_pNb = j * (~rb->M)((I_pN));
+        auto I_mNb = j * rb2->bodyType * (~rb2->M)(I_mN);
 
-        //I_pNb = I_pNb.mult(kln::line({1.f,1.f,1.f,0.f},{1.f,1.f,1.f,0.f}));
+
         rb->B += I_pNb;
-        //rb2->B = rb2->B;// -j * (~rb2->M)(I_mN);
+        rb2->B -= I_mNb;
     }
 
 }

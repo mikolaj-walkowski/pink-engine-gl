@@ -13,12 +13,13 @@ void ps::pp::sphereToPlane(Rigidbody* _sphere, Rigidbody* _plane, ps::pp::Manifo
     auto center = _sphere->M(sphere->center);
 
     auto line = plane | center;
+    // line = line.mult(kln::line(1.f, 1.f, 1.f, 0.f, 0.f, 0.f));
 
     auto distance = abs((center.normalized() & plane).scalar());
     if (distance < sphere->radius) {
         m->count = 1;
         m->pointsOfContact[0] = line ^ plane;
-        m->normal = line.normalized();
+        m->normal = line;
         m->penetration = sphere->radius - distance;
     }
 }
@@ -51,6 +52,7 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
         auto j = _box->M(box->verts[p.second]);
 
         auto line = i & j;
+        line.normalize();
         //line.normalize();
 
         m->normal = plane | kln::origin();

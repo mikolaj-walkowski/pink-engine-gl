@@ -82,29 +82,32 @@ int main(int argc, char** argv)
   ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::verletIntegration);
 
   /// DEBUG ZONE ========
-  // CREATING objects kln::rotor(kln::pi_4, 1, 1, 1)
+  // CREATING objects kln::
   ps::Object boxObj = utils::objectCreate(
-    ((kln::motor) kln::uMotor()).normalized() ,
+    ((kln::motor)kln::translator(3.f,1.f,0.f,0.f) * kln::rotor(kln::pi_4, 1, 1, 1)).normalized(),
+    ps::pp::BT_DYNAMIC,
     ps::pp::ST_BOX,
     &utils::boxCreate(1, 1, 1, 2, kln::uMotor())
   );
 
-  ps::pp::print("Origin", ((kln::motor)kln::rotor(kln::pi_4, 1, 1, 1).normalized())(kln::origin()));
+  //ps::pp::print("Origin", ((kln::motor)kln::rotor(kln::pi_4, 1, 1, 1).normalized())(kln::origin()));
 
   ps::Object sphereObj = utils::objectCreate(
     kln::translator(-3, 1, 0, 0),
+    ps::pp::BT_DYNAMIC,
     ps::pp::ST_SPHERE,
     &utils::sphereCreate(1.f, 2.f, kln::uMotor())
   );
 
   ps::Object planeObj = utils::objectCreate(
     kln::translator(-3, 0, 1, 0),
+    ps::pp::BT_STATIC,
     ps::pp::ST_PLANE,
     &utils::planeCreate(kln::plane(0, 1, 0, 0))
   );
 
 
-  //wordChain[0].simulatedObjects.push_back(boxObj);
+  wordChain[0].simulatedObjects.push_back(boxObj);
   wordChain[0].simulatedObjects.push_back(sphereObj);
   wordChain[0].staticObjects.push_back(planeObj);
 
