@@ -44,6 +44,9 @@ private:
   VkPipelineLayout                                  m_rtPipelineLayout;
   VkPipeline                                        m_rtPipeline;
   nvvk::Buffer                                      m_rtSBTBuffer;
+  std::vector<VkAccelerationStructureInstanceKHR>   m_tlas;
+  VkBuildAccelerationStructureFlagsKHR              m_rtFlags;
+  std::vector<nvvk::RaytracingBuilderKHR::BlasInput> m_blas;
 
 
   PushConstantRay m_pcRay{};
