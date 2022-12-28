@@ -150,7 +150,7 @@ void UI::PhysicsWindow() {
                     auto m = pe->debug_data.collisionData[n];
                     auto nl = m.normal;
 
-                    klnLine("Normal", nl);
+                    //klnLine("Normal", nl);
                     if (ImGui::BeginTable("Points of contact", 4))
                     {
                         klnPointTableHeader();

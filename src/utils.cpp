@@ -108,14 +108,14 @@ ps::pp::Box utils::boxCreate(float x, float y, float z, float mass, kln::motor o
     x /= 2.f;
     y /= 2.f;
     z /= 2.f;
-    out.verts[0] = offset(kln::point(-x, -y, -z));
-    out.verts[1] = offset(kln::point(x, -y, -z));
-    out.verts[2] = offset(kln::point(-x, y, -z));
-    out.verts[3] = offset(kln::point(x, y, -z));
-    out.verts[4] = offset(kln::point(-x, -y, z));
-    out.verts[5] = offset(kln::point(x, -y, z));
-    out.verts[6] = offset(kln::point(-x, y, z));
-    out.verts[7] = offset(kln::point(x, y, z));
+    out.verts[0] = (kln::point(-x, y, z));
+    out.verts[1] = (kln::point(x, y, z));
+    out.verts[2] = (kln::point(x, y, -z));
+    out.verts[3] = (kln::point(-x, y, -z));
+    out.verts[4] = (kln::point(-x, -y, z));
+    out.verts[5] = (kln::point(x, -y, z));
+    out.verts[6] = (kln::point(x, -y, -z));
+    out.verts[7] = (kln::point(-x, -y, -z));
 
 
     // for (int i = 0; i < 8; i++) {

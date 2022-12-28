@@ -24,9 +24,9 @@ kln::point klnTestCross(kln::point a, kln::line b) {
     kln::point p;
     float out[4] = {
         0.f, // 14? e123
-        -(b.e31() * a.e021() - b.e12() * a.e013() + b.e01() * a.e123()), //13  e032
-        -b.e23() * a.e021() + b.e12() * a.e032() + b.e02() * a.e123() , //12 e013
-        -(b.e23() * a.e021() - b.e31() * a.e032() - b.e03() * a.e123())//11 e021
+        -(b.e31() * a.e021() - b.e12() * a.e013() + b.e01() * a.e123()), //13 e032
+        -b.e23() * a.e021() + b.e12() * a.e032() + b.e02() * a.e123() ,  //12 e013
+        -(b.e23() * a.e021() - b.e31() * a.e032() - b.e03() * a.e123())  //11 e021
     };
     p.load(out);
     return p;
@@ -104,7 +104,7 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     G = !~((~rb->M)(G));
     kln::line Damp = !~(-0.35f * rb->B);
 
-    kln::line F = G +Damp;
+    kln::line F = G + Damp;
 
     rb->dM = -0.5f * (rb->M * (kln::motor)(rb->B));
 
@@ -118,49 +118,97 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
 
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     auto& staticObjects = e->out->staticObjects;
+    auto& dynamicObjects = e->out->simulatedObjects;
 
     auto collisions = e->collision_props.collisions;
     auto collisionData = e->collision_props.collisionData;
-    auto collisionSize = &e->collision_props.size;
+    auto& collisionSize = e->collision_props.size;
     auto collisionMaxSize = Engine::maxNumber;
 
-    *collisionSize = 0;
+    collisionSize = 0;
 
 
     for (int n = 0; n < staticObjects.size(); n++)
     {
         auto& i = staticObjects[n];
-        if (*collisionSize >= collisionMaxSize) break;
+        if (collisionSize >= collisionMaxSize) break;
         if (rb == &i.rigidbody) continue;
 
         auto type = BM(rb->shapeType) | BM(i.rigidbody.shapeType);
         switch (type)
         {
-        case (BM(ST_SPHERE) | BM(ST_PLANE)):
-            sphereToPlane(rb, &i.rigidbody, &collisionData[*collisionSize]);
+        case (BM(ST_SPHERE) | BM(ST_PLANE)): {
+            sphereToPlane(rb, &i.rigidbody, &collisionData[collisionSize]);
             break;
+        }
         case (BM(ST_BOX) | BM(ST_PLANE)): {
-            boxToPlane(rb, &i.rigidbody, &collisionData[*collisionSize]);
+            boxToPlane(rb, &i.rigidbody, &collisionData[collisionSize]);
+            break;
+        }
+        case (BM(ST_SPHERE)): {
+            sphereToSphere(rb, &i.rigidbody, &collisionData[collisionSize]);
             break;
         }
         default:
-            collisionData[*collisionSize].count = 0;
+            collisionData[collisionSize].count = 0;
             break;
         }
 
-        if (collisionData[*collisionSize].count != 0) {
-            collisionData[*collisionSize].rb = &(staticObjects[n].rigidbody);
+        if (collisionData[collisionSize].count != 0) {
+            collisionData[collisionSize].rb = &(staticObjects[n].rigidbody);
 
 #ifndef NDEBUG
-            for (int di = 0; di < collisionData[*collisionSize].count; di++)
+            for (int di = 0; di < collisionData[collisionSize].count; di++)
             {
-                auto p = collisionData[*collisionSize].pointsOfContact[di];
+                auto p = collisionData[collisionSize].pointsOfContact[di];
                 nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
                 nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
                 e->out->points.push_back(t * s);
             }
 #endif
-            ++(*collisionSize);
+            ++(collisionSize);
+        }
+    }
+
+    for (int n = 0; n < dynamicObjects.size(); n++)
+    {
+        auto& i = dynamicObjects[n];
+        if (collisionSize >= collisionMaxSize) break;
+        if (rb == &i.rigidbody) continue;
+
+        auto type = BM(rb->shapeType) | BM(i.rigidbody.shapeType);
+        switch (type)
+        {
+        case (BM(ST_SPHERE) | BM(ST_PLANE)): {
+            sphereToPlane(rb, &i.rigidbody, &collisionData[collisionSize]);
+            break;
+        }
+        case (BM(ST_BOX) | BM(ST_PLANE)): {
+            boxToPlane(rb, &i.rigidbody, &collisionData[collisionSize]);
+            break;
+        }
+        case (BM(ST_SPHERE)): {
+            sphereToSphere(rb, &i.rigidbody, &collisionData[collisionSize]);
+            break;
+        }
+        default:
+            collisionData[collisionSize].count = 0;
+            break;
+        }
+
+        if (collisionData[collisionSize].count != 0) {
+            collisionData[collisionSize].rb = &(dynamicObjects[n].rigidbody);
+
+#ifndef NDEBUG
+            for (int di = 0; di < collisionData[collisionSize].count; di++)
+            {
+                auto p = collisionData[collisionSize].pointsOfContact[di];
+                nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
+                nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
+                e->out->points.push_back(t * s);
+            }
+#endif
+            ++(collisionSize);
         }
     }
 }
@@ -180,34 +228,35 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         auto& I_m = *((kln::line*)rb2->shape);
         auto B_m = (rb2->M)(rb2->B);
 
-        auto normal = (data.normal);
-        kln::point Q = kln::point({0.f,0.f,0.f,0.f});
+        auto normal = (data.normal);//.normalized();
+        kln::point Q = kln::point({ 0.f,0.f,0.f,0.f });
 
         for (int ii = 0; ii < data.count; ii++)
         {
             Q += data.pointsOfContact[ii];
         }
         Q /= (float)data.count;
+        //Q = kln::point(Q.x(), Q.y(), Q.z());
 
-        auto N = (normal | Q) | Q;
+        auto N = normal | Q;//.normalized();
+
+        auto fuck1 = (~rb->M)(N);
+        auto fuck2 = (~rb2->M)(N);
         
-        // N.normalize();
-
         auto I_pN = (rb->M)(!~(((~rb->M)(N)).div(I_p))) * rb->bodyType;
-        auto I_mN = (rb2->M)(!~(((~rb2->M)(N)).div(I_m)))*rb2->bodyType;
+        auto I_mN = (rb2->M)(!~(((~rb2->M)(N)).div(I_m))) * rb2->bodyType;
 
         //IMPULSE
         auto QxB = klnTestCross(Q, B_p - B_m);
-        auto QxI = klnTestCross(Q, I_pN - I_mN);
+        auto QxI = klnTestCross(Q, I_pN + I_mN);
 
         auto num = (Q & QxB) | ~N;
         auto den = (Q & QxI) | ~N;
 
         auto j = -(1 + rho) * num / den;
-        
-        auto I_pNb = j * (~rb->M)((I_pN));
-        auto I_mNb = j * rb2->bodyType * (~rb2->M)(I_mN);
 
+        auto I_pNb = j * (~rb->M)(I_pN);
+        auto I_mNb = j * (~rb2->M)(I_mN);
 
         rb->B += I_pNb;
         rb2->B -= I_mNb;

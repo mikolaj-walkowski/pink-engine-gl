@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   /// DEBUG ZONE ========
   // CREATING objects kln::
   ps::Object boxObj = utils::objectCreate(
-    ((kln::motor)kln::translator(3.f,1.f,0.f,0.f) * kln::rotor(kln::pi_4, 1, 1, 1)).normalized(),
+    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::rotor(kln::pi_4,1.f,0.f,1.f)).normalized(),
     ps::pp::BT_DYNAMIC,
     ps::pp::ST_BOX,
     &utils::boxCreate(1, 1, 1, 2, kln::uMotor())
@@ -99,8 +99,16 @@ int main(int argc, char** argv)
     &utils::sphereCreate(1.f, 2.f, kln::uMotor())
   );
 
+  ps::Object sphereObj2 = utils::objectCreate(
+    kln::translator(-3, 1, 0, 0) * kln::translator(3, 0, 1, 0),
+    ps::pp::BT_DYNAMIC,
+    ps::pp::ST_SPHERE,
+    &utils::sphereCreate(1.f, 2.f, kln::uMotor())
+  );
+
+  kln::euler_angles a = { kln::pi / 8.f, kln::pi / 8.f, 0.0f };
   ps::Object planeObj = utils::objectCreate(
-    kln::translator(-3, 0, 1, 0),
+    kln::translator(-6, 0, 1, 0) * kln::rotor(a),
     ps::pp::BT_STATIC,
     ps::pp::ST_PLANE,
     &utils::planeCreate(kln::plane(0, 1, 0, 0))
@@ -109,6 +117,8 @@ int main(int argc, char** argv)
 
   wordChain[0].simulatedObjects.push_back(boxObj);
   wordChain[0].simulatedObjects.push_back(sphereObj);
+  wordChain[0].simulatedObjects.push_back(sphereObj2);
+
   wordChain[0].staticObjects.push_back(planeObj);
 
   ///  DEBUG ZONE ======== 
@@ -162,7 +172,7 @@ int main(int argc, char** argv)
     }
 
     nowTime = (float)glfwGetTime();
-    graphicsEngine.drawFrame(&wordChain[euclidean_remainder(now - 1, WC_SIZE)], &wordChain[now], std::min(deltaTime,1.0f));
+    graphicsEngine.drawFrame(&wordChain[euclidean_remainder(now - 1, WC_SIZE)], &wordChain[now], std::min(deltaTime, 1.0f));
   }
 
   // Cleanup
