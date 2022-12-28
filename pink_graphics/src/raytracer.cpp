@@ -109,27 +109,26 @@ auto Raytracer::implicitToVkGeometryKHR(const ImplInst& implicitObj)
 void Raytracer::createBottomLevelAS(std::vector<ObjModel>& models, ImplInst& implicitObj)
 {
   // BLAS - Storing each primitive in a geometry
-  std::vector<nvvk::RaytracingBuilderKHR::BlasInput> allBlas;
-  allBlas.reserve(models.size());
+  m_blas.reserve(models.size());
   for(const auto& obj : models)
   {
     auto blas = objectToVkGeometryKHR(obj);
 
     // We could add more geometry in each BLAS, but we add only one for now
-    allBlas.emplace_back(blas);
+    m_blas.emplace_back(blas);
   }
 
   // Adding implicit
   if(!implicitObj.objImpl.empty())
   {
     auto blas = implicitToVkGeometryKHR(implicitObj);
-    allBlas.emplace_back(blas);
-    implicitObj.blasId = static_cast<int>(allBlas.size() - 1);  // remember blas ID for tlas
+    m_blas.emplace_back(blas);
+    implicitObj.blasId = static_cast<int>(m_blas.size() - 1);  // remember blas ID for tlas
   }
 
 
-  m_rtBuilder.buildBlas(allBlas, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR
-                                     | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR);
+  m_rtBuilder.buildBlas(m_blas, VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR
+                                    | VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR);
 }
 
 void Raytracer::createTopLevelAS(std::vector<ObjInstance>& instances, ImplInst& implicitObj)
@@ -138,7 +137,7 @@ void Raytracer::createTopLevelAS(std::vector<ObjInstance>& instances, ImplInst& 
 
 
   auto nbObj = static_cast<uint32_t>(instances.size()) - 1;  // minus the implicit (for material)
-  tlas.reserve(instances.size());
+  m_tlas.reserve(instances.size());
   for(uint32_t i = 0; i < nbObj; i++)
   {
     VkAccelerationStructureInstanceKHR rayInst{};
@@ -163,7 +162,7 @@ void Raytracer::createTopLevelAS(std::vector<ObjInstance>& instances, ImplInst& 
     rayInst.instanceShaderBindingTableRecordOffset = 1;  // We will use the same hit group for all objects (the second one)
     tlas.emplace_back(rayInst);
   }
-
+  m_rtFlags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
   m_rtBuilder.buildTlas(tlas, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR);
 }
 
