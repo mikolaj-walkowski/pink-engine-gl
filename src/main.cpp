@@ -98,7 +98,7 @@ int main(int argc, char** argv)
     ps::pp::ST_SPHERE,
     &utils::sphereCreate(1.f, 2.f, kln::uMotor())
   );
-  //sphereObj.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
+  sphereObj.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
 
   ps::Object sphereObj2 = utils::objectCreate(
     kln::translator(-3, 1, 0, 0) * kln::translator(3, 0, 1, 0),
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 
   kln::euler_angles a = { kln::pi / 8.f, kln::pi / 8.f, 0.0f };
   ps::Object planeObj = utils::objectCreate(
-    kln::translator(-6, 0, 1, 0),// *kln::rotor(a),
+    kln::translator(-6, 0, 1, 0) * kln::rotor(a),
     ps::pp::BT_STATIC,
     ps::pp::ST_PLANE,
     &utils::planeCreate(kln::plane(0, 1, 0, 0))
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 
   wordChain[0].simulatedObjects.push_back(boxObj);
   wordChain[0].simulatedObjects.push_back(sphereObj);
-  wordChain[0].simulatedObjects.push_back(sphereObj2);
+  //wordChain[0].simulatedObjects.push_back(sphereObj2);
 
   wordChain[0].staticObjects.push_back(planeObj);
 
@@ -153,7 +153,6 @@ int main(int argc, char** argv)
     nowTime = (float)glfwGetTime();
     deltaTime += (nowTime - lastTime) / limitFPS;
 
-    // - Only update at 60 frames / s
     if (deltaTime >= 1.0) {
       next = (now + 1) % WC_SIZE;
       physicsEngine.step(&wordChain[now], &wordChain[next], (nowTime - lastTime));

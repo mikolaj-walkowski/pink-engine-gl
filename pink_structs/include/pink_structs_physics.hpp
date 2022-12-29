@@ -47,6 +47,13 @@ namespace ps::pp {
         // TODO add precalculated lines and constructor
     };
 
+    struct Cylinder {
+        kln::line inertia;
+        kln::line centerLine;
+        kln::point caps[2];
+        float r;
+    };
+
     struct Plane {
         kln::line inertia;
         kln::plane plane;

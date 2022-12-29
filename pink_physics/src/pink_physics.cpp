@@ -228,7 +228,6 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         auto B_m = (rb2->M)(rb2->B);
 
         auto normal = (data.normal);
-        //kln::point Q = kln::point({ 0.f,0.f,0.f,0.f });
 
         for (int ii = 0; ii < data.count; ii++)
         {
@@ -265,7 +264,6 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
             auto num_T = ((Q & QxB) | ~T);
             if (eCmp(num_T, 0.0f)) return;
-            // T = kln::project(T, Q);
 
             auto I_pT = (rb->M)(!~(((~rb->M)(T)).div(I_p))) * rb->bodyType;
             auto I_mT = (rb2->M)(!~(((~rb2->M)(T)).div(I_m))) * rb2->bodyType;
@@ -292,6 +290,8 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
             auto I_pTb = jt * (~rb->M)(I_pT);
             auto I_mTb = jt * (~rb2->M)(I_mT);
 
+
+            //TODO fix for SIMULATED v SIMULATED collisions / or disable for them ()  
             rb->B += I_pTb;
             rb2->B -= I_mTb;
         }

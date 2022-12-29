@@ -147,3 +147,26 @@ ps::pp::Plane utils::planeCreate(kln::plane p) {
     return out;
 }
 
+
+ps::pp::Cylinder cylinderCreate(float len, float r, float m, kln::motor offset) {
+    ps::pp::Cylinder out;
+    out.inertia = offset(kln::motor(
+        1.f, 1.f, 1.f, 1.f,
+        (1.f / 12.f) * m * (3 * r * r + len * len),
+        (1.f / 12.f) * m * (3 * r * r + len * len),
+        0.5f * m * (r * r),
+        1.f
+    ));
+    
+    r /= 2.f;
+
+    auto t = kln::translator(r, 0.f, 1.f, 0.f);
+    out.caps[0] = t(kln::origin());
+
+    t = kln::translator(-r, 0.f, 1.f, 0.f);
+    out.caps[1] = t(kln::origin());
+
+    out.centerLine = (out.caps[0] & out.caps[1]).normalized();
+
+    return out;
+}

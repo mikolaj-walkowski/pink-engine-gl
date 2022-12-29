@@ -41,6 +41,7 @@ namespace utils {
     ps::pp::Box boxCreate(float x, float y, float z, float mass, kln::motor offset);
     ps::pp::Sphere sphereCreate(float r, float mass, kln::motor offset);
     ps::pp::Plane planeCreate(kln::plane p);
+    ps::pp::Cylinder cylinderCreate(float len, float width, float mass, kln::motor offset);
 
     void objectDestroy(ps::Object* rb);
 }//namespace utils
