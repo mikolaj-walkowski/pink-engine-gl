@@ -1,6 +1,6 @@
 #include "pink_physics_colliders.hpp"
 
-bool eCmp(float a, float b) {
+bool ps::pp::eCmp(float a, float b) {
     float epsilon = 0.0001f;
     return abs(a - b) < epsilon;
 }
@@ -86,7 +86,7 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
         //Line parallel
         auto helper = (plane & i).scalar();
         if (point.e123() == 0.f) {
-            if (eCmp((plane & i).scalar(), 0.0f)) {
+            if (ps::pp::eCmp((plane & i).scalar(), 0.0f)) {
                 kln::point* p = (kln::point*)find(m->pointsOfContact, m->pointsOfContact + m->count, &i, sizeof(kln::point));
                 if (p == NULL && m->count < m->maxContactPoints) {
                     m->pointsOfContact[m->count] = i;

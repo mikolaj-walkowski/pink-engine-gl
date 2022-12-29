@@ -5,7 +5,6 @@
 #include "backends/imgui_impl_glfw.h"
 #include "imgui.h"
 
-
 kln::line::line(motor l) {
     p1_ = l.p1_;
     p2_ = l.p2_;
@@ -24,9 +23,9 @@ kln::point klnTestCross(kln::point a, kln::line b) {
     kln::point p;
     float out[4] = {
         0.f, // 14? e123
-        -(b.e31() * a.e021() - b.e12() * a.e013() + b.e01() * a.e123()), //13 e032
+        b.e31() * a.e021() - b.e12() * a.e013() + b.e01() * a.e123(), //13 e032
         -b.e23() * a.e021() + b.e12() * a.e032() + b.e02() * a.e123() ,  //12 e013
-        -(b.e23() * a.e021() - b.e31() * a.e032() - b.e03() * a.e123())  //11 e021
+        b.e23() * a.e013() - b.e31() * a.e032() + b.e03() * a.e123()  //11 e021
     };
     p.load(out);
     return p;
@@ -104,7 +103,7 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     G = !~((~rb->M)(G));
     kln::line Damp = !~(-0.35f * rb->B);
 
-    kln::line F = G + Damp;
+    kln::line F = G;//+Damp;
 
     rb->dM = -0.5f * (rb->M * (kln::motor)(rb->B));
 
@@ -228,38 +227,74 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         auto& I_m = *((kln::line*)rb2->shape);
         auto B_m = (rb2->M)(rb2->B);
 
-        auto normal = (data.normal);//.normalized();
-        kln::point Q = kln::point({ 0.f,0.f,0.f,0.f });
+        auto normal = (data.normal);
+        //kln::point Q = kln::point({ 0.f,0.f,0.f,0.f });
 
         for (int ii = 0; ii < data.count; ii++)
         {
-            Q += data.pointsOfContact[ii];
+            auto Q = data.pointsOfContact[ii];
+
+            auto N = normal | Q;
+
+            auto I_pN = (rb->M)(!~(((~rb->M)(N)).div(I_p))) * rb->bodyType;
+            auto I_mN = (rb2->M)(!~(((~rb2->M)(N)).div(I_m))) * rb2->bodyType;
+
+            //IMPULSE
+            auto QxB = klnTestCross(Q, B_p - B_m);
+            auto QxI = klnTestCross(Q, I_pN + I_mN);
+
+            auto localB = Q & QxB;
+
+            auto num = (Q & QxB) | ~N;
+            auto den = (Q & QxI) | ~N;
+
+            auto j = -(1 + rho) * num / den;
+            j /= (float)data.count;
+
+            auto I_pNb = j * (~rb->M)(I_pN);
+            auto I_mNb = j * (~rb2->M)(I_mN);
+
+            rb->B += I_pNb;
+            rb2->B -= I_mNb;
+
+            // FRICTION
+            auto T = (kln::project(Q & QxB, normal) | Q) | Q;
+            if (eCmp(T.norm(), 0.0f)) return;
+            
+            T.normalize();
+
+            auto num_T = ((Q & QxB) | ~T);
+            if (eCmp(num_T, 0.0f)) return;
+            // T = kln::project(T, Q);
+
+            auto I_pT = (rb->M)(!~(((~rb->M)(T)).div(I_p))) * rb->bodyType;
+            auto I_mT = (rb2->M)(!~(((~rb2->M)(T)).div(I_m))) * rb2->bodyType;
+
+            auto QxIT = klnTestCross(Q, I_pT + I_mT);
+
+            auto den_T = ((Q & QxIT) | ~T);
+
+            auto jt = num_T / den_T;
+
+            jt /= (float)data.count;
+
+            if (ps::pp::eCmp(jt, 0.0f)) return;
+
+            float f = 0.2f;
+
+            if (jt > j * f) {
+                jt = j * f;
+            }
+            else if (jt < -j * f) {
+                jt = -j * f;
+            }
+
+            auto I_pTb = jt * (~rb->M)(I_pT);
+            auto I_mTb = jt * (~rb2->M)(I_mT);
+
+            rb->B += I_pTb;
+            rb2->B -= I_mTb;
         }
-        Q /= (float)data.count;
-        //Q = kln::point(Q.x(), Q.y(), Q.z());
-
-        auto N = normal | Q;//.normalized();
-
-        auto fuck1 = (~rb->M)(N);
-        auto fuck2 = (~rb2->M)(N);
-        
-        auto I_pN = (rb->M)(!~(((~rb->M)(N)).div(I_p))) * rb->bodyType;
-        auto I_mN = (rb2->M)(!~(((~rb2->M)(N)).div(I_m))) * rb2->bodyType;
-
-        //IMPULSE
-        auto QxB = klnTestCross(Q, B_p - B_m);
-        auto QxI = klnTestCross(Q, I_pN + I_mN);
-
-        auto num = (Q & QxB) | ~N;
-        auto den = (Q & QxI) | ~N;
-
-        auto j = -(1 + rho) * num / den;
-
-        auto I_pNb = j * (~rb->M)(I_pN);
-        auto I_mNb = j * (~rb2->M)(I_mN);
-
-        rb->B += I_pNb;
-        rb2->B -= I_mNb;
     }
 
 }

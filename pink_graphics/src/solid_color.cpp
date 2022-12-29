@@ -653,8 +653,8 @@ void SolidColor::initOffscreen()
 //
 void SolidColor::initRayTracing()
 {
-  m_raytrace.createBottomLevelAS(m_objModel, m_implObjects);
-  m_raytrace.createTopLevelAS(m_instances, m_implObjects);
+//   m_raytrace.createBottomLevelAS(m_objModel, m_implObjects);
+//   m_raytrace.createTopLevelAS(m_instances, m_implObjects);
   m_raytrace.createRtDescriptorSet(m_offscreen.colorTexture().descriptor.imageView);
   m_raytrace.createRtPipeline(m_descSetLayout);
 }

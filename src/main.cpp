@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   /// DEBUG ZONE ========
   // CREATING objects kln::
   ps::Object boxObj = utils::objectCreate(
-    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::rotor(kln::pi_4,1.f,0.f,1.f)).normalized(),
+    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::rotor(kln::pi_4, 1.f, 0.f, 1.f)).normalized(),
     ps::pp::BT_DYNAMIC,
     ps::pp::ST_BOX,
     &utils::boxCreate(1, 1, 1, 2, kln::uMotor())
@@ -98,6 +98,7 @@ int main(int argc, char** argv)
     ps::pp::ST_SPHERE,
     &utils::sphereCreate(1.f, 2.f, kln::uMotor())
   );
+  //sphereObj.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
 
   ps::Object sphereObj2 = utils::objectCreate(
     kln::translator(-3, 1, 0, 0) * kln::translator(3, 0, 1, 0),
@@ -105,10 +106,11 @@ int main(int argc, char** argv)
     ps::pp::ST_SPHERE,
     &utils::sphereCreate(1.f, 2.f, kln::uMotor())
   );
+  //sphereObj2.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
 
   kln::euler_angles a = { kln::pi / 8.f, kln::pi / 8.f, 0.0f };
   ps::Object planeObj = utils::objectCreate(
-    kln::translator(-6, 0, 1, 0) * kln::rotor(a),
+    kln::translator(-6, 0, 1, 0),// *kln::rotor(a),
     ps::pp::BT_STATIC,
     ps::pp::ST_PLANE,
     &utils::planeCreate(kln::plane(0, 1, 0, 0))
@@ -129,7 +131,7 @@ int main(int argc, char** argv)
   int next = 1;
 
 
-  static float limitFPS = 1.0f / 30.0f;
+  static float limitFPS = 1.0f / 5.0f;
 
   static float dT = 1000 * limitFPS;
 
