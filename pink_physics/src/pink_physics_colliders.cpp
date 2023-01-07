@@ -148,3 +148,81 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
 
 
 }
+
+void ps::pp::boxToBox(Rigidbody* ap_box1, Rigidbody* ap_box2, Manifold* m) {
+    auto boxOne = (ps::pp::Box*)(ap_box1->shape);
+    auto boxOneCenter = ap_box1->M(ap_box1->centerOfMass);
+
+    auto boxTwo = (ps::pp::Box*)(ap_box2->shape);
+    auto boxTwoCenter = ap_box2->M(ap_box2->centerOfMass);
+
+    m->count = 0;
+
+    for (auto p1 : boxOne->faces) {
+        auto vert1 = ap_box1->M(boxOne->verts[p1[0]]);
+        auto vert2 = ap_box1->M(boxOne->verts[p1[1]]);
+        auto vert3 = ap_box1->M(boxOne->verts[p1[2]]);
+        auto vert4 = ap_box1->M(boxOne->verts[p1[3]]);
+
+        auto plane = vert1 & vert2 & vert3;
+        plane.normalize();
+        auto normal = plane;
+
+        for (auto p2 : boxTwo->edges) {
+            
+            auto i = ap_box2->M(boxTwo->verts[p2.first]);
+            auto j = ap_box2->M(boxTwo->verts[p2.second]);
+
+            auto line = i & j;
+            line.normalize();
+
+            auto point = plane ^ line;
+
+            point.normalize();
+
+            // ugly as hell, but works
+            bool x = between(
+                std::max(i.x(), j.x()),
+                std::min(i.x(), j.x()),
+                point.x()
+            ) & between(
+                std::max(std::max(vert1.x(), vert2.x()), std::max(vert3.x(), vert4.x())),
+                std::min(std::min(vert1.x(), vert2.x()), std::min(vert3.x(), vert4.x())),
+                point.x()
+            );
+
+            bool y = between(
+                std::max(i.y(), j.y()),
+                std::min(i.y(), j.y()),
+                point.y()
+            ) & between(
+                std::max(std::max(vert1.y(), vert2.y()), std::max(vert3.y(), vert4.y())),
+                std::min(std::min(vert1.y(), vert2.y()), std::min(vert3.y(), vert4.y())),
+                point.y()
+            );
+
+            bool z = between(
+                std::max(i.z(), j.z()),
+                std::min(i.z(), j.z()),
+                point.z()
+            ) & between(
+                std::max(std::max(vert1.z(), vert2.z()), std::max(vert3.z(), vert4.z())),
+                std::min(std::min(vert1.z(), vert2.z()), std::min(vert3.z(), vert4.z())),
+                point.z()
+            );
+            
+            if (x && y && z) {
+                kln::point* p = (kln::point*)find(m->pointsOfContact, m->pointsOfContact + m->count, &point, sizeof(kln::point));
+                if (p == NULL && m->count < m->maxContactPoints) {
+                    m->normal = normal;
+                    m->pointsOfContact[m->count] = point;
+                    ++(m->count);
+                }
+            }
+
+        }
+
+    }
+
+
+}

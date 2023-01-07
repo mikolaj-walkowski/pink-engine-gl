@@ -89,6 +89,15 @@ int main(int argc, char** argv)
     ps::pp::ST_BOX,
     &utils::boxCreate(1, 1, 1, 2, kln::uMotor())
   );
+  boxObj.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
+
+  ps::Object boxObj2 = utils::objectCreate(
+    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.1f, 1.0f, 0.0f)).normalized(),
+    ps::pp::BT_DYNAMIC,
+    ps::pp::ST_BOX,
+    &utils::boxCreate(1, 1, 1, 2, kln::uMotor())
+  );
+  boxObj2.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
 
   //ps::pp::print("Origin", ((kln::motor)kln::rotor(kln::pi_4, 1, 1, 1).normalized())(kln::origin()));
 
@@ -98,17 +107,18 @@ int main(int argc, char** argv)
     ps::pp::ST_SPHERE,
     &utils::sphereCreate(1.f, 2.f, kln::uMotor())
   );
-  sphereObj.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
+  sphereObj.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("sphere");
 
   ps::Object sphereObj2 = utils::objectCreate(
-    kln::translator(-3, 1, 0, 0) * kln::translator(3, 0, 1, 0),
+    kln::translator(-3, 1, 0, 0) * kln::translator(3, 0.1f, 1, 0.0f),
     ps::pp::BT_DYNAMIC,
     ps::pp::ST_SPHERE,
     &utils::sphereCreate(1.f, 2.f, kln::uMotor())
   );
-  //sphereObj2.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
+  sphereObj2.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("sphere");
 
-  kln::euler_angles a = { kln::pi / 8.f, kln::pi / 8.f, 0.0f };
+  // kln::euler_angles a = { kln::pi / 8.f, kln::pi / 8.f, 0.0f };
+  kln::euler_angles a = { 0.0f, 0.0f, 0.0f };
   ps::Object planeObj = utils::objectCreate(
     kln::translator(-6, 0, 1, 0) * kln::rotor(a),
     ps::pp::BT_STATIC,
@@ -118,8 +128,9 @@ int main(int argc, char** argv)
 
 
   wordChain[0].simulatedObjects.push_back(boxObj);
+  wordChain[0].simulatedObjects.push_back(boxObj2);
   wordChain[0].simulatedObjects.push_back(sphereObj);
-  //wordChain[0].simulatedObjects.push_back(sphereObj2);
+  wordChain[0].simulatedObjects.push_back(sphereObj2);
 
   wordChain[0].staticObjects.push_back(planeObj);
 

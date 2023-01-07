@@ -148,6 +148,10 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
             sphereToSphere(rb, &i.rigidbody, &collisionData[collisionSize]);
             break;
         }
+        case (BM(ST_BOX)): {
+            boxToBox(rb, &i.rigidbody, &collisionData[collisionSize]);
+            break;
+        }
         default:
             collisionData[collisionSize].count = 0;
             break;
@@ -188,6 +192,10 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         }
         case (BM(ST_SPHERE)): {
             sphereToSphere(rb, &i.rigidbody, &collisionData[collisionSize]);
+            break;
+        }
+        case (BM(ST_BOX)): {
+            boxToBox(rb, &i.rigidbody, &collisionData[collisionSize]);
             break;
         }
         default:

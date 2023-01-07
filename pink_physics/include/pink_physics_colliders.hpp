@@ -8,7 +8,7 @@ namespace ps::pp {
 
 
 
-    //TODO box v box
+    void boxToBox(Rigidbody* ap_box1, Rigidbody* ap_box2, Manifold* m);
     void sphereToSphere(Rigidbody* b1, Rigidbody* b2, Manifold* m);
 
     //TODO cylinder v plane
