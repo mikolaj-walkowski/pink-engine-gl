@@ -42,6 +42,10 @@ bool ps::pp::collide(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, ps::pp::Man
         f = sphereToSphere;
         break;
     }
+    case (BM(ps::pp::ST_BOX)): {
+        f = boxToBox;
+        break;
+    }
     }
 
     // }
@@ -113,7 +117,7 @@ bool between(float max, float min, float a) {
 // Points of contact already in box space
 bool ps::pp::boxToPlane(BaseShape* _plane, kln::motor* m1, BaseShape* _box, kln::motor* m2, Manifold* m) {
     auto box = (ps::pp::Box*)_box;
-    auto boxCenter = (*m2)(kln::origin());//TODO FIX m2(box->centerOfMass);
+    auto boxCenter = (*m2)(m->rb2->centerOfMass);
     auto plane = (*m1)(((ps::pp::Plane*)_plane)->plane);
     bool out = false;
     m->normal = plane * -1;
@@ -133,7 +137,6 @@ bool ps::pp::boxToPlane(BaseShape* _plane, kln::motor* m1, BaseShape* _box, kln:
         // printf("Point: %f,%f,%f,%f\n", point.e013(), point.e021(), point.e032(), point.e123());
 
         //Line parallel
-        auto helper = (plane & i).scalar();
         if (point.e123() == 0.f) {
             if (ps::pp::eCmp((plane & i).scalar(), 0.0f)) {
                 kln::point* p = (kln::point*)find(m->pointsOfContact, m->pointsOfContact + m->count, &i, sizeof(kln::point));
@@ -211,3 +214,94 @@ bool ps::pp::boxToPlane(BaseShape* _plane, kln::motor* m1, BaseShape* _box, kln:
 //     }
 //     return out;
 // }
+
+bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, kln::motor* m2, Manifold* m) {
+    auto ap_box1 = m->rb1;
+    auto ap_box2 = m->rb2;
+    bool out = false;
+
+    auto boxOne = (ps::pp::Box*)(ap_box1->shape);
+    auto boxOneCenter = ap_box1->M(ap_box1->centerOfMass);
+
+    auto boxTwo = (ps::pp::Box*)(ap_box2->shape);
+    auto boxTwoCenter = ap_box2->M(ap_box2->centerOfMass);
+
+    m->normal = (boxOneCenter & boxTwoCenter) | boxOneCenter;
+    m->normal.normalize();
+    // TODO really bad tmp fix
+    m->count = 0;
+    //PROBLEM what if edge and line are parallel
+    //PROBLEM multiple faces registering collision override normal
+
+    for (auto p1 : boxOne->faces) {
+        auto vert1 = ap_box1->M(boxOne->verts[p1[0]]);
+        auto vert2 = ap_box1->M(boxOne->verts[p1[1]]);
+        auto vert3 = ap_box1->M(boxOne->verts[p1[2]]);
+        auto vert4 = ap_box1->M(boxOne->verts[p1[3]]);
+
+        auto plane = vert1 & vert2 & vert3;
+        plane.normalize();
+        auto normal = plane;
+
+        for (auto p2 : boxTwo->edges) {
+
+            auto i = ap_box2->M(boxTwo->verts[p2.first]);
+            auto j = ap_box2->M(boxTwo->verts[p2.second]);
+
+            auto line = i & j;
+            line.normalize();
+
+            auto point = plane ^ line;
+
+            point.normalize();
+
+            // ugly as hell, but works
+            bool x = between(
+                std::max(i.x(), j.x()),
+                std::min(i.x(), j.x()),
+                point.x()
+            ) & between(
+                std::max(std::max(vert1.x(), vert2.x()), std::max(vert3.x(), vert4.x())),
+                std::min(std::min(vert1.x(), vert2.x()), std::min(vert3.x(), vert4.x())),
+                point.x()
+            );
+
+            bool y = between(
+                std::max(i.y(), j.y()),
+                std::min(i.y(), j.y()),
+                point.y()
+            ) & between(
+                std::max(std::max(vert1.y(), vert2.y()), std::max(vert3.y(), vert4.y())),
+                std::min(std::min(vert1.y(), vert2.y()), std::min(vert3.y(), vert4.y())),
+                point.y()
+            );
+
+            bool z = between(
+                std::max(i.z(), j.z()),
+                std::min(i.z(), j.z()),
+                point.z()
+            ) & between(
+                std::max(std::max(vert1.z(), vert2.z()), std::max(vert3.z(), vert4.z())),
+                std::min(std::min(vert1.z(), vert2.z()), std::min(vert3.z(), vert4.z())),
+                point.z()
+            );
+
+            if (x && y && z) {
+                kln::point* p = (kln::point*)find(m->pointsOfContact, m->pointsOfContact + m->count, &point, sizeof(kln::point));
+                if (p == NULL && m->count < m->maxContactPoints) {
+                    m->pointsOfContact[m->count] = point;
+                    //m->normal += normal;
+                    ++(m->count);
+                    out = true;
+                }
+            }
+
+        }
+
+    }
+
+    // m->normal /= m->count;
+    // m->normal.normalize();
+
+    return out;
+}

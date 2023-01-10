@@ -50,5 +50,5 @@ namespace ps::pp {
         BaseShape* shape;
     };
 
-    static char* shapeName[ST_SIZE] = { "plane","sphere","cube","cylinder", "composite" };
+    static char* shapeName[ST_SIZE] = { "plane","sphere","cube_multi","cylinder", "composite" };
 } //namespace ps::pp

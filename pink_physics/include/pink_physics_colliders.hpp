@@ -11,6 +11,7 @@ namespace ps::pp {
     bool defaultCollider(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
     //TODO box v box
     bool sphereToSphere(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
+    bool boxToBox(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
 
     //TODO cylinder v plane
 
