@@ -218,15 +218,15 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             auto I_pN = (rb_p->M)(!~(((~rb_p->M)(N)).div(I_p))) * rb_p->bodyType;
             // Inertia of rb_m (at Q) along N (now join line ?) 
             auto I_mN = (rb_m->M)(!~(((~rb_m->M)(N)).div(I_m))) * rb_m->bodyType;
-            
+
             // Local inertia sum
             auto QxI = klnTestCross(Q, I_pN + I_mN);
             auto den = (Q & QxI) | N;
 
             auto localB = Q & QxB;
-        
+
             auto j = -(1 + rho) * num / den;
-             j /= (float)data.count;
+            j /= (float)data.count;
             if (isnan(j)) continue;
             auto I_pNb = j * (~rb_p->M)(I_pN);
             auto I_mNb = j * (~rb_m->M)(I_mN);
@@ -331,9 +331,9 @@ namespace ps::pp {
             // b1.rigidbody.F -= ((~b1.rigidbody.M)((s.k * -x) * line));
             // b2.rigidbody.F += ((~b2.rigidbody.M)((s.k * -x) * line));
             b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line));
-            b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x)/ b2.rigidbody.shape->mass) * line));
+            b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line));
         }
-        
+
 
         for (int i = 0; i < in->simulatedObjects.size(); i++) {
             this->integrator(this, &out->simulatedObjects[i].rigidbody);
@@ -348,9 +348,13 @@ namespace ps::pp {
 #endif
         }
 
-        // for (int i = 0; i < in->simulatedObjects.size(); i++) {
-        //     this->collide(this, &out->simulatedObjects[i].rigidbody);
-        //     this->resolve(this, &out->simulatedObjects[i].rigidbody);
-        // }
+        for (int i = 0; i < joins.size();i++) {
+            auto& j = joins[i];
+            auto& body = out->simulatedObjects[j.body];
+            auto& w = out->simulatedObjects[j.wheel];
+
+            
+        }
+
     }
 }

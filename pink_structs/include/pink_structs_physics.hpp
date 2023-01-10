@@ -27,6 +27,15 @@ namespace ps::pp {
         float k;
     };
 
+    struct WheelJoin {
+        int body;
+        int wheel;
+
+        float travel;
+        kln::point Att[2];
+        kln::line l;
+    };
+
     enum ShapeType {
         ST_PLANE,
         ST_SPHERE,
