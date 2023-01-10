@@ -24,20 +24,6 @@ else()
 set_target_properties(klein PROPERTIES COMPILE_FLAGS "-w")
 endif()
 
-# set(ASSIMP_BUILD_STATIC_LIB ON)
-# set(ASSIMP_INSTALL OFF)
-# set(ASSIMP_TOOLS ON)
-# set(ENABLE_BOOST_WORKAROUND ON)
-# set(ASSIMP_BUILD_TESTS OFF)
-# set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
-# set(ASSIMP_NO_EXPORT OFF)
-
-# message(STATUS "++++++++++++++++++++++++++++")
-# message(STATUS "[PINK] Adding asimp")
-# message(STATUS "++++++++++++++++++++++++++++")
-
-# add_subdirectory(assimp EXCLUDE_FROM_ALL)
-
 message(STATUS "++++++++++++++++++++++++++++")
 message(STATUS "[PINK] Adding nnvpro_core")
 message(STATUS "++++++++++++++++++++++++++++")
@@ -86,7 +72,6 @@ add_subdirectory(pink_physics)
 
 
 target_link_libraries(${PROJECT_NAME}
-        #assimp
         klein::klein
         nvpro_core
         pink::structs

@@ -64,7 +64,7 @@ void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         rb->M.normalize();
         rb->B.grade2();
         e->collide(e, rb);
-        e->resolve(e, rb);
+        e->resolve(e);
     }
 }
 
@@ -79,7 +79,7 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     rb->B.grade2();
 
     e->collide(e, rb);
-    e->resolve(e, rb);
+    e->resolve(e);
 }
 
 // void ps::pp::RK4(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
@@ -103,7 +103,7 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     G = !~((~rb->M)(G));
     kln::line Damp = !~(-0.35f * rb->B);
 
-    kln::line F = G;//+Damp;
+    kln::line F = G + Damp;
 
     rb->dM = -0.5f * (rb->M * (kln::motor)(rb->B));
 
@@ -115,14 +115,14 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     rb->dB = (helper);
 }
 
+
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     auto& staticObjects = e->out->staticObjects;
     auto& dynamicObjects = e->out->simulatedObjects;
 
-    auto collisions = e->collision_props.collisions;
-    auto collisionData = e->collision_props.collisionData;
+    auto& collisionData = e->collision_props.collisionData;
     auto& collisionSize = e->collision_props.size;
-    auto collisionMaxSize = Engine::maxNumber;
+    auto& collisionMaxSize = Engine::maxNumber;
 
     collisionSize = 0;
 
@@ -131,37 +131,17 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     {
         auto& i = staticObjects[n];
         if (collisionSize >= collisionMaxSize) break;
-        if (rb == &i.rigidbody) continue;
-
-        auto type = BM(rb->shapeType) | BM(i.rigidbody.shapeType);
-        switch (type)
-        {
-        case (BM(ST_SPHERE) | BM(ST_PLANE)): {
-            sphereToPlane(rb, &i.rigidbody, &collisionData[collisionSize]);
-            break;
-        }
-        case (BM(ST_BOX) | BM(ST_PLANE)): {
-            boxToPlane(rb, &i.rigidbody, &collisionData[collisionSize]);
-            break;
-        }
-        case (BM(ST_SPHERE)): {
-            sphereToSphere(rb, &i.rigidbody, &collisionData[collisionSize]);
-            break;
-        }
-        default:
-            collisionData[collisionSize].count = 0;
-            break;
-        }
-
-        if (collisionData[collisionSize].count != 0) {
-            collisionData[collisionSize].rb = &(staticObjects[n].rigidbody);
-
+        if (collide(rb, &i.rigidbody, &collisionData[collisionSize])) {
 #ifndef NDEBUG
             for (int di = 0; di < collisionData[collisionSize].count; di++)
             {
                 auto p = collisionData[collisionSize].pointsOfContact[di];
                 nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
                 nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
+                // auto x = p.x();
+                // auto y = p.y();
+                // auto z = p.z();
+                // printf("x %f, y %f, z %f\n", x, y, z);
                 e->out->points.push_back(t * s);
             }
 #endif
@@ -175,29 +155,7 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         if (collisionSize >= collisionMaxSize) break;
         if (rb == &i.rigidbody) continue;
 
-        auto type = BM(rb->shapeType) | BM(i.rigidbody.shapeType);
-        switch (type)
-        {
-        case (BM(ST_SPHERE) | BM(ST_PLANE)): {
-            sphereToPlane(rb, &i.rigidbody, &collisionData[collisionSize]);
-            break;
-        }
-        case (BM(ST_BOX) | BM(ST_PLANE)): {
-            boxToPlane(rb, &i.rigidbody, &collisionData[collisionSize]);
-            break;
-        }
-        case (BM(ST_SPHERE)): {
-            sphereToSphere(rb, &i.rigidbody, &collisionData[collisionSize]);
-            break;
-        }
-        default:
-            collisionData[collisionSize].count = 0;
-            break;
-        }
-
-        if (collisionData[collisionSize].count != 0) {
-            collisionData[collisionSize].rb = &(dynamicObjects[n].rigidbody);
-
+        if (collide(rb, &i.rigidbody, &collisionData[collisionSize])) {
 #ifndef NDEBUG
             for (int di = 0; di < collisionData[collisionSize].count; di++)
             {
@@ -213,72 +171,98 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 }
 
 //BUG main nest
-void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
+void ps::pp::basicResolver(ps::pp::Engine* e) {
+    // Coefficient of restitution
     float rho = 0.5f;
 
-    auto& I_p = *((kln::line*)rb->shape);
-    auto B_p = (rb->M)(rb->B);
 
     for (int i = 0; i < e->collision_props.size; i++)
     {
+        // Collision data 
         auto& data = e->collision_props.collisionData[i];
-        auto rb2 = data.rb;
+        // Colliding body
+        auto rb_p = data.rb1;
+        auto rb_m = data.rb2;
 
-        auto& I_m = *((kln::line*)rb2->shape);
-        auto B_m = (rb2->M)(rb2->B);
+        // rb_p inertia map
+        const auto& I_p = rb_p->shape->inertia;
+        // rb_m inertia map
+        const auto& I_m = rb_m->shape->inertia;
 
+        // Collision plane normal
         auto normal = (data.normal);
 
         for (int ii = 0; ii < data.count; ii++)
         {
+            // Point of contact
             auto Q = data.pointsOfContact[ii];
-
+            // Normal meet line ?
             auto N = normal | Q;
 
-            auto I_pN = (rb->M)(!~(((~rb->M)(N)).div(I_p))) * rb->bodyType;
-            auto I_mN = (rb2->M)(!~(((~rb2->M)(N)).div(I_m))) * rb2->bodyType;
+            // World rb_p rate
+            auto B_p = (rb_p->M)(rb_p->B);
+            // World rb_m rate
+            auto B_m = (rb_m->M)(rb_m->B);
 
             //IMPULSE
+            // Local (at Q) relative Rate
             auto QxB = klnTestCross(Q, B_p - B_m);
+
+            // Local (at Q) relative rate along meet line N ?
+            auto num = (Q & QxB) | N;
+
+            // check if bodies are already moving away
+            if (num < 0.f) continue;
+
+            // Inertia of rb_p (at Q) along N (now join line ?) 
+            auto I_pN = (rb_p->M)(!~(((~rb_p->M)(N)).div(I_p))) * rb_p->bodyType;
+            // Inertia of rb_m (at Q) along N (now join line ?) 
+            auto I_mN = (rb_m->M)(!~(((~rb_m->M)(N)).div(I_m))) * rb_m->bodyType;
+            
+            // Local inertia sum
             auto QxI = klnTestCross(Q, I_pN + I_mN);
+            auto den = (Q & QxI) | N;
 
             auto localB = Q & QxB;
-
-            auto num = (Q & QxB) | ~N;
-            auto den = (Q & QxI) | ~N;
-
+        
             auto j = -(1 + rho) * num / den;
             j /= (float)data.count;
+            if (isnan(j)) continue;
+            auto I_pNb = j * (~rb_p->M)(I_pN);
+            auto I_mNb = j * (~rb_m->M)(I_mN);
 
-            auto I_pNb = j * (~rb->M)(I_pN);
-            auto I_mNb = j * (~rb2->M)(I_mN);
-
-            rb->B += I_pNb;
-            rb2->B -= I_mNb;
+            rb_p->B += I_pNb;
+            rb_m->B -= I_mNb;
 
             // FRICTION
-            auto T = (kln::project(Q & QxB, normal) | Q) | Q;
-            if (eCmp(T.norm(), 0.0f)) return;
-            
+            auto p = (localB | Q).normalized();
+            auto h = p;
+            p -= normal;
+            p.zeroE0();
+            if (eCmp(p.norm(), 0.0f)) continue;
+            p.normalize();
+            p = kln::project(p, Q);
+            auto T = p | Q;
+
             T.normalize();
 
-            auto num_T = ((Q & QxB) | ~T);
-            if (eCmp(num_T, 0.0f)) return;
+            auto num_T = ((Q & QxB) | T);
+            if (eCmp(num_T, 0.0f) || isnan(T.norm())) continue;
 
-            auto I_pT = (rb->M)(!~(((~rb->M)(T)).div(I_p))) * rb->bodyType;
-            auto I_mT = (rb2->M)(!~(((~rb2->M)(T)).div(I_m))) * rb2->bodyType;
+            auto I_pT = (rb_p->M)(!~(((~rb_p->M)(T)).div(I_p))) * rb_p->bodyType;
+            auto I_mT = (rb_m->M)(!~(((~rb_m->M)(T)).div(I_m))) * rb_m->bodyType;
 
             auto QxIT = klnTestCross(Q, I_pT + I_mT);
 
-            auto den_T = ((Q & QxIT) | ~T);
+            auto den_T = ((Q & QxIT) | T);
 
             auto jt = num_T / den_T;
 
             jt /= (float)data.count;
 
-            if (ps::pp::eCmp(jt, 0.0f)) return;
+            if (ps::pp::eCmp(jt, 0.0f) || isnan(jt)) continue;
 
-            float f = 0.2f;
+            float f = 0.05f;
 
             if (jt > j * f) {
                 jt = j * f;
@@ -287,13 +271,13 @@ void ps::pp::basicResolver(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
                 jt = -j * f;
             }
 
-            auto I_pTb = jt * (~rb->M)(I_pT);
-            auto I_mTb = jt * (~rb2->M)(I_mT);
+            auto I_pTb = jt * (~rb_p->M)(I_pT);
+            auto I_mTb = jt * (~rb_m->M)(I_mT);
 
 
             //TODO fix for SIMULATED v SIMULATED collisions / or disable for them ()  
-            rb->B += I_pTb;
-            rb2->B -= I_mTb;
+            rb_p->B += I_pTb;
+            rb_m->B -= I_mTb;
         }
     }
 
@@ -337,8 +321,8 @@ namespace ps::pp {
             debug_data.collisionData.insert(debug_data.collisionData.end(), collision_props.collisionData, collision_props.collisionData + collision_props.size);
             for (int j = 0; j < collision_props.size; j++)
             {
-                std::string name = "Id:" + std::to_string(out->simulatedObjects[j].id) + "<" + shapeName[out->simulatedObjects[j].rigidbody.shapeType] + "> and ";//+ shapeName[collision_props.collisions[i]->shapeType];
-                debug_data.collisions.push_back(name);
+                //std::string name = "Id:" + std::to_string(out->simulatedObjects[j].id) + "<" + shapeName[out->simulatedObjects[j].rigidbody.shapeType] + "> and ";//+ shapeName[collision_props.collisions[i]->shapeType];
+                //debug_data.collisions.push_back(name);
             }
 #endif
         }

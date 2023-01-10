@@ -84,42 +84,39 @@ int main(int argc, char** argv)
   /// DEBUG ZONE ========
   // CREATING objects kln::
   ps::Object boxObj = utils::objectCreate(
-    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::rotor(kln::pi_4, 1.f, 0.f, 1.f)).normalized(),
+    (kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
     ps::pp::BT_DYNAMIC,
-    ps::pp::ST_BOX,
-    &utils::boxCreate(1, 1, 1, 2, kln::uMotor())
+    "car",
+     new ps::pp::Box(2.f, 1.f, 4.f, 2, kln::uMotor())
   );
 
-  //ps::pp::print("Origin", ((kln::motor)kln::rotor(kln::pi_4, 1, 1, 1).normalized())(kln::origin()));
 
   ps::Object sphereObj = utils::objectCreate(
     kln::translator(-3, 1, 0, 0),
     ps::pp::BT_DYNAMIC,
-    ps::pp::ST_SPHERE,
-    &utils::sphereCreate(1.f, 2.f, kln::uMotor())
+    "",
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
   );
-  sphereObj.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
 
   ps::Object sphereObj2 = utils::objectCreate(
     kln::translator(-3, 1, 0, 0) * kln::translator(3, 0, 1, 0),
     ps::pp::BT_DYNAMIC,
-    ps::pp::ST_SPHERE,
-    &utils::sphereCreate(1.f, 2.f, kln::uMotor())
+    "",
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
   );
-  //sphereObj2.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh("cube_multi");
 
-  kln::euler_angles a = { kln::pi / 8.f, kln::pi / 8.f, 0.0f };
+  kln::euler_angles a = { kln::pi / 8.f, 0.f, 0.f };
   ps::Object planeObj = utils::objectCreate(
     kln::translator(-6, 0, 1, 0) * kln::rotor(a),
     ps::pp::BT_STATIC,
-    ps::pp::ST_PLANE,
-    &utils::planeCreate(kln::plane(0, 1, 0, 0))
+    "",
+    new ps::pp::Plane(kln::plane(0, 1, 0, 0))
   );
 
 
   wordChain[0].simulatedObjects.push_back(boxObj);
-  wordChain[0].simulatedObjects.push_back(sphereObj);
-  //wordChain[0].simulatedObjects.push_back(sphereObj2);
+  // wordChain[0].simulatedObjects.push_back(sphereObj);
+  // wordChain[0].simulatedObjects.push_back(sphereObj2);
 
   wordChain[0].staticObjects.push_back(planeObj);
 
@@ -131,7 +128,7 @@ int main(int argc, char** argv)
   int next = 1;
 
 
-  static float limitFPS = 1.0f / 5.0f;
+  static float limitFPS = 1.0f / 15.0f;
 
   static float dT = 1000 * limitFPS;
 

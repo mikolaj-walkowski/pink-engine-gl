@@ -11,7 +11,7 @@ namespace ps::pp {
 
     typedef void (*SimulateFunc)(Rigidbody*);
     typedef void (*ColliderFunc)(Engine*, Rigidbody*);
-    typedef void (*ResolverFunc)(Engine*, Rigidbody*);
+    typedef void (*ResolverFunc)(Engine*);
     typedef void (*IntegrationFunc)(Engine*, Rigidbody*);
 
     class Engine {
@@ -28,7 +28,6 @@ namespace ps::pp {
         static const int maxNumber = 10;
         struct {
             int size;
-            Rigidbody* collisions[Engine::maxNumber];
             Manifold collisionData[Engine::maxNumber];
         }collision_props;
 
@@ -60,7 +59,7 @@ namespace ps::pp {
 
     void basicSimulate(Rigidbody*);
     void basicCollider(Engine*, Rigidbody*);
-    void basicResolver(Engine*, Rigidbody*);
+    void basicResolver(Engine*);
     void eulerIntegration(Engine*, Rigidbody*);
     void verletIntegration(Engine*, Rigidbody*);
     void print(const char*,kln::point);

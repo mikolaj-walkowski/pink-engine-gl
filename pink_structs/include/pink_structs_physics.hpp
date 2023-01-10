@@ -14,49 +14,27 @@ namespace ps::pp {
         float penetration;
         kln::plane normal;
         kln::point pointsOfContact[maxContactPoints];
-        Rigidbody* rb;
+        Rigidbody* rb1;
+        Rigidbody* rb2;
     } Manifold;
 
     enum ShapeType {
-        ST_SPHERE,
         ST_PLANE,
+        ST_SPHERE,
         ST_BOX,
+        ST_CYLINDER,
+        ST_COMPOSITE,
         ST_SIZE
     };
-
     enum BodyType {
         BT_STATIC = 0,
         BT_DYNAMIC = 1
     };
-    
-    struct Sphere {
-        kln::line inertia;
-        float radius;
-        kln::point center;
-    };
 
-    struct Box {
+    class BaseShape {
+    public:
         kln::line inertia;
-        kln::point verts[8];
-        static inline std::pair<int, int> edges[12] =
-        {
-        {0,1},{0,3},{1,2},{2,3},
-        {0,4},{1,5},{2,6},{3,7},
-        {4,5},{4,7},{5,6},{6,7}
-        };
-        // TODO add precalculated lines and constructor
-    };
-
-    struct Cylinder {
-        kln::line inertia;
-        kln::line centerLine;
-        kln::point caps[2];
-        float r;
-    };
-
-    struct Plane {
-        kln::line inertia;
-        kln::plane plane;
+        ShapeType type;
     };
 
     struct Rigidbody {
@@ -69,10 +47,8 @@ namespace ps::pp {
         kln::point centerOfMass;
 
         BodyType bodyType;
-        ShapeType shapeType;
-        void* shape;
+        BaseShape* shape;
     };
 
-    static int shapeSize[ST_SIZE] = { sizeof(Sphere), sizeof(Plane), sizeof(Box) };
-    static char* shapeName[ST_SIZE] = { "sphere","plane","cube" };
+    static char* shapeName[ST_SIZE] = { "plane","sphere","cube","cylinder", "composite" };
 } //namespace ps::pp

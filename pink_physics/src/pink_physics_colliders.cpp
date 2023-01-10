@@ -5,12 +5,59 @@ bool ps::pp::eCmp(float a, float b) {
     return abs(a - b) < epsilon;
 }
 
-void ps::pp::sphereToPlane(Rigidbody* _sphere, Rigidbody* _plane, ps::pp::Manifold* m) {
-    auto plane = _plane->M(((ps::pp::Plane*)_plane->shape)->plane);
-    auto sphere = (ps::pp::Sphere*)_sphere->shape;
-    m->count = 0;
 
-    auto center = _sphere->M(sphere->center).normalized();
+// void initJmpTable() {
+//     ps::pp::jumpTable[BM(ps::pp::ST_SPHERE)] = ps::pp::sphereToSphere;
+//     ps::pp::jumpTable[BM(ps::pp::ST_PLANE) | BM(ps::pp::ST_SPHERE)] = ps::pp::sphereToPlane;
+//     ps::pp::jumpTable[BM(ps::pp::ST_PLANE) | BM(ps::pp::ST_BOX)] = ps::pp::boxToPlane;
+//     ps::pp::jumpTable[BM(ps::pp)]
+// }
+bool ps::pp::collide(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, ps::pp::Manifold* m) {
+    if (rb1->shape->type > rb2->shape->type) {
+        m->rb1 = rb2;
+        m->rb2 = rb1;
+    }
+    else {
+        m->rb1 = rb1;
+        m->rb2 = rb2;
+    }
+
+    CollisionFunction f = defaultCollider;
+    auto type = BM(m->rb1->shape->type) | BM(m->rb2->shape->type);
+    // if (type & BM(ps::pp::ST_COMPOSITE)) {
+    //     f = shapeToComposite;
+    // }
+    // else {
+    switch (type)
+    {
+    case (BM(ps::pp::ST_SPHERE) | BM(ps::pp::ST_PLANE)): {
+        f = sphereToPlane;
+        break;
+    }
+    case (BM(ps::pp::ST_BOX) | BM(ps::pp::ST_PLANE)): {
+        f = boxToPlane;
+        break;
+    }
+    case (BM(ps::pp::ST_SPHERE)): {
+        f = sphereToSphere;
+        break;
+    }
+    }
+
+    // }
+    bool out = f(m->rb1->shape, &m->rb1->M, m->rb2->shape, &m->rb2->M, m);
+    return out;
+}
+
+bool ps::pp::defaultCollider(BaseShape* b1, kln::motor* m1, BaseShape* b2, kln::motor* m2, Manifold* m) {
+    return false;
+}
+
+bool ps::pp::sphereToPlane(BaseShape* _plane, kln::motor* m1, BaseShape* _sphere, kln::motor* m2, ps::pp::Manifold* m) {
+    auto plane = (*m1)(((ps::pp::Plane*)_plane)->plane);
+    auto sphere = (ps::pp::Sphere*)_sphere;
+
+    auto center = (*m2)(sphere->center).normalized();
 
     auto line = plane | center;
 
@@ -18,30 +65,32 @@ void ps::pp::sphereToPlane(Rigidbody* _sphere, Rigidbody* _plane, ps::pp::Manifo
     if (distance < sphere->radius) {
         m->count = 1;
         m->pointsOfContact[0] = (line ^ plane);
-        m->normal = plane ;
+        m->normal = plane * -1.f;
         m->penetration = sphere->radius - distance;
+        return true;
     }
+    return false;
 }
 
-void ps::pp::sphereToSphere(Rigidbody* sp1, Rigidbody* sp2, Manifold* m) {
-    auto s1 = (ps::pp::Sphere*)sp1->shape;
-    auto s2 = (ps::pp::Sphere*)sp2->shape;
-    m->count = 0;
+bool ps::pp::sphereToSphere(BaseShape* sp1, kln::motor* m1, BaseShape* sp2, kln::motor* m2, Manifold* m) {
+    auto s1 = (ps::pp::Sphere*)sp1;
+    auto s2 = (ps::pp::Sphere*)sp2;
 
-    auto c1 = sp1->M(s1->center).normalized();
-    auto c2 = sp2->M(s2->center).normalized();
+    auto c1 = (*m1)(s1->center).normalized();
+    auto c2 = (*m2)(s2->center).normalized();
     auto normal = c1 & c2;
     if (normal.norm() <= s1->radius + s2->radius) {
-        float b = s2->radius/(s1->radius + s2->radius);
+        float b = s2->radius / (s1->radius + s2->radius);
         auto t = c1 * c2;
         t = kln::sqrt(t) * b;
         m->count = 1;
         m->pointsOfContact[0] = t(c2);
         auto plane = normal.normalized() | m->pointsOfContact[0];
-        m->normal = plane ;
+        m->normal = plane;
         m->penetration = s1->radius + s2->radius - normal.norm();
+        return true;
     }
-    
+    return false;
 }
 
 void* find(void* arr, void* arr_end, void* data, int size) {
@@ -62,24 +111,24 @@ bool between(float max, float min, float a) {
 }
 
 // Points of contact already in box space
-void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
-    auto box = (ps::pp::Box*)(_box->shape);
-    auto boxCenter = _box->M(_box->centerOfMass);
-    auto plane = _plane->M(((ps::pp::Plane*)(_plane->shape))->plane);
-
+bool ps::pp::boxToPlane(BaseShape* _plane, kln::motor* m1, BaseShape* _box, kln::motor* m2, Manifold* m) {
+    auto box = (ps::pp::Box*)_box;
+    auto boxCenter = (*m2)(kln::origin());//TODO FIX m2(box->centerOfMass);
+    auto plane = (*m1)(((ps::pp::Plane*)_plane)->plane);
+    bool out = false;
+    m->normal = plane * -1;
     m->count = 0;
-    m->normal = plane;
     //m->normal.normalize();
 
     for (auto p : box->edges) {
-        auto i = _box->M(box->verts[p.first]);
-        auto j = _box->M(box->verts[p.second]);
+        auto i = (*m2)(box->verts[p.first]);
+        auto j = (*m2)(box->verts[p.second]);
 
         auto line = i & j;
         line.normalize();
 
         auto point = line ^ plane;
-        
+
         //point.e013() == 0 && point.e021() == 0 && point.e032() == 0 && 
         // printf("Point: %f,%f,%f,%f\n", point.e013(), point.e021(), point.e032(), point.e123());
 
@@ -91,11 +140,14 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
                 if (p == NULL && m->count < m->maxContactPoints) {
                     m->pointsOfContact[m->count] = i;
                     ++(m->count);
+                    out = true;
                 }
                 p = (kln::point*)find(m->pointsOfContact, m->pointsOfContact + m->count, &j, sizeof(kln::point));
                 if (p == NULL && m->count < m->maxContactPoints) {
                     m->pointsOfContact[m->count] = j;
                     ++(m->count);
+                    out = true;
+
                 }
             }
         }
@@ -121,12 +173,13 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
             // printf("I: %f,%f,%f,%f\n", i.e013(), i.e021(), i.e032(), i.e123());
             // printf("J: %f,%f,%f,%f\n", j.e013(), j.e021(), j.e032(), j.e123());
             // printf("Point: %f,%f,%f,%f\n", point.e013(), point.e021(), point.e032(), point.e123());
-            
+
             if (x && y && z) {
                 kln::point* p = (kln::point*)find(m->pointsOfContact, m->pointsOfContact + m->count, &point, sizeof(kln::point));
                 if (p == NULL && m->count < m->maxContactPoints) {
                     m->pointsOfContact[m->count] = point;
                     ++(m->count);
+                    out = true;
                 }
             }
 
@@ -146,5 +199,15 @@ void ps::pp::boxToPlane(Rigidbody* _box, Rigidbody* _plane, Manifold* m) {
 
     }
 
-
+    return out;
 }
+
+// bool ps::pp::shapeToComposite(BaseShape* sh, kln::motor* m1, BaseShape* com, kln::motor* m2, Manifold* m) {
+//     auto c = (Composite*)com;
+//     bool out = false;
+//     for (int i = 0; i < c->children.size(); ++i) {
+//         auto ch = c->children[i];
+//         out |= collide(sh, m1, ch.first, &((*m2) * ch.second), m);
+//     }
+//     return out;
+// }

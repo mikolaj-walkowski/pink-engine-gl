@@ -1,28 +1,31 @@
 #pragma once
 #include <vector>
 #include "pink_structs.hpp"
-
+#include "pink_physics_shapes.hpp"
 namespace ps::pp {
-    
-    typedef void CollisionFunction(Rigidbody*, Rigidbody*, Manifold*);
 
+    typedef bool (*CollisionFunction)(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
 
+    bool collide(Rigidbody*, Rigidbody*, Manifold*);
 
+    bool defaultCollider(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
     //TODO box v box
-    void sphereToSphere(Rigidbody* b1, Rigidbody* b2, Manifold* m);
+    bool sphereToSphere(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
 
     //TODO cylinder v plane
-    
+
 
     //TODO cylinder v cylinder
 
     //TODO box v cylinder
 
-    //TODO any v system
-    //TODO system v system
+    // bool shapeToComposite(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
 
-    void sphereToSphere(Rigidbody* sp1, Rigidbody* sp2, Manifold* m);
-    void sphereToPlane(Rigidbody* sphere, Rigidbody* plane, Manifold* m);
-    void boxToPlane(Rigidbody* box, Rigidbody* plane, Manifold* m);
-    bool eCmp(float, float );
+    bool sphereToSphere(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
+    bool sphereToPlane(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
+    bool boxToPlane(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
+
+    //CollisionFunction jumpTable[BM(ST_SIZE)];
+
+    bool eCmp(float, float);
 }//namespace ps::pp

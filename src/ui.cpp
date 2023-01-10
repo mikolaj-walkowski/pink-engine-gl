@@ -170,7 +170,7 @@ void UI::PhysicsWindow() {
             auto sim = pe->out->simulatedObjects;
             for (int i = 0; i < sim.size(); i++) {
                 ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-                if (ImGui::TreeNode((std::to_string(sim[i].id) + "<" + ps::pp::shapeName[sim[i].rigidbody.shapeType] + ">").c_str())) {
+                if (ImGui::TreeNode((std::to_string(sim[i].id) + "<" + ps::pp::shapeName[sim[i].rigidbody.shape->type] + ">").c_str())) {
                     klnLine("dB", sim[i].rigidbody.dB);
                     klnLine("B", sim[i].rigidbody.B);
 
