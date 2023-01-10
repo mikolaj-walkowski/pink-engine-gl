@@ -82,21 +82,25 @@ int main(int argc, char** argv)
   ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicCollider, ps::pp::basicResolver, ps::pp::verletIntegration);
 
   /// DEBUG ZONE ========
-  // CREATING objects kln::
+  // CREATING objects 
+
+  kln::euler_angles a = { kln::pi / 8.f, 0.f, 0.f };
+  kln::euler_angles b = { kln::pi / 4.f, kln::pi / 4.f, 0.f };
+
+
   ps::Object boxObj = utils::objectCreate(
     (kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
     ps::pp::BT_DYNAMIC,
-    "",//"car",
-    new ps::pp::Box(1.f, 1.f, 1.f, 1, kln::uMotor())//new ps::pp::Box(2.f, 1.f, 4.f, 2, kln::uMotor())
+    "car",
+    new ps::pp::Box(2.f, 1.f, 4.f, 2, kln::uMotor())
   );
 
   ps::Object boxObj2 = utils::objectCreate(
-    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.25f, 1.0f, 0.0f)).normalized(),
+    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.1f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
     ps::pp::BT_DYNAMIC,
     "",
     new ps::pp::Box(1, 1, 1, 2, kln::uMotor())
   );
-
 
   ps::Object sphereObj = utils::objectCreate(
     kln::translator(-3, 1, 0, 0),
@@ -112,9 +116,8 @@ int main(int argc, char** argv)
     new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
   );
 
-  kln::euler_angles a = { kln::pi / 8.f, 0.f, 0.f };
   ps::Object planeObj = utils::objectCreate(
-    kln::translator(-6, 0, 1, 0),// * kln::rotor(a),
+    kln::translator(-6, 0, 1, 0), //* kln::rotor(a),
     ps::pp::BT_STATIC,
     "",
     new ps::pp::Plane(kln::plane(0, 1, 0, 0))
@@ -123,10 +126,12 @@ int main(int argc, char** argv)
 
   wordChain[0].simulatedObjects.push_back(boxObj);
   wordChain[0].simulatedObjects.push_back(boxObj2);
-  // wordChain[0].simulatedObjects.push_back(sphereObj);
+  //wordChain[0].simulatedObjects.push_back(sphereObj);
   // wordChain[0].simulatedObjects.push_back(sphereObj2);
 
   wordChain[0].staticObjects.push_back(planeObj);
+
+  physicsEngine.springs.push_back({0, 1, 5.f, -0.1f});
 
   ///  DEBUG ZONE ======== 
 

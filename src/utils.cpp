@@ -75,12 +75,13 @@ void utils::nvidia::setupContext(nvvk::Context* c, std::vector<utils::ExtensionL
 ps::Object utils::objectCreate(kln::motor m, ps::pp::BodyType bt_type, std::string meshName, ps::pp::BaseShape* shape) {
     m.normalize();
 
-    ps::pp::Rigidbody rb = { m, ~m(kln::line(0,0,0,0,0,0)), kln::uMotor(), kln::line(), kln::origin(), bt_type, shape };
+    ps::pp::Rigidbody rb = { m, ~m(kln::line(0,0,0,0,0,0)), kln::uMotor(), kln::line(),kln::line(0,0,0,0,0,0), kln::origin(), bt_type, shape };
 
     ps::Object out = {};
 
     out.id = newID();
     out.rigidbody = rb;
+
     auto& names = ps::pg::ObjLibrary::getObjLibrary().m_objectNames;
     auto& name = std::find(names.begin(), names.end(), meshName);
     out.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh(name != names.end() ? meshName : ps::pp::shapeName[shape->type]);

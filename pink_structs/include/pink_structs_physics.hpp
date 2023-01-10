@@ -18,6 +18,15 @@ namespace ps::pp {
         Rigidbody* rb2;
     } Manifold;
 
+    struct Spring { 
+
+        int rb1;  //TODO Bad
+        int rb2; //TODO
+
+        float restingLength;
+        float k;
+    };
+
     enum ShapeType {
         ST_PLANE,
         ST_SPHERE,
@@ -35,6 +44,7 @@ namespace ps::pp {
     public:
         kln::line inertia;
         ShapeType type;
+        float mass;
     };
 
     struct Rigidbody {
@@ -43,6 +53,8 @@ namespace ps::pp {
 
         kln::motor dM;
         kln::line dB;
+
+        kln::line F;
 
         kln::point centerOfMass;
 

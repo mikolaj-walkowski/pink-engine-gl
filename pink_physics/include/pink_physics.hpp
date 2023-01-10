@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace ps::pp {
-
+    
     class Engine;
 
     typedef void (*SimulateFunc)(Rigidbody*);
@@ -14,6 +14,7 @@ namespace ps::pp {
     typedef void (*ResolverFunc)(Engine*);
     typedef void (*IntegrationFunc)(Engine*, Rigidbody*);
 
+    
     class Engine {
     public:
         ps::WordState* in;
@@ -47,7 +48,7 @@ namespace ps::pp {
 
         }debug_data;
 #endif
-
+        std::vector<Spring> springs;
         void step(ps::WordState*, ps::WordState*, float);
         void renderUI();
         Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF);

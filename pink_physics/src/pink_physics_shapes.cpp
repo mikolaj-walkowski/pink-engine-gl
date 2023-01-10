@@ -1,9 +1,10 @@
 #include "pink_physics_shapes.hpp"
 
 
-ps::pp::Box::Box(float x, float y, float z, float mass, kln::motor offset) {
+ps::pp::Box::Box(float x, float y, float z, float _mass, kln::motor offset) {
     type = ST_BOX;
-
+    mass = _mass;
+    
     float a = mass / 12.f;
     inertia = offset(kln::motor(
         1.f, 1.f, 1.f, 1.f,
@@ -53,9 +54,9 @@ ps::pp::Box::Box(float x, float y, float z, float mass, kln::motor offset) {
     // }
 }
 
-ps::pp::Sphere::Sphere(float r, float mass, kln::motor offset) {
+ps::pp::Sphere::Sphere(float r, float _mass, kln::motor offset) {
     type = ST_SPHERE;
-
+    mass = _mass;
     float a = 0.4f * mass;
 
     inertia = kln::motor(
@@ -71,18 +72,21 @@ ps::pp::Sphere::Sphere(float r, float mass, kln::motor offset) {
 
 ps::pp::Plane::Plane(kln::plane p) {
     type = ST_PLANE;
+    mass = 1.f;
 
     plane = p;
     inertia = kln::motor(1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f);
 }
 
-ps::pp::Cylinder::Cylinder(float len, float r, float m, kln::motor offset) {
+ps::pp::Cylinder::Cylinder(float len, float r, float _mass, kln::motor offset) {
     type = ST_CYLINDER;
+    mass = _mass;
+    
     inertia = offset(kln::motor(
         1.f, 1.f, 1.f, 1.f,
-        (1.f / 12.f) * m * (3 * r * r + len * len),
-        (1.f / 12.f) * m * (3 * r * r + len * len),
-        0.5f * m * (r * r),
+        (1.f / 12.f) * mass * (3 * r * r + len * len),
+        (1.f / 12.f) * mass * (3 * r * r + len * len),
+        0.5f * mass * (r * r),
         1.f
     ));
 

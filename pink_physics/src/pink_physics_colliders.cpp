@@ -234,6 +234,7 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
     //PROBLEM multiple faces registering collision override normal
 
     for (auto p1 : boxOne->faces) {
+        
         auto vert1 = ap_box1->M(boxOne->verts[p1[0]]);
         auto vert2 = ap_box1->M(boxOne->verts[p1[1]]);
         auto vert3 = ap_box1->M(boxOne->verts[p1[2]]);
@@ -290,7 +291,7 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
                 kln::point* p = (kln::point*)find(m->pointsOfContact, m->pointsOfContact + m->count, &point, sizeof(kln::point));
                 if (p == NULL && m->count < m->maxContactPoints) {
                     m->pointsOfContact[m->count] = point;
-                    //m->normal += normal;
+                    // m->normal += normal;
                     ++(m->count);
                     out = true;
                 }

@@ -103,15 +103,15 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     G = !~((~rb->M)(G));
     kln::line Damp = !~(-0.35f * rb->B);
 
-    kln::line F = G + Damp;
+    rb->F += G + Damp;
 
     rb->dM = -0.5f * (rb->M * (kln::motor)(rb->B));
 
     auto I = *((kln::line*)rb->shape);
 
     auto I_B = (!rb->B).mult(I);
-    auto helper = !~((F - klnTestCross(I_B, rb->B)).div(I));
-
+    auto helper = !~((rb->F - klnTestCross(I_B, rb->B)).div(I));
+    rb->F *= 0;
     rb->dB = (helper);
 }
 
@@ -226,7 +226,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             auto localB = Q & QxB;
         
             auto j = -(1 + rho) * num / den;
-            j /= (float)data.count;
+             j /= (float)data.count;
             if (isnan(j)) continue;
             auto I_pNb = j * (~rb_p->M)(I_pN);
             auto I_mNb = j * (~rb_m->M)(I_mN);
@@ -295,7 +295,7 @@ namespace ps::pp {
         this->out = _out;
         this->dT = _dT;
 
-        *out = *in;
+        *out = *in; //TODO Wat?
 
 #ifndef NDEBUG
         if (debug_data.stepped) {
@@ -313,6 +313,27 @@ namespace ps::pp {
         out->points.clear();
         //if(debug_data.oneStep)
 #endif
+        for (int i = 0; i < springs.size(); i++)
+        {
+            auto& s = springs[i];
+            auto& b1 = out->simulatedObjects[s.rb1];//TODO very bad 
+            auto& b2 = out->simulatedObjects[s.rb2];//TODO very bad 
+
+            auto c1 = b1.rigidbody.M(b1.rigidbody.centerOfMass);
+            auto c2 = b2.rigidbody.M(b2.rigidbody.centerOfMass);
+
+            auto line = c1 & c2;
+
+            auto x = line.norm() - s.restingLength;
+
+            line.normalize();
+
+            // b1.rigidbody.F -= ((~b1.rigidbody.M)((s.k * -x) * line));
+            // b2.rigidbody.F += ((~b2.rigidbody.M)((s.k * -x) * line));
+            b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line));
+            b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x)/ b2.rigidbody.shape->mass) * line));
+        }
+        
 
         for (int i = 0; i < in->simulatedObjects.size(); i++) {
             this->integrator(this, &out->simulatedObjects[i].rigidbody);
