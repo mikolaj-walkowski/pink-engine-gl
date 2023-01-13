@@ -5,10 +5,9 @@ namespace ps::pp {
     class Sphere: public BaseShape {
     public:
         float radius;
-        kln::point center;
 
         Sphere(float r, float mass, kln::motor offset);
-
+        virtual void move(const kln::motor& M, const BaseShape* og);
     };
 
     class Box: public BaseShape {
@@ -35,31 +34,38 @@ namespace ps::pp {
         // kln::plane faces[6];
 
         Box(float x, float y, float z, float mass, kln::motor offset);
+        virtual void move(const kln::motor& M, const BaseShape* og);
+        
     };
 
 
-    struct Cylinder: public BaseShape {
+    class Cylinder: public BaseShape {
     public:
         kln::line centerLine;
         kln::point caps[2];
         float r;
 
         Cylinder(float len, float r, float m, kln::motor offset);
+        virtual void move(const kln::motor& M, const BaseShape* og);
+        
     };
 
-    struct Plane: public BaseShape {
+    class Plane: public BaseShape {
     public:
         kln::plane plane;
 
         Plane(kln::plane p);
+        virtual void move(const kln::motor& M, const BaseShape* og);
+        
     };
 
-    struct Composite: public BaseShape {
+    class Composite: public BaseShape {
     public:
         std::vector < std::pair<BaseShape*, kln::motor>> children;
 
         Composite(std::vector < std::pair<BaseShape*, kln::motor>> data);
-
+        virtual void move(const kln::motor& M, const BaseShape* og);
+    
         ~Composite(); 
     };
 

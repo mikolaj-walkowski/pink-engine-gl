@@ -49,7 +49,7 @@ bool ps::pp::collide(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, ps::pp::Man
     }
 
     // }
-    bool out = f(m->rb1->shape, &m->rb1->M, m->rb2->shape, &m->rb2->M, m);
+    bool out = f(m->rb1->moved, &m->rb1->M, m->rb2->moved, &m->rb2->M, m);
     return out;
 }
 
@@ -58,10 +58,10 @@ bool ps::pp::defaultCollider(BaseShape* b1, kln::motor* m1, BaseShape* b2, kln::
 }
 
 bool ps::pp::sphereToPlane(BaseShape* _plane, kln::motor* m1, BaseShape* _sphere, kln::motor* m2, ps::pp::Manifold* m) {
-    auto plane = (*m1)(((ps::pp::Plane*)_plane)->plane);
+    auto plane = (((ps::pp::Plane*)_plane)->plane);
     auto sphere = (ps::pp::Sphere*)_sphere;
 
-    auto center = (*m2)(sphere->center).normalized();
+    auto center = (sphere->center);
 
     auto line = plane | center;
 
@@ -80,8 +80,8 @@ bool ps::pp::sphereToSphere(BaseShape* sp1, kln::motor* m1, BaseShape* sp2, kln:
     auto s1 = (ps::pp::Sphere*)sp1;
     auto s2 = (ps::pp::Sphere*)sp2;
 
-    auto c1 = (*m1)(s1->center).normalized();
-    auto c2 = (*m2)(s2->center).normalized();
+    auto c1 = (s1->center);
+    auto c2 = (s2->center);
     auto normal = c1 & c2;
     if (normal.norm() <= s1->radius + s2->radius) {
         float b = s2->radius / (s1->radius + s2->radius);
@@ -117,16 +117,16 @@ bool between(float max, float min, float a) {
 // Points of contact already in box space
 bool ps::pp::boxToPlane(BaseShape* _plane, kln::motor* m1, BaseShape* _box, kln::motor* m2, Manifold* m) {
     auto box = (ps::pp::Box*)_box;
-    auto boxCenter = (*m2)(m->rb2->centerOfMass);
-    auto plane = (*m1)(((ps::pp::Plane*)_plane)->plane);
+    auto boxCenter = box->center;
+    auto plane = (((ps::pp::Plane*)_plane)->plane);
     bool out = false;
     m->normal = plane * -1;
     m->count = 0;
     //m->normal.normalize();
 
     for (auto p : box->edges) {
-        auto i = (*m2)(box->verts[p.first]);
-        auto j = (*m2)(box->verts[p.second]);
+        auto i = (box->verts[p.first]);
+        auto j = (box->verts[p.second]);
 
         auto line = i & j;
         line.normalize();
@@ -220,11 +220,11 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
     auto ap_box2 = m->rb2;
     bool out = false;
 
-    auto boxOne = (ps::pp::Box*)(ap_box1->shape);
-    auto boxOneCenter = ap_box1->M(ap_box1->centerOfMass);
+    auto boxOne = (ps::pp::Box*)(ap_box1->moved);
+    auto boxOneCenter = ap_box1->moved->center;
 
-    auto boxTwo = (ps::pp::Box*)(ap_box2->shape);
-    auto boxTwoCenter = ap_box2->M(ap_box2->centerOfMass);
+    auto boxTwo = (ps::pp::Box*)(ap_box2->moved);
+    auto boxTwoCenter = ap_box2->moved->center;
 
     m->normal = (boxOneCenter & boxTwoCenter) | boxOneCenter;
     m->normal.normalize();
@@ -235,10 +235,10 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
 
     for (auto p1 : boxOne->faces) {
         
-        auto vert1 = ap_box1->M(boxOne->verts[p1[0]]);
-        auto vert2 = ap_box1->M(boxOne->verts[p1[1]]);
-        auto vert3 = ap_box1->M(boxOne->verts[p1[2]]);
-        auto vert4 = ap_box1->M(boxOne->verts[p1[3]]);
+        auto vert1 = (boxOne->verts[p1[0]]);
+        auto vert2 = (boxOne->verts[p1[1]]);
+        auto vert3 = (boxOne->verts[p1[2]]);
+        auto vert4 = (boxOne->verts[p1[3]]);
 
         auto plane = vert1 & vert2 & vert3;
         plane.normalize();
@@ -246,8 +246,8 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
 
         for (auto p2 : boxTwo->edges) {
 
-            auto i = ap_box2->M(boxTwo->verts[p2.first]);
-            auto j = ap_box2->M(boxTwo->verts[p2.second]);
+            auto i = (boxTwo->verts[p2.first]);
+            auto j = (boxTwo->verts[p2.second]);
 
             auto line = i & j;
             line.normalize();

@@ -31,7 +31,6 @@ kln::point klnTestCross(kln::point a, kln::line b) {
     return p;
 }
 
-
 kln::line klnTestCross(kln::line a, kln::line b) {
     //// Direct initialization from components. A more common way of creating a
         /// motor is to take a product between a rotor and a translator.
@@ -78,24 +77,12 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     rb->M.normalize();
     rb->B.grade2();
 
+    rb->moved->move(rb->M, rb->shape);
+
     e->collide(e, rb);
     e->resolve(e);
 }
 
-// void ps::pp::RK4(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
-//     e->simulate(rb);
-//     auto k1dM = rb->dM;
-//     auto k1dB = rb->dB;
-
-
-
-//     e->simulate(rb);
-//     auto k1dM = rb->dM;
-//     auto k1dB = rb->dB;
-
-
-
-// }
 
 // TODO Upgrade Box collision
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
@@ -107,7 +94,7 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
 
     rb->dM = -0.5f * (rb->M * (kln::motor)(rb->B));
 
-    auto I = *((kln::line*)rb->shape);
+    auto I = rb->shape->inertia;
 
     auto I_B = (!rb->B).mult(I);
     auto helper = !~((rb->F - klnTestCross(I_B, rb->B)).div(I));
@@ -170,7 +157,6 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     }
 }
 
-//BUG main nest
 void ps::pp::basicResolver(ps::pp::Engine* e) {
     // Coefficient of restitution
     float rho = 0.5f;
@@ -290,6 +276,68 @@ namespace ps::pp {
 
     }
 
+    void Engine::applySprings() {
+        for (int i = 0; i < springs.size(); i++)
+        {
+            auto& s = springs[i];
+            auto& b1 = out->simulatedObjects[s.rb1];//TODO very bad 
+            auto& b2 = out->simulatedObjects[s.rb2];//TODO very bad 
+
+            auto c1 = b1.rigidbody.moved->center;
+            auto c2 = b2.rigidbody.moved->center;
+
+            auto line = c1 & c2;
+
+            auto x = line.norm() - s.restingLength;
+
+            line.normalize();
+
+            b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line));
+            b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line));
+        }
+    }
+
+    void Engine::applyJoins() {
+        for (int i = 0; i < joins.size();i++) {
+            auto& j = joins[i];
+            auto& body = out->simulatedObjects[j.body].rigidbody;
+            auto& wheel = out->simulatedObjects[j.wheel].rigidbody;
+
+            auto attachment = body.M(j.Att[1]);
+            auto constraint = kln::project(body.M(j.constraint),attachment) ;
+
+            // rb_p inertia map
+            const auto& I_body = body.shape->inertia;
+            // rb_m inertia map
+            const auto& I_wheel = wheel.shape->inertia;
+
+
+            // World rb_p rate
+            auto B_body = (body.M)(body.B);
+            // World rb_wheel rate
+            auto B_wheel = (wheel.M)(wheel.B);
+
+            // Inertia of rb_body (at Q) along N (now join line ?) 
+            auto I_bodyN = (body.M)(!~(((~body.M)(constraint)).div(I_body))) * body.bodyType;
+            // Inertia of rb_wheel (at Q) along N (now join line ?) 
+            auto I_wheelN = (wheel.M)(!~(((~wheel.M)(constraint)).div(I_wheel))) * wheel.bodyType;
+
+            //IMPULSE
+            // Local (at Q) relative Rate
+            auto QxB = klnTestCross(attachment, B_body - B_wheel);
+            auto num = (attachment & QxB) | constraint;
+            auto QxI = klnTestCross(attachment, I_bodyN + I_wheelN);
+            auto den = (attachment & QxI) | constraint;
+
+            auto lambda = num / den;
+
+            if (isnan(lambda)) continue;
+
+            body.B += (~body.M)(I_bodyN) * lambda ;
+            wheel.B -= (~wheel.M)(I_wheelN) * lambda ;
+        }
+    }
+
     void Engine::step(ps::WordState* _in, ps::WordState* _out, float _dT) {
         this->in = _in;
         this->out = _out;
@@ -313,26 +361,7 @@ namespace ps::pp {
         out->points.clear();
         //if(debug_data.oneStep)
 #endif
-        for (int i = 0; i < springs.size(); i++)
-        {
-            auto& s = springs[i];
-            auto& b1 = out->simulatedObjects[s.rb1];//TODO very bad 
-            auto& b2 = out->simulatedObjects[s.rb2];//TODO very bad 
-
-            auto c1 = b1.rigidbody.M(b1.rigidbody.centerOfMass);
-            auto c2 = b2.rigidbody.M(b2.rigidbody.centerOfMass);
-
-            auto line = c1 & c2;
-
-            auto x = line.norm() - s.restingLength;
-
-            line.normalize();
-
-            // b1.rigidbody.F -= ((~b1.rigidbody.M)((s.k * -x) * line));
-            // b2.rigidbody.F += ((~b2.rigidbody.M)((s.k * -x) * line));
-            b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line));
-            b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line));
-        }
+        applySprings();
 
 
         for (int i = 0; i < in->simulatedObjects.size(); i++) {
@@ -348,13 +377,7 @@ namespace ps::pp {
 #endif
         }
 
-        for (int i = 0; i < joins.size();i++) {
-            auto& j = joins[i];
-            auto& body = out->simulatedObjects[j.body];
-            auto& w = out->simulatedObjects[j.wheel];
-
-            
-        }
+        //applyJoins();
 
     }
 }
