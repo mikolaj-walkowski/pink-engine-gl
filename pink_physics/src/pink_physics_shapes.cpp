@@ -4,7 +4,8 @@
 ps::pp::Box::Box(float x, float y, float z, float _mass, kln::motor offset) {
     type = ST_BOX;
     mass = _mass;
-    
+    center = kln::origin(); //TODO change
+
     float a = mass / 12.f;
     inertia = offset(kln::motor(
         1.f, 1.f, 1.f, 1.f,
@@ -54,9 +55,22 @@ ps::pp::Box::Box(float x, float y, float z, float _mass, kln::motor offset) {
     // }
 }
 
+void ps::pp::Box::move(const kln::motor& M, const BaseShape* og) {
+    Box* o = (Box*)og;
+    center = M(o->center);
+    
+    for (int i = 0; i < 8; i++)
+    {
+        verts[i] = M(o->verts[i]);
+    }
+}
+
+
 ps::pp::Sphere::Sphere(float r, float _mass, kln::motor offset) {
     type = ST_SPHERE;
     mass = _mass;
+    center = kln::origin(); //TODO change
+    
     float a = 0.4f * mass;
 
     inertia = kln::motor(
@@ -70,6 +84,11 @@ ps::pp::Sphere::Sphere(float r, float _mass, kln::motor offset) {
     center = kln::point(0, 0, 0);
 }
 
+void ps::pp::Sphere::move(const kln::motor& M, const BaseShape* og) {
+    Sphere* o = (Sphere*)og;
+    center = M(o->center);
+}
+
 ps::pp::Plane::Plane(kln::plane p) {
     type = ST_PLANE;
     mass = 1.f;
@@ -78,10 +97,18 @@ ps::pp::Plane::Plane(kln::plane p) {
     inertia = kln::motor(1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f);
 }
 
+void ps::pp::Plane::move(const kln::motor& M, const BaseShape* og) {
+    Plane* o = (Plane*)og;
+    center = M(o->center);
+    plane = M(o->plane);
+}
+
 ps::pp::Cylinder::Cylinder(float len, float r, float _mass, kln::motor offset) {
     type = ST_CYLINDER;
     mass = _mass;
+    center = kln::origin(); //TODO change
     
+
     inertia = offset(kln::motor(
         1.f, 1.f, 1.f, 1.f,
         (1.f / 12.f) * mass * (3 * r * r + len * len),
@@ -102,8 +129,30 @@ ps::pp::Cylinder::Cylinder(float len, float r, float _mass, kln::motor offset) {
 
 }
 
+void ps::pp::Cylinder::move(const kln::motor& M, const BaseShape* og) {
+    Cylinder* o = (Cylinder*)og;
+    center = M(o->center);
+    
+    for (int i = 0; i < 2; i++)
+    {
+        caps[i] = M(o->caps[i]);
+    }
+    centerLine = M(o->centerLine);
+}
+
 ps::pp::Composite::Composite(std::vector < std::pair<BaseShape*, kln::motor>> data) {
+    center = kln::origin(); //TODO change
+    
     children = data;
+}
+
+void ps::pp::Composite::move(const kln::motor& M, const BaseShape* og) {
+    Composite* o = (Composite*)og;
+    center = M(o->center);
+    
+    for (int i = 0; i < children.size(); ++i) {
+        children[i].first->move(M*children[i].second,o->children[i].first);
+    }
 }
 
 ps::pp::Composite::~Composite() {

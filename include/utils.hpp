@@ -37,7 +37,7 @@ namespace utils {
 
     ps::UniqueID newID();
 
-    ps::Object objectCreate(kln::motor m, ps::pp::BodyType, std::string meshName, ps::pp::BaseShape*);
+    ps::Object objectCreate(kln::motor m, ps::pp::BodyType, std::string meshName, ps::pp::BaseShape*, ps::pp::BaseShape*);
 
     void objectDestroy(ps::Object* rb);
 }//namespace utils

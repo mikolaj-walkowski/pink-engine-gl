@@ -18,7 +18,7 @@ namespace ps::pp {
         Rigidbody* rb2;
     } Manifold;
 
-    struct Spring { 
+    struct Spring {
 
         int rb1;  //TODO Bad
         int rb2; //TODO
@@ -28,12 +28,12 @@ namespace ps::pp {
     };
 
     struct WheelJoin {
-        int body;
+        int body; //TODO Bad
         int wheel;
 
         float travel;
         kln::point Att[2];
-        kln::line l;
+        kln::line constraint;
     };
 
     enum ShapeType {
@@ -52,8 +52,11 @@ namespace ps::pp {
     class BaseShape {
     public:
         kln::line inertia;
+        kln::point center;
         ShapeType type;
         float mass;
+
+        virtual void move(const kln::motor& M, const BaseShape* og) = 0;
     };
 
     struct Rigidbody {
@@ -68,7 +71,9 @@ namespace ps::pp {
         kln::point centerOfMass;
 
         BodyType bodyType;
+
         BaseShape* shape;
+        BaseShape* moved;
     };
 
     static char* shapeName[ST_SIZE] = { "plane","sphere","cube_multi","cylinder", "composite" };

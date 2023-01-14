@@ -92,6 +92,7 @@ int main(int argc, char** argv)
     (kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
     ps::pp::BT_DYNAMIC,
     "car",
+    new ps::pp::Box(2.f, 1.f, 4.f, 2, kln::uMotor()),
     new ps::pp::Box(2.f, 1.f, 4.f, 2, kln::uMotor())
   );
 
@@ -99,6 +100,7 @@ int main(int argc, char** argv)
     ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.1f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
     ps::pp::BT_DYNAMIC,
     "",
+    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
     new ps::pp::Box(1, 1, 1, 2, kln::uMotor())
   );
 
@@ -106,6 +108,7 @@ int main(int argc, char** argv)
     kln::translator(-3, 1, 0, 0),
     ps::pp::BT_DYNAMIC,
     "",
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
     new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
   );
 
@@ -113,6 +116,7 @@ int main(int argc, char** argv)
     kln::translator(-3, 1, 0, 0) * kln::translator(3, 0.1f, 1, 0.0f),
     ps::pp::BT_DYNAMIC,
     "",
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
     new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
   );
 
@@ -120,6 +124,7 @@ int main(int argc, char** argv)
     kln::translator(-6, 0, 1, 0), //* kln::rotor(a),
     ps::pp::BT_STATIC,
     "",
+    new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
     new ps::pp::Plane(kln::plane(0, 1, 0, 0))
   );
 
@@ -131,7 +136,12 @@ int main(int argc, char** argv)
 
   wordChain[0].staticObjects.push_back(planeObj);
 
-  physicsEngine.springs.push_back({0, 1, 5.f, -0.1f});
+  physicsEngine.springs.push_back({ 0, 1, 5.f, -0.1f });
+  physicsEngine.joins.push_back(
+    { 0,1,3,
+    {boxObj.rigidbody.moved->center,boxObj2.rigidbody.moved->center},
+    kln::line(1,1,1,1,1,1) - !~(boxObj.rigidbody.moved->center & boxObj2.rigidbody.moved->center)
+    });
 
   ///  DEBUG ZONE ======== 
 

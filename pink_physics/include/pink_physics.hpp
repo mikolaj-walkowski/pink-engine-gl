@@ -51,6 +51,8 @@ namespace ps::pp {
         std::vector<Spring> springs;
         std::vector<WheelJoin> joins;
         void step(ps::WordState*, ps::WordState*, float);
+        void applySprings();
+        void applyJoins();
         void renderUI();
         Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF);
     };
