@@ -168,7 +168,6 @@ int main(int argc, char** argv)
       continue;
 
 
-    // TODO Zajebane z neta 
     //- Measure time 
     nowTime = (float)glfwGetTime();
     deltaTime += (nowTime - lastTime) / limitFPS;

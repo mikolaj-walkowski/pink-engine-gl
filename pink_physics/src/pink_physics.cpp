@@ -308,6 +308,8 @@ namespace ps::pp {
         
         auto joinToWorld = parent.M;
 
+        j->valid = true;
+        
         auto line = joinToWorld(j->constraint);
 
         auto center = child.moved->center;
@@ -329,12 +331,11 @@ namespace ps::pp {
         
         if (curr < vmin) {
             newCenter = minAtt;
-            // newCenter = maxAtt;
-            
+            j->valid = false;
         }
         else if (curr > vmax){
             newCenter = maxAtt;
-            // newCenter = minAtt;
+            j->valid = false;
         }
         kln::motor correction = kln::sqrt(newCenter * center) ;
         child.M = child.M * correction;
