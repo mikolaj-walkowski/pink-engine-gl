@@ -6,8 +6,9 @@
 #include <vector>
 
 namespace ps::pp {
-    
+
     class Engine;
+
 
     typedef void (*SimulateFunc)(Rigidbody*);
     typedef void (*ColliderFunc)(Engine*, Rigidbody*);
@@ -49,10 +50,10 @@ namespace ps::pp {
         }debug_data;
 #endif
         std::vector<Spring> springs;
-        std::vector<WheelJoin> joins;
+        std::vector<Join> joins;
         void step(ps::WordState*, ps::WordState*, float);
         void applySprings();
-        void applyJoins();
+        void enforceJoins();
         void renderUI();
         Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF);
     };
@@ -60,11 +61,15 @@ namespace ps::pp {
     Rigidbody rigidbodyCreate(kln::motor, ShapeType, void*, int);
     void rigidbodyDestroy(Rigidbody*);
 
-
+    void checkJoin(Engine* e, Join* j);
+    void enforceJoin(Engine* e, Join* j);
+    
     void basicSimulate(Rigidbody*);
+    void carSimulate(Rigidbody*);
     void basicCollider(Engine*, Rigidbody*);
     void basicResolver(Engine*);
     void eulerIntegration(Engine*, Rigidbody*);
     void verletIntegration(Engine*, Rigidbody*);
-    void print(const char*,kln::point);
+    void applyImpulseNormal(Rigidbody* rb, kln::line dir, float a);
+    void print(const char*, kln::point);
 } // namespace ps::pp

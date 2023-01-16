@@ -74,16 +74,16 @@ void utils::nvidia::setupContext(nvvk::Context* c, std::vector<utils::ExtensionL
 
 ps::Object utils::objectCreate(kln::motor m, ps::pp::BodyType bt_type, std::string meshName, ps::pp::BaseShape* shape, ps::pp::BaseShape* moved) {
     m.normalize();
-    
 
-    ps::pp::Rigidbody rb = { m, ~m(kln::line(0,0,0,0,0,0)), kln::uMotor(), kln::line(),kln::line(0,0,0,0,0,0), kln::origin(), bt_type, shape, moved};
+
+    ps::pp::Rigidbody rb = { m, ~m(kln::line(0,0,0,0,0,0)), kln::uMotor(), kln::line(),kln::line(0,0,0,0,0,0), kln::origin(), bt_type, shape, moved };
     rb.moved->move(rb.M, rb.shape);
-
+    rb.apply = ps::pp::applyImpulseNormal; //TODO yuck
     ps::Object out = {};
 
     out.id = newID();
     out.rigidbody = rb;
-    
+
     auto& names = ps::pg::ObjLibrary::getObjLibrary().m_objectNames;
     auto& name = std::find(names.begin(), names.end(), meshName);
     out.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh(name != names.end() ? meshName : ps::pp::shapeName[shape->type]);
@@ -91,6 +91,66 @@ ps::Object utils::objectCreate(kln::motor m, ps::pp::BodyType bt_type, std::stri
     return out;
 }
 
+void utils::createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m) {
+    ps::Object body = objectCreate(
+        m,
+        ps::pp::BT_DYNAMIC,
+        "",
+        new ps::pp::Box(2.f, 1.f, 4.f, 5, kln::uMotor()),
+        new ps::pp::Box(2.f, 1.f, 4.f, 5, kln::uMotor())
+    );
+
+    int bodyIndex = (int)ws->simulatedObjects.size();
+    ws->simulatedObjects.push_back(body);
+    int whIndexStart = (int)ws->simulatedObjects.size();
+
+    ps::Object wheels[4];
+    ps::pp::Join joins[4];
+    ps::pp::Spring springs[4];
+    struct {
+        float x;
+        float y;
+        float z;
+    } s[4] = { {1, -1,1},{1, -1,-1},{-1, -1,-1},{-1, -1,1} } , pt = {1.6f, 1.f , 1.4f};
+    float travel = 1;
+    float wheelR = 0.5;
+    
+    for (int i = 0; i < 4; i++) {
+
+        
+        wheels[i] = objectCreate(
+            m * kln::sqrt(kln::point(pt.x * s[i].x, pt.y * s[i].y, pt.z * s[i].z)* kln::origin()),
+            ps::pp::BT_DYNAMIC,
+            "",
+            new ps::pp::Sphere(wheelR, 0.2f, kln::uMotor()),
+            new ps::pp::Sphere(wheelR, 0.2f, kln::uMotor())
+        );
+        kln::point topAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y - (travel/2.f) * s[i].y, pt.z * s[i].z);
+        kln::point botAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y + (travel / 2.f) * s[i].y, pt.z * s[i].z);
+
+        auto line = ( topAttch & botAttch).normalized();
+        joins[i] = {
+            bodyIndex,
+            whIndexStart + i,
+            { topAttch, botAttch},
+            line
+        };
+
+        kln::point springAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y - travel * s[i].y, pt.z * s[i].z);
+        springs[i] = {
+            bodyIndex,
+            whIndexStart + i,
+            kln::sqrt( springAttch * kln::origin()),
+            kln::uMotor(),
+            travel,
+            -6.f//-0.3f//-6.f
+        };
+    }
+
+    ws->simulatedObjects.insert(ws->simulatedObjects.end(), wheels, wheels + 4);
+    e->joins.insert(e->joins.end(), joins, joins + 4);
+    e->springs.insert(e->springs.end(), springs, springs + 4);
+}
 void utils::objectDestroy(ps::Object* ob) {
     if (ob->rigidbody.shape != NULL) {
         delete ob->rigidbody.shape;

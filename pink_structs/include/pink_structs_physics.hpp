@@ -6,7 +6,8 @@
 #define BM(x) (int)(1<<((int)(x)))
 
 namespace ps::pp {
-    struct Rigidbody;
+    class Rigidbody;
+    typedef void (*applyImpulse)(Rigidbody* rb, kln::line dir, float scalar);//TODO yuck
 
     typedef struct Manifold {
         static const int maxContactPoints = 10;
@@ -23,17 +24,35 @@ namespace ps::pp {
         int rb1;  //TODO Bad
         int rb2; //TODO
 
+        kln::motor rb1atch;
+        kln::motor rb2atch;
+
         float restingLength;
         float k;
     };
 
-    struct WheelJoin {
-        int body; //TODO Bad
-        int wheel;
+    struct Constraint {
+        kln::line C;
+        kln::line inertia;
+    };
 
-        float travel;
+    struct Join {
+        int parent; //TODO Bad
+        int child;
+
         kln::point Att[2];
         kln::line constraint;
+        
+        kln::line parentInertiaMask;
+        kln::line childInertiaMask;
+
+        bool valid;
+
+        float travel;
+        
+
+        // kln::motor ParentToChild;
+        // kln::motor ChildToParent;
     };
 
     enum ShapeType {
@@ -53,13 +72,15 @@ namespace ps::pp {
     public:
         kln::line inertia;
         kln::point center;
+        nvmath::mat4f size;
         ShapeType type;
         float mass;
 
         virtual void move(const kln::motor& M, const BaseShape* og) = 0;
     };
 
-    struct Rigidbody {
+    class Rigidbody {
+        public:
         kln::motor M;
         kln::line B;
 
@@ -74,7 +95,13 @@ namespace ps::pp {
 
         BaseShape* shape;
         BaseShape* moved;
+
+        applyImpulse apply; // TODO yuck 
+
+        Join* joins;
+        int joinSize;
     };
+
 
     static char* shapeName[ST_SIZE] = { "plane","sphere","cube_multi","cylinder", "composite" };
 } //namespace ps::pp

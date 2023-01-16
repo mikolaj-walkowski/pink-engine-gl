@@ -9,5 +9,5 @@ nvmath::mat4f ps::Object::interpolate(ps::Object* a, float t) {
     }
 
     kln::motor m = kln::exp(this->interpolation_catche.log * t) * this->rigidbody.M;
-    return nvmath::mat4f(m.as_mat4x4().data);
+    return nvmath::mat4f(m.as_mat4x4().data) * a->rigidbody.shape->size;
 }

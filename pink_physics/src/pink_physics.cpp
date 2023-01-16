@@ -83,8 +83,6 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     e->resolve(e);
 }
 
-
-// TODO Upgrade Box collision
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     kln::line G(0.f, -9.81f, 0.f, 0.f, 0.f, 0.f);
     G = !~((~rb->M)(G));
@@ -97,11 +95,29 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     auto I = rb->shape->inertia;
 
     auto I_B = (!rb->B).mult(I);
-    auto helper = !~((rb->F - klnTestCross(I_B, rb->B)).div(I));
+
+    rb->dB = !~((rb->F - klnTestCross(I_B, rb->B)).div(I));
     rb->F *= 0;
-    rb->dB = (helper);
 }
 
+// void ps::pp::carSimulate(Rigidbody* rb) {
+//     auto car = (Car*)rb;
+
+//     kln::line G(0.f, -9.81f, 0.f, 0.f, 0.f, 0.f);
+//     G = !~((~rb->M)(G));
+//     kln::line Damp = !~(-0.35f * rb->B);
+
+//     rb->F += G + Damp;
+
+//     rb->dM = -0.5f * (rb->M * (kln::motor)(rb->B));
+
+//     auto I = rb->shape->inertia;
+
+//     auto I_B = (!rb->B).mult(I);
+
+//     rb->dB = !~((rb->F - klnTestCross(I_B, rb->B)).div(I));
+//     rb->F *= 0;
+// }
 
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     auto& staticObjects = e->out->staticObjects;
@@ -113,7 +129,26 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
     collisionSize = 0;
 
+    for (int n = 0; n < dynamicObjects.size(); n++)
+    {
+        auto& i = dynamicObjects[n];
+        if (rb == &i.rigidbody) continue;
 
+        if (collide(rb, &i.rigidbody, &collisionData[collisionSize])) {
+#ifndef NDEBUG
+            for (int di = 0; di < collisionData[collisionSize].count; di++)
+            {
+                auto p = collisionData[collisionSize].pointsOfContact[di];
+                nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
+                nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
+                e->out->points.push_back(t * s);
+            }
+#endif
+            ++(collisionSize);
+
+        }
+    }
+    
     for (int n = 0; n < staticObjects.size(); n++)
     {
         auto& i = staticObjects[n];
@@ -129,26 +164,6 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
                 // auto y = p.y();
                 // auto z = p.z();
                 // printf("x %f, y %f, z %f\n", x, y, z);
-                e->out->points.push_back(t * s);
-            }
-#endif
-            ++(collisionSize);
-        }
-    }
-
-    for (int n = 0; n < dynamicObjects.size(); n++)
-    {
-        auto& i = dynamicObjects[n];
-        if (collisionSize >= collisionMaxSize) break;
-        if (rb == &i.rigidbody) continue;
-
-        if (collide(rb, &i.rigidbody, &collisionData[collisionSize])) {
-#ifndef NDEBUG
-            for (int di = 0; di < collisionData[collisionSize].count; di++)
-            {
-                auto p = collisionData[collisionSize].pointsOfContact[di];
-                nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
-                nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
                 e->out->points.push_back(t * s);
             }
 #endif
@@ -180,6 +195,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
 
         for (int ii = 0; ii < data.count; ii++)
         {
+            
             // Point of contact
             auto Q = data.pointsOfContact[ii];
             // Normal meet line ?
@@ -190,12 +206,29 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             // World rb_m rate
             auto B_m = (rb_m->M)(rb_m->B);
 
-            //IMPULSE
-            // Local (at Q) relative Rate
+            int size = 0;
             auto QxB = klnTestCross(Q, B_p - B_m);
+            auto localB = (Q & QxB);
+
+            // if rb.
+            // for (int iii = 0; iii < 4; iii++) {
+
+            //     auto c = constrains[iii];
+            //     auto num = localB | c.C;
+            //     if (num < 0.f) continue;
+
+            //     auto QxI = klnTestCross(Q, I_pN + I_mN);
+            //     auto den = (Q & QxI) | c.C;
+                
+            //     if (den == 0.f) continue;
+
+
+            // }
+            //IMPULSE
+            
 
             // Local (at Q) relative rate along meet line N ?
-            auto num = (Q & QxB) | N;
+            auto num = localB | N;
 
             // check if bodies are already moving away
             if (num < 0.f) continue;
@@ -209,20 +242,16 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             auto QxI = klnTestCross(Q, I_pN + I_mN);
             auto den = (Q & QxI) | N;
 
-            auto localB = Q & QxB;
 
             auto j = -(1 + rho) * num / den;
             j /= (float)data.count;
             if (isnan(j)) continue;
-            auto I_pNb = j * (~rb_p->M)(I_pN);
-            auto I_mNb = j * (~rb_m->M)(I_mN);
 
-            rb_p->B += I_pNb;
-            rb_m->B -= I_mNb;
-
+            rb_p->apply(rb_p, (~rb_p->M)(I_pN), j);
+            rb_m->apply(rb_m, (~rb_m->M)(I_mN), -j);
+        
             // FRICTION
             auto p = (localB | Q).normalized();
-            auto h = p;
             p -= normal;
             p.zeroE0();
             if (eCmp(p.norm(), 0.0f)) continue;
@@ -257,13 +286,8 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
                 jt = -j * f;
             }
 
-            auto I_pTb = jt * (~rb_p->M)(I_pT);
-            auto I_mTb = jt * (~rb_m->M)(I_mT);
-
-
-            //TODO fix for SIMULATED v SIMULATED collisions / or disable for them ()  
-            rb_p->B += I_pTb;
-            rb_m->B -= I_mTb;
+            rb_p->apply(rb_p, (~rb_p->M)(I_pT), jt);
+            rb_m->apply(rb_m, (~rb_m->M)(I_mT), -jt);
         }
     }
 
@@ -271,6 +295,58 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
 
 
 namespace ps::pp {
+    
+    void checkJoin(Engine* e, Join* j) {
+        auto& parent = e->out->simulatedObjects[j->parent];
+        auto& child = e->out->simulatedObjects[j->child];
+
+    }
+    
+    void enforceJoin(Engine* e, Join* j) {
+        auto& parent = e->out->simulatedObjects[j->parent].rigidbody;
+        auto& child = e->out->simulatedObjects[j->child].rigidbody;
+        
+        auto joinToWorld = parent.M;
+
+        auto line = joinToWorld(j->constraint);
+
+        auto center = child.moved->center;
+        auto newCenter = kln::project(center, line).normalized();
+
+        auto minAtt = joinToWorld(j->Att[0]);
+        auto maxAtt = joinToWorld(j->Att[1]);
+
+        if ((maxAtt | line).e0() < (minAtt | line).e0()) {
+            maxAtt = joinToWorld(j->Att[0]);
+            minAtt = joinToWorld(j->Att[1]);
+        }
+
+        auto vmin = (minAtt | line).e0();
+        auto vmax = (maxAtt | line).e0();
+        
+
+        auto curr = (newCenter | line).e0();
+        
+        if (curr < vmin) {
+            newCenter = minAtt;
+            // newCenter = maxAtt;
+            
+        }
+        else if (curr > vmax){
+            newCenter = maxAtt;
+            // newCenter = minAtt;
+        }
+        kln::motor correction = kln::sqrt(newCenter * center) ;
+        child.M = child.M * correction;
+    }
+
+    void applyImpulseNormal(Rigidbody* rb, kln::line dir, float a) {
+        rb->B += dir * a;
+    }
+
+    void applyImpulseWheel(Rigidbody* rb, kln::line dir, float a) {
+        rb->B += dir * a;
+    }
 
     Engine::Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF): simulate(sF), collide(cF), resolve(rF), integrator(iF) {
 
@@ -283,8 +359,8 @@ namespace ps::pp {
             auto& b1 = out->simulatedObjects[s.rb1];//TODO very bad 
             auto& b2 = out->simulatedObjects[s.rb2];//TODO very bad 
 
-            auto c1 = b1.rigidbody.moved->center;
-            auto c2 = b2.rigidbody.moved->center;
+            auto c1 = s.rb1atch(b1.rigidbody.moved->center);
+            auto c2 = s.rb2atch(b2.rigidbody.moved->center);
 
             auto line = c1 & c2;
 
@@ -292,49 +368,17 @@ namespace ps::pp {
 
             line.normalize();
 
-            b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line));
-            b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line));
+            b1.rigidbody.F -= ((~b1.rigidbody.M)((s.k * -x) * line));
+            b2.rigidbody.F += ((~b2.rigidbody.M)((s.k * -x) * line));
+
+            // b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line));
+            // b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line));
         }
     }
 
-    void Engine::applyJoins() {
+    void Engine::enforceJoins() {
         for (int i = 0; i < joins.size();i++) {
-            auto& j = joins[i];
-            auto& body = out->simulatedObjects[j.body].rigidbody;
-            auto& wheel = out->simulatedObjects[j.wheel].rigidbody;
-
-            auto attachment = body.M(j.Att[1]);
-            auto constraint = kln::project(body.M(j.constraint),attachment) ;
-
-            // rb_p inertia map
-            const auto& I_body = body.shape->inertia;
-            // rb_m inertia map
-            const auto& I_wheel = wheel.shape->inertia;
-
-
-            // World rb_p rate
-            auto B_body = (body.M)(body.B);
-            // World rb_wheel rate
-            auto B_wheel = (wheel.M)(wheel.B);
-
-            // Inertia of rb_body (at Q) along N (now join line ?) 
-            auto I_bodyN = (body.M)(!~(((~body.M)(constraint)).div(I_body))) * body.bodyType;
-            // Inertia of rb_wheel (at Q) along N (now join line ?) 
-            auto I_wheelN = (wheel.M)(!~(((~wheel.M)(constraint)).div(I_wheel))) * wheel.bodyType;
-
-            //IMPULSE
-            // Local (at Q) relative Rate
-            auto QxB = klnTestCross(attachment, B_body - B_wheel);
-            auto num = (attachment & QxB) | constraint;
-            auto QxI = klnTestCross(attachment, I_bodyN + I_wheelN);
-            auto den = (attachment & QxI) | constraint;
-
-            auto lambda = num / den;
-
-            if (isnan(lambda)) continue;
-
-            body.B += (~body.M)(I_bodyN) * lambda ;
-            wheel.B -= (~wheel.M)(I_wheelN) * lambda ;
+            enforceJoin(this, &joins[i]);
         }
     }
 
@@ -376,8 +420,8 @@ namespace ps::pp {
             }
 #endif
         }
-
-        //applyJoins();
+        
+        enforceJoins();
 
     }
 }
