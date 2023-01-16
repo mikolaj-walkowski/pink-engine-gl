@@ -9,6 +9,7 @@
 #include "GLFW/glfw3.h"
 
 #include "pink_structs.hpp"
+#include "pink_physics.hpp"
 #include <vector>
 
 namespace utils {
@@ -38,6 +39,7 @@ namespace utils {
     ps::UniqueID newID();
 
     ps::Object objectCreate(kln::motor m, ps::pp::BodyType, std::string meshName, ps::pp::BaseShape*, ps::pp::BaseShape*);
-
+    void createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m);
+    
     void objectDestroy(ps::Object* rb);
 }//namespace utils
