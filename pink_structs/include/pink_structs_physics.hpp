@@ -46,13 +46,9 @@ namespace ps::pp {
         kln::line parentInertiaMask;
         kln::line childInertiaMask;
 
-        bool valid;
+        bool valid = true;
 
         float travel;
-        
-
-        // kln::motor ParentToChild;
-        // kln::motor ChildToParent;
     };
 
     enum ShapeType {
@@ -98,7 +94,7 @@ namespace ps::pp {
 
         applyImpulse apply; // TODO yuck 
 
-        Join* joins;
+        int* joins; //TODO yuck2 
         int joinSize;
     };
 

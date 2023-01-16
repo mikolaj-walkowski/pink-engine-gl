@@ -116,8 +116,6 @@ void utils::createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m) {
     float wheelR = 0.5;
     
     for (int i = 0; i < 4; i++) {
-
-        
         wheels[i] = objectCreate(
             m * kln::sqrt(kln::point(pt.x * s[i].x, pt.y * s[i].y, pt.z * s[i].z)* kln::origin()),
             ps::pp::BT_DYNAMIC,
@@ -125,7 +123,11 @@ void utils::createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m) {
             new ps::pp::Sphere(wheelR, 0.2f, kln::uMotor()),
             new ps::pp::Sphere(wheelR, 0.2f, kln::uMotor())
         );
-        kln::point topAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y - (travel/2.f) * s[i].y, pt.z * s[i].z);
+        wheels[i].rigidbody.joins = new int;
+        *wheels[i].rigidbody.joins = (int)e->joins.size() + i;
+        wheels[i].rigidbody.joinSize = 1;
+        
+        kln::point topAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y - (travel / 2.f) * s[i].y, pt.z * s[i].z);
         kln::point botAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y + (travel / 2.f) * s[i].y, pt.z * s[i].z);
 
         auto line = ( topAttch & botAttch).normalized();
@@ -135,7 +137,7 @@ void utils::createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m) {
             { topAttch, botAttch},
             line
         };
-
+        
         kln::point springAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y - travel * s[i].y, pt.z * s[i].z);
         springs[i] = {
             bodyIndex,
@@ -146,14 +148,21 @@ void utils::createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m) {
             -6.f//-0.3f//-6.f
         };
     }
-
+    
+    body.rigidbody.joins = new int[4];
+    int tmp[] = { (int)e->joins.size(), (int)e->joins.size() + 1,(int)e->joins.size() + 2 ,(int)e->joins.size() + 3 };
+    memcpy(body.rigidbody.joins, tmp, sizeof(int) * 4);
+    body.rigidbody.joinSize = 4;
+    
     ws->simulatedObjects.insert(ws->simulatedObjects.end(), wheels, wheels + 4);
     e->joins.insert(e->joins.end(), joins, joins + 4);
     e->springs.insert(e->springs.end(), springs, springs + 4);
 }
+
 void utils::objectDestroy(ps::Object* ob) {
     if (ob->rigidbody.shape != NULL) {
         delete ob->rigidbody.shape;
         delete ob->rigidbody.moved;
+        delete ob->rigidbody.joins;
     }
 }
