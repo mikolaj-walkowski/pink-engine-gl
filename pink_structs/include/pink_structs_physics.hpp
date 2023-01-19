@@ -99,5 +99,5 @@ namespace ps::pp {
     };
 
 
-    static char* shapeName[ST_SIZE] = { "plane","sphere","cube_multi","cylinder", "composite" };
+    static const char* shapeName[ST_SIZE] = { "plane","sphere","cube_multi","cylinder", "composite" };
 } //namespace ps::pp

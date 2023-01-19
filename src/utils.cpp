@@ -145,7 +145,7 @@ void utils::createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m) {
             kln::sqrt( springAttch * kln::origin()),
             kln::uMotor(),
             travel,
-            -6.f//-0.3f//-6.f
+            -10.f//-0.3f
         };
     }
     

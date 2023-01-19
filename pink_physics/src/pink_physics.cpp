@@ -62,6 +62,8 @@ void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         rb->B = rb->B + (step * rb->dB);
         rb->M.normalize();
         rb->B.grade2();
+        rb->moved->move(rb->M, rb->shape);
+
         e->collide(e, rb);
         e->resolve(e);
     }
@@ -80,7 +82,9 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     rb->moved->move(rb->M, rb->shape);
 
     e->collide(e, rb);
-    e->resolve(e);
+    for (int i = 0; i < 10; i++) {
+        e->resolve(e);
+    }
 }
 
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
@@ -148,7 +152,7 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
         }
     }
-    
+
     for (int n = 0; n < staticObjects.size(); n++)
     {
         auto& i = staticObjects[n];
@@ -160,10 +164,6 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
                 auto p = collisionData[collisionSize].pointsOfContact[di];
                 nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
                 nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
-                // auto x = p.x();
-                // auto y = p.y();
-                // auto z = p.z();
-                // printf("x %f, y %f, z %f\n", x, y, z);
                 e->out->points.push_back(t * s);
             }
 #endif
@@ -195,7 +195,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
 
         for (int ii = 0; ii < data.count; ii++)
         {
-            
+
             // Point of contact
             auto Q = data.pointsOfContact[ii];
             // Normal meet line ?
@@ -219,19 +219,18 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
 
             //     auto QxI = klnTestCross(Q, I_pN + I_mN);
             //     auto den = (Q & QxI) | c.C;
-                
+
             //     if (den == 0.f) continue;
 
 
             // }
             //IMPULSE
-            
+
 
             // Local (at Q) relative rate along meet line N ?
             auto num = localB | N;
 
             // check if bodies are already moving away
-            if (num < 0.f) continue;
 
             // Inertia of rb_p (at Q) along N (now join line ?) 
             auto I_pN = (rb_p->M)(!~(((~rb_p->M)(N)).div(I_p))) * rb_p->bodyType;
@@ -246,10 +245,11 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             auto j = -(1 + rho) * num / den;
             j /= (float)data.count;
             if (isnan(j)) continue;
+            // if (j < 0.f ) continue;
 
             rb_p->apply(rb_p, (~rb_p->M)(I_pN), j);
             rb_m->apply(rb_m, (~rb_m->M)(I_mN), -j);
-        
+
             // FRICTION
             auto p = (localB | Q).normalized();
             p -= normal;
@@ -295,21 +295,21 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
 
 
 namespace ps::pp {
-    
+
     void checkJoin(Engine* e, Join* j) {
         auto& parent = e->out->simulatedObjects[j->parent];
         auto& child = e->out->simulatedObjects[j->child];
 
     }
-    
-    void enforceJoin(Engine* e, Join* j) {
+
+    void enforceJoint(Engine* e, Join* j) {
         auto& parent = e->out->simulatedObjects[j->parent].rigidbody;
         auto& child = e->out->simulatedObjects[j->child].rigidbody;
-        
+
         auto joinToWorld = parent.M;
 
         j->valid = true;
-        
+
         auto line = joinToWorld(j->constraint);
 
         auto center = child.moved->center;
@@ -325,19 +325,19 @@ namespace ps::pp {
 
         auto vmin = (minAtt | line).e0();
         auto vmax = (maxAtt | line).e0();
-        
+
 
         auto curr = (newCenter | line).e0();
-        
+
         if (curr < vmin) {
             newCenter = minAtt;
             j->valid = false;
         }
-        else if (curr > vmax){
+        else if (curr > vmax) {
             newCenter = maxAtt;
             j->valid = false;
         }
-        kln::motor correction = kln::sqrt(newCenter * center) ;
+        kln::motor correction = kln::sqrt(newCenter * center);
         child.M = child.M * correction;
     }
 
@@ -363,23 +363,26 @@ namespace ps::pp {
             auto c1 = s.rb1atch(b1.rigidbody.moved->center);
             auto c2 = s.rb2atch(b2.rigidbody.moved->center);
 
-            auto line = c1 & c2;
+            auto line1 = c1 & c2;
+            auto line2 = c2 & c1;
 
-            auto x = line.norm() - s.restingLength;
+            auto x = line1.norm() - s.restingLength;
 
-            line.normalize();
+            line1.normalize();
+            line2.normalize();
 
-            b1.rigidbody.F -= ((~b1.rigidbody.M)((s.k * -x) * line));
-            b2.rigidbody.F += ((~b2.rigidbody.M)((s.k * -x) * line));
+            b1.rigidbody.F -= ((~b1.rigidbody.M)((s.k * -x) * line1));
+            b2.rigidbody.F -= ((~b2.rigidbody.M)((s.k * -x) * line2));
 
-            // b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line));
-            // b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line));
+
+            // b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line1));
+            // b2.rigidbody.B -= !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line2));
         }
     }
 
-    void Engine::enforceJoins() {
+    void Engine::enforceJoints() {
         for (int i = 0; i < joins.size();i++) {
-            enforceJoin(this, &joins[i]);
+            enforceJoint(this, &joins[i]);
         }
     }
 
@@ -421,8 +424,8 @@ namespace ps::pp {
             }
 #endif
         }
-        
-        enforceJoins();
+
+         enforceJoints();
 
     }
 }

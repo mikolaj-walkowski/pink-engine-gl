@@ -53,7 +53,7 @@ namespace ps::pp {
         std::vector<Join> joins;
         void step(ps::WordState*, ps::WordState*, float);
         void applySprings();
-        void enforceJoins();
+        void enforceJoints();
         void renderUI();
         Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF);
     };
@@ -62,7 +62,7 @@ namespace ps::pp {
     void rigidbodyDestroy(Rigidbody*);
 
     void checkJoin(Engine* e, Join* j);
-    void enforceJoin(Engine* e, Join* j);
+    void enforceJoint(Engine* e, Join* j);
     
     void basicSimulate(Rigidbody*);
     void carSimulate(Rigidbody*);
