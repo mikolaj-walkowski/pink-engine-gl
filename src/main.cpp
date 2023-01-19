@@ -179,7 +179,6 @@ int main(int argc, char** argv)
       now = next;
     }
 
-    // DO WYMIANY 
 
     // Start the Dear ImGui frame
     UI::D().newFrame();

@@ -24,10 +24,6 @@ bool ps::pp::collide(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, ps::pp::Man
 
     CollisionFunction f = defaultCollider;
     auto type = BM(m->rb1->shape->type) | BM(m->rb2->shape->type);
-    // if (type & BM(ps::pp::ST_COMPOSITE)) {
-    //     f = shapeToComposite;
-    // }
-    // else {
     switch (type)
     {
     case (BM(ps::pp::ST_SPHERE) | BM(ps::pp::ST_PLANE)): {
@@ -47,8 +43,6 @@ bool ps::pp::collide(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, ps::pp::Man
         break;
     }
     }
-
-    // }
     bool out = f(m->rb1->moved, &m->rb1->M, m->rb2->moved, &m->rb2->M, m);
     return out;
 }
