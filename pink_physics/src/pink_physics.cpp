@@ -64,8 +64,11 @@ void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         rb->B.grade2();
         rb->moved->move(rb->M, rb->shape);
 
-        e->collide(e, rb);
+        e->collide(e, rb, e->out->simulatedObjects);
         e->resolve(e);
+
+        e->collide(e, rb, e->out->staticObjects);
+        ps::pp::solidResolver(e);
     }
 }
 
@@ -81,9 +84,13 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
     rb->moved->move(rb->M, rb->shape);
 
-    e->collide(e, rb);
-    for (int i = 0; i < 10; i++) {
+    e->collide(e, rb, e->out->simulatedObjects);
+    for (int i = 0; i < 1; i++) {
         e->resolve(e);
+    }
+    e->collide(e, rb, e->out->staticObjects);
+    for (int i = 0; i < 1; i++) {
+        ps::pp::solidResolver(e);
     }
 }
 
@@ -172,6 +179,116 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     }
 }
 
+void ps::pp::vecCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb, std::vector<ps::Object>& vec) {
+    auto& collisionData = e->collision_props.collisionData;
+    auto& collisionSize = e->collision_props.size;
+    auto& collisionMaxSize = Engine::maxNumber;
+
+    collisionSize = 0;
+
+    for (int n = 0; n < vec.size(); n++)
+    {
+        auto& i = vec[n];
+        if (rb == &i.rigidbody) continue;
+
+        if (collide(rb, &i.rigidbody, &collisionData[collisionSize])) {
+#ifndef NDEBUG
+            for (int di = 0; di < collisionData[collisionSize].count; di++)
+            {
+                auto p = collisionData[collisionSize].pointsOfContact[di];
+                nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
+                nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
+                e->out->points.push_back(t * s);
+            }
+#endif
+            ++(collisionSize);
+
+        }
+    }
+}
+
+void ps::pp::solidResolver(ps::pp::Engine* e) {
+    float rho = 0.5f;
+
+
+    for (int i = 0; i < e->collision_props.size; i++)
+    {
+        // Collision data 
+        auto& data = e->collision_props.collisionData[i];
+        // Colliding body
+        auto rb_p = data.rb1;
+        auto rb_m = data.rb2;
+
+        // rb_p inertia map
+        const auto& I_p = rb_p->shape->inertia;
+        // rb_m inertia map
+        const auto& I_m = rb_m->shape->inertia;
+
+        // Collision plane normal
+        auto normal = (data.normal);
+
+        for (int ii = 0; ii < data.count; ii++)
+        {
+
+            // Point of contact
+            auto Q = data.pointsOfContact[ii];
+            // Normal meet line ?
+            auto N = normal | Q;
+
+            // World rb_p rate
+            auto B_p = (rb_p->M)(rb_p->B);
+            // World rb_m rate
+            auto B_m = (rb_m->M)(rb_m->B);
+
+            int size = 0;
+            auto QxB = klnTestCross(Q, B_p - B_m);
+            auto localB = (Q & QxB);
+
+            auto num = localB | N;
+
+            auto j = -(1 + rho) * num;
+            j /= (float)data.count;
+            if (isnan(j)) continue;
+            if (j < 0.f) continue;
+
+            rb_p->apply(rb_p, (~rb_p->M)(N * rb_p->bodyType), j);
+            rb_m->apply(rb_m, (~rb_m->M)(N * rb_m->bodyType), -j);
+
+            // FRICTION
+            auto p = (localB | Q).normalized();
+            p -= normal;
+            p.zeroE0();
+            if (eCmp(p.norm(), 0.0f)) continue;
+            p.normalize();
+            p = kln::project(p, Q);
+            auto T = p | Q;
+
+            T.normalize();
+
+            auto num_T = ((Q & QxB) | T);
+            if (eCmp(num_T, 0.0f) || isnan(T.norm())) continue;
+
+            auto jt = num_T;
+
+            jt /= (float)data.count;
+
+            if (ps::pp::eCmp(jt, 0.0f) || isnan(jt)) continue;
+
+            float f = 0.05f;
+
+            if (jt > j * f) {
+                jt = j * f;
+            }
+            else if (jt < -j * f) {
+                jt = -j * f;
+            }
+
+            rb_p->apply(rb_p, (~rb_p->M)(T * rb_p->bodyType), jt);
+            rb_m->apply(rb_m, (~rb_m->M)(T * rb_m->bodyType), -jt);
+        }
+    }
+}
+
 void ps::pp::basicResolver(ps::pp::Engine* e) {
     // Coefficient of restitution
     float rho = 0.5f;
@@ -245,7 +362,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             auto j = -(1 + rho) * num / den;
             j /= (float)data.count;
             if (isnan(j)) continue;
-            // if (j < 0.f ) continue;
+            if (j < 0.f) continue;
 
             rb_p->apply(rb_p, (~rb_p->M)(I_pN), j);
             rb_m->apply(rb_m, (~rb_m->M)(I_mN), -j);
@@ -425,7 +542,7 @@ namespace ps::pp {
 #endif
         }
 
-         enforceJoints();
+        enforceJoints();
 
     }
 }

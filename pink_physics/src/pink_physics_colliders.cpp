@@ -5,13 +5,6 @@ bool ps::pp::eCmp(float a, float b) {
     return abs(a - b) < epsilon;
 }
 
-
-// void initJmpTable() {
-//     ps::pp::jumpTable[BM(ps::pp::ST_SPHERE)] = ps::pp::sphereToSphere;
-//     ps::pp::jumpTable[BM(ps::pp::ST_PLANE) | BM(ps::pp::ST_SPHERE)] = ps::pp::sphereToPlane;
-//     ps::pp::jumpTable[BM(ps::pp::ST_PLANE) | BM(ps::pp::ST_BOX)] = ps::pp::boxToPlane;
-//     ps::pp::jumpTable[BM(ps::pp)]
-// }
 bool ps::pp::collide(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, ps::pp::Manifold* m) {
     if (rb1->shape->type > rb2->shape->type) {
         m->rb1 = rb2;

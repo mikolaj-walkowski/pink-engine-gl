@@ -11,7 +11,7 @@ namespace ps::pp {
 
 
     typedef void (*SimulateFunc)(Rigidbody*);
-    typedef void (*ColliderFunc)(Engine*, Rigidbody*);
+    typedef void (*ColliderFunc)(Engine*, Rigidbody*, std::vector<ps::Object>&);
     typedef void (*ResolverFunc)(Engine*);
     typedef void (*IntegrationFunc)(Engine*, Rigidbody*);
 
@@ -68,6 +68,8 @@ namespace ps::pp {
     void carSimulate(Rigidbody*);
     void basicCollider(Engine*, Rigidbody*);
     void basicResolver(Engine*);
+    void solidResolver(Engine*);
+    void vecCollider(Engine* e, Rigidbody* rb, std::vector<ps::Object>& vec);
     void eulerIntegration(Engine*, Rigidbody*);
     void verletIntegration(Engine*, Rigidbody*);
     void applyImpulseNormal(Rigidbody* rb, kln::line dir, float a);
