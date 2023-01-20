@@ -249,10 +249,10 @@ void ps::pp::solidResolver(ps::pp::Engine* e) {
             auto j = -(1 + rho) * num;
             j /= (float)data.count;
             if (isnan(j)) continue;
-            if (j < 0.f) continue;
+            if (j > 0.f) continue;
 
-            rb_p->apply(rb_p, (~rb_p->M)(N * rb_p->bodyType), j);
-            rb_m->apply(rb_m, (~rb_m->M)(N * rb_m->bodyType), -j);
+            rb_p->apply(rb_p, !~((~rb_p->M)(N)), j);
+            rb_m->apply(rb_m, !~((~rb_m->M)(N)), -j);
 
             // FRICTION
             auto p = (localB | Q).normalized();
@@ -283,8 +283,8 @@ void ps::pp::solidResolver(ps::pp::Engine* e) {
                 jt = -j * f;
             }
 
-            rb_p->apply(rb_p, (~rb_p->M)(T * rb_p->bodyType), jt);
-            rb_m->apply(rb_m, (~rb_m->M)(T * rb_m->bodyType), -jt);
+            rb_p->apply(rb_p, !~((~rb_p->M)(T)), jt);
+            rb_m->apply(rb_m, !~((~rb_m->M)(T)), -jt);
         }
     }
 }
@@ -350,9 +350,9 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             // check if bodies are already moving away
 
             // Inertia of rb_p (at Q) along N (now join line ?) 
-            auto I_pN = (rb_p->M)(!~(((~rb_p->M)(N)).div(I_p))) * rb_p->bodyType;
+            auto I_pN = (rb_p->M)(!~(((~rb_p->M)(N)).div(I_p)));
             // Inertia of rb_m (at Q) along N (now join line ?) 
-            auto I_mN = (rb_m->M)(!~(((~rb_m->M)(N)).div(I_m))) * rb_m->bodyType;
+            auto I_mN = (rb_m->M)(!~(((~rb_m->M)(N)).div(I_m)));
 
             // Local inertia sum
             auto QxI = klnTestCross(Q, I_pN + I_mN);
@@ -362,7 +362,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             auto j = -(1 + rho) * num / den;
             j /= (float)data.count;
             if (isnan(j)) continue;
-            if (j < 0.f) continue;
+            if (j > 0.f) continue;
 
             rb_p->apply(rb_p, (~rb_p->M)(I_pN), j);
             rb_m->apply(rb_m, (~rb_m->M)(I_mN), -j);
@@ -381,8 +381,8 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             auto num_T = ((Q & QxB) | T);
             if (eCmp(num_T, 0.0f) || isnan(T.norm())) continue;
 
-            auto I_pT = (rb_p->M)(!~(((~rb_p->M)(T)).div(I_p))) * rb_p->bodyType;
-            auto I_mT = (rb_m->M)(!~(((~rb_m->M)(T)).div(I_m))) * rb_m->bodyType;
+            auto I_pT = (rb_p->M)(!~(((~rb_p->M)(T)).div(I_p)));
+            auto I_mT = (rb_m->M)(!~(((~rb_m->M)(T)).div(I_m)));
 
             auto QxIT = klnTestCross(Q, I_pT + I_mT);
 
@@ -462,6 +462,9 @@ namespace ps::pp {
         rb->B += dir * a;
     }
 
+    void applyImpulseStatic(Rigidbody* rb, kln::line dir, float a) {
+    }
+
     void applyImpulseWheel(Rigidbody* rb, kln::line dir, float a) {
         rb->B += dir * a;
     }
@@ -481,19 +484,19 @@ namespace ps::pp {
             auto c2 = s.rb2atch(b2.rigidbody.moved->center);
 
             auto line1 = c1 & c2;
-            auto line2 = c2 & c1;
+            // auto line2 = c2 & c1;
 
             auto x = line1.norm() - s.restingLength;
 
             line1.normalize();
-            line2.normalize();
+            // line2.normalize();
 
-            b1.rigidbody.F -= ((~b1.rigidbody.M)((s.k * -x) * line1));
-            b2.rigidbody.F -= ((~b2.rigidbody.M)((s.k * -x) * line2));
+            // b1.rigidbody.F -= ((~b1.rigidbody.M)((s.k * -x) * line1));
+            // b2.rigidbody.F -= ((~b2.rigidbody.M)((s.k * -x) * line2));
 
 
-            // b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line1));
-            // b2.rigidbody.B -= !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line2));
+            b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line1));
+            b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line1));
         }
     }
 

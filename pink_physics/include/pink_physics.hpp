@@ -66,12 +66,18 @@ namespace ps::pp {
     
     void basicSimulate(Rigidbody*);
     void carSimulate(Rigidbody*);
-    void basicCollider(Engine*, Rigidbody*);
+
     void basicResolver(Engine*);
     void solidResolver(Engine*);
+    
+    void basicCollider(Engine*, Rigidbody*);
     void vecCollider(Engine* e, Rigidbody* rb, std::vector<ps::Object>& vec);
+
     void eulerIntegration(Engine*, Rigidbody*);
     void verletIntegration(Engine*, Rigidbody*);
+    
     void applyImpulseNormal(Rigidbody* rb, kln::line dir, float a);
+    void applyImpulseStatic(Rigidbody* rb, kln::line dir, float a);
+
     void print(const char*, kln::point);
 } // namespace ps::pp

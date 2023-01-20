@@ -78,7 +78,7 @@ ps::Object utils::objectCreate(kln::motor m, ps::pp::BodyType bt_type, std::stri
 
     ps::pp::Rigidbody rb = { m, ~m(kln::line(0,0,0,0,0,0)), kln::uMotor(), kln::line(),kln::line(0,0,0,0,0,0), kln::origin(), bt_type, shape, moved };
     rb.moved->move(rb.M, rb.shape);
-    rb.apply = ps::pp::applyImpulseNormal; //TODO yuck
+    rb.apply = bt_type == ps::pp::BT_DYNAMIC ? ps::pp::applyImpulseNormal : ps::pp::applyImpulseStatic; //TODO yuck
     ps::Object out = {};
 
     out.id = newID();
@@ -145,7 +145,7 @@ void utils::createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m) {
             kln::sqrt( springAttch * kln::origin()),
             kln::uMotor(),
             travel,
-            -10.f//-0.3f
+            -0.25f//-10.f -0.3f
         };
     }
     
