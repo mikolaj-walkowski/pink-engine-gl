@@ -349,7 +349,7 @@ void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
     vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descSet, 0, nullptr);
 
 
-    // Ogólnie to to działa, ale jebać to
+    // Ogólnie to to niby działa
     rasterizeHelper(cmdBuf, std::make_pair(&w1->staticObjects, &w2->staticObjects));
     rasterizeHelper(cmdBuf, std::make_pair(&w1->simulatedObjects, &w2->simulatedObjects));
 
