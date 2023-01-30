@@ -3,6 +3,19 @@
 #include "pink_structs.hpp"
 #include "pink_physics_shapes.hpp"
 namespace ps::pp {
+    
+    struct Interval{
+        float min;
+        float max;
+    };
+
+    Interval GetInterval(const kln::point* verts, const vec3& axis);
+    bool OverlapOnAxis(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, const vec3& axis);
+    const kln::line* kln_calcBoxOrientation(ps::pp::Rigidbody* rb);
+    bool PointInBox(kln::point& inp_point, ps::pp::Rigidbody* rb);
+    bool ClipToPlane(const kln::plane& plane, std::pair<kln::point, kln::point>& line, kln::point* outPoint);
+    std::vector<kln::point> ClipEdgesToOBB(std::pair<kln::point, kln::point>* edges, ps::pp::Rigidbody* rb);
+    float PenetrationDepth(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, const vec3& axis, bool* outShouldFlip = nullptr);
 
     typedef bool (*CollisionFunction)(BaseShape*, kln::motor*, BaseShape*, kln::motor*, Manifold*);
 

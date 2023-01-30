@@ -22,7 +22,7 @@ namespace ps::pp {
         };
         // kln::line edges[12];
 
-        static inline const std::vector<int> faces[6] =
+        static inline const int faces[6][4] =
         {
             {0,1,2,3},          // edges[0] + edges[1] + edges[2] + edges[3] (top)
             {0,1,5,4},          // edges[0] + edges[4] + edges[5] + edges[8] (side)
