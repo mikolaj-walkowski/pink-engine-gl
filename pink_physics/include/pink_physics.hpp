@@ -35,7 +35,7 @@ namespace ps::pp {
 
         struct {
             float step = 0.4f;
-            int iterations = 10;
+            int iterations = 4;
         } interpolation_props;
 
 #ifndef NDEBUG
@@ -50,7 +50,7 @@ namespace ps::pp {
         }debug_data;
 #endif
         std::vector<Spring> springs;
-        std::vector<Join> joins;
+        std::vector<Joint> joins;
         void step(ps::WordState*, ps::WordState*, float);
         void applySprings();
         void enforceJoints();
@@ -61,8 +61,8 @@ namespace ps::pp {
     Rigidbody rigidbodyCreate(kln::motor, ShapeType, void*, int);
     void rigidbodyDestroy(Rigidbody*);
 
-    void checkJoin(Engine* e, Join* j);
-    void enforceJoint(Engine* e, Join* j);
+    void checkJoin(Engine* e, Joint* j);
+    void enforceJoint(Engine* e, Joint* j);
     
     void basicSimulate(Rigidbody*);
     void carSimulate(Rigidbody*);

@@ -85,54 +85,55 @@ int main(int argc, char** argv)
   // CREATING objects 
 
   kln::euler_angles a = { kln::pi / 8.f, 0.f, 0.f };
-  // kln::euler_angles b = { kln::pi / 4.f, kln::pi / 4.f, 0.f };
+  kln::euler_angles b = { kln::pi / 4.f, kln::pi / 4.f, 0.f };
 
 
-  // ps::Object boxObj = utils::objectCreate(
-  //   (kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
-  //   ps::pp::BT_DYNAMIC,
-  //   "car",
-  //   new ps::pp::Box(2.f, 1.f, 4.f, 2, kln::uMotor()),
-  //   new ps::pp::Box(2.f, 1.f, 4.f, 2, kln::uMotor())
-  // );
+  ps::Object boxObj = utils::objectCreate(
+    (kln::motor)kln::translator(14.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
+    ps::pp::BT_DYNAMIC,
+    "",
+    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
+    new ps::pp::Box(1, 1, 1, 2, kln::uMotor())
+  );
 
-  // ps::Object boxObj2 = utils::objectCreate(
-  //   ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.1f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
-  //   ps::pp::BT_DYNAMIC,
-  //   "",
-  //   new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-  //   new ps::pp::Box(1, 1, 1, 2, kln::uMotor())
-  // );
+  ps::Object boxObj2 = utils::objectCreate(
+    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.1f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
+    ps::pp::BT_DYNAMIC,
+    "",
+    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
+    new ps::pp::Box(1, 1, 1, 2, kln::uMotor())
+  );
 
-  // ps::Object sphereObj = utils::objectCreate(
-  //   kln::translator(-3, 1, 0, 0),
-  //   ps::pp::BT_DYNAMIC,
-  //   "",
-  //   new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-  //   new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
-  // );
+  ps::Object sphereObj = utils::objectCreate(
+    kln::translator(-3, 1, 0, 0),
+    ps::pp::BT_DYNAMIC,
+    "",
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
+  );
 
-  // ps::Object sphereObj2 = utils::objectCreate(
-  //   kln::translator(-3, 1, 0, 0) * kln::translator(3, 0.1f, 1, 0.0f),
-  //   ps::pp::BT_DYNAMIC,
-  //   "",
-  //   new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-  //   new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
-  // );
+  ps::Object sphereObj2 = utils::objectCreate(
+    kln::translator(-3, 1, 0, 0) * kln::translator(3, 0.1f, 1, 0.0f),
+    ps::pp::BT_DYNAMIC,
+    "",
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
+  );
 
   ps::Object planeObj = utils::objectCreate(
-    kln::translator(-6, 0, 1, 0) ,//* kln::rotor(a),
+    kln::translator(-3, 0, 1, 0) * kln::rotor(a),
     ps::pp::BT_STATIC,
     "",
     new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
     new ps::pp::Plane(kln::plane(0, 1, 0, 0))
   );
-  utils::createCar(&wordChain[0],&physicsEngine,(kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f));
+  planeObj.rigidbody.shape->size = nvmath::scale_mat4(nvmath::vec3f(10.f, 10.f, 10.f));
+  //utils::createCar(&wordChain[0],&physicsEngine,(kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f));
 
-  // wordChain[0].simulatedObjects.push_back(boxObj);
-  // wordChain[0].simulatedObjects.push_back(boxObj2);
-  //wordChain[0].simulatedObjects.push_back(sphereObj);
-  // wordChain[0].simulatedObjects.push_back(sphereObj2);
+  //wordChain[0].simulatedObjects.push_back(boxObj);
+  //wordChain[0].simulatedObjects.push_back(boxObj2);
+  wordChain[0].simulatedObjects.push_back(sphereObj);
+  //wordChain[0].simulatedObjects.push_back(sphereObj2);
 
   wordChain[0].staticObjects.push_back(planeObj);
 

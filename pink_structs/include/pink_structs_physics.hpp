@@ -36,7 +36,7 @@ namespace ps::pp {
         kln::line inertia;
     };
 
-    struct Join {
+    struct Joint {
         int parent; //TODO Bad
         int child;
 

@@ -95,36 +95,37 @@ void utils::createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m) {
     ps::Object body = objectCreate(
         m,
         ps::pp::BT_DYNAMIC,
-        "",
+        "car_body",
         new ps::pp::Box(2.f, 1.f, 4.f, 5, kln::uMotor()),
         new ps::pp::Box(2.f, 1.f, 4.f, 5, kln::uMotor())
     );
-
+    body.rigidbody.shape->size = nvmath::scale_mat4(nvmath::vec3f(1, 1, 1));
+    
     int bodyIndex = (int)ws->simulatedObjects.size();
     ws->simulatedObjects.push_back(body);
     int whIndexStart = (int)ws->simulatedObjects.size();
 
     ps::Object wheels[4];
-    ps::pp::Join joins[4];
+    ps::pp::Joint joins[4];
     ps::pp::Spring springs[4];
     struct {
         float x;
         float y;
         float z;
-    } s[4] = { {1, -1,1},{1, -1,-1},{-1, -1,-1},{-1, -1,1} } , pt = {1.6f, 1.f , 1.4f};
-    float travel = 1;
+    } s[4] = { {1, -1,1},{1, -1,-1},{-1, -1,-1},{-1, -1,1} } , pt = {1.3f, .5f , 1.4f};
+    float travel = 0.5;
     float wheelR = 0.5;
     
     for (int i = 0; i < 4; i++) {
         wheels[i] = objectCreate(
             m * kln::sqrt(kln::point(pt.x * s[i].x, pt.y * s[i].y, pt.z * s[i].z)* kln::origin()),
             ps::pp::BT_DYNAMIC,
-            "",
+            "wheel",
             new ps::pp::Sphere(wheelR, 0.2f, kln::uMotor()),
             new ps::pp::Sphere(wheelR, 0.2f, kln::uMotor())
         );
-        wheels[i].rigidbody.joins = new int;
-        *wheels[i].rigidbody.joins = (int)e->joins.size() + i;
+        wheels[i].rigidbody.joins = new int[1];
+        wheels[i].rigidbody.joins[0] = (int)e->joins.size() + i;
         wheels[i].rigidbody.joinSize = 1;
         
         kln::point topAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y - (travel / 2.f) * s[i].y, pt.z * s[i].z);
@@ -145,7 +146,7 @@ void utils::createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m) {
             kln::sqrt( springAttch * kln::origin()),
             kln::uMotor(),
             travel,
-            -0.25f//-10.f -0.3f
+            -0.3f//-10.f -0.3f
         };
     }
     

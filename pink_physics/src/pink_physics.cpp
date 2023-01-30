@@ -70,6 +70,7 @@ void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         e->collide(e, rb, e->out->staticObjects);
         ps::pp::solidResolver(e);
     }
+    rb->F *= 0;
 }
 
 void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
@@ -77,6 +78,7 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
     auto old_dM = rb->dM;
     e->simulate(rb);
+    rb->F *= 0;
     rb->M = rb->M + (rb->dM + old_dM) * (step / 2.f);
     rb->B = rb->B + (step * rb->dB);
     rb->M.normalize();
@@ -108,7 +110,6 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
     auto I_B = (!rb->B).mult(I);
 
     rb->dB = !~((rb->F - klnTestCross(I_B, rb->B)).div(I));
-    rb->F *= 0;
 }
 
 // void ps::pp::carSimulate(Rigidbody* rb) {
@@ -413,13 +414,13 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
 
 namespace ps::pp {
 
-    void checkJoin(Engine* e, Join* j) {
+    void checkJoin(Engine* e, Joint* j) {
         auto& parent = e->out->simulatedObjects[j->parent];
         auto& child = e->out->simulatedObjects[j->child];
 
     }
 
-    void enforceJoint(Engine* e, Join* j) {
+    void enforceJoint(Engine* e, Joint* j) {
         auto& parent = e->out->simulatedObjects[j->parent].rigidbody;
         auto& child = e->out->simulatedObjects[j->child].rigidbody;
 
