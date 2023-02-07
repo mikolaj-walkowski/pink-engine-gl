@@ -72,20 +72,31 @@ void utils::nvidia::setupContext(nvvk::Context* c, std::vector<utils::ExtensionL
 
 }
 
-ps::Object* utils::objectCreate(ps::ObjectManager& objM,kln::motor m, ps::pp::BodyType bt_type, std::string meshName, ps::pp::BaseShape* shape, ps::pp::BaseShape* moved) {
+ps::Object* utils::objectCreate(ps::ObjectManager& objM, kln::motor m, ps::pp::BodyType bt_type, std::string meshName, ps::pp::BaseShape* shape, ps::pp::BaseShape* moved, nvmath::mat4f scale) {
+    ps::Object out = {};
+    
     m.normalize();
 
+    //Physics
+    {
+        ps::pp::Rigidbody rb = { m, ~m(kln::line(0,0,0,0,0,0)), kln::uMotor(), kln::line(),kln::line(0,0,0,0,0,0), kln::origin(), bt_type, shape, moved };
+        rb.moved->move(rb.M, rb.shape);
+        rb.apply = bt_type == ps::pp::BT_DYNAMIC ? ps::pp::applyImpulseNormal : ps::pp::applyImpulseStatic; //TODO yuck
 
-    ps::pp::Rigidbody rb = { m, ~m(kln::line(0,0,0,0,0,0)), kln::uMotor(), kln::line(),kln::line(0,0,0,0,0,0), kln::origin(), bt_type, shape, moved };
-    rb.moved->move(rb.M, rb.shape);
-    rb.apply = bt_type == ps::pp::BT_DYNAMIC ? ps::pp::applyImpulseNormal : ps::pp::applyImpulseStatic; //TODO yuck
-    ps::Object out = {};
+        out.rigidbody = rb;
+    }
+    
+    //Graphics 
+    {
+        ps::pg::Model m;
+        auto& names = ps::pg::ObjLibrary::getObjLibrary().m_objectNames;
+        auto& name = std::find(names.begin(), names.end(), meshName);
+        m.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh(name != names.end() ? meshName : ps::pp::shapeName[shape->type]);
+        m.scale = scale;
+        
+        out.model = m;
+    }
 
-    out.rigidbody = rb;
-
-    auto& names = ps::pg::ObjLibrary::getObjLibrary().m_objectNames;
-    auto& name = std::find(names.begin(), names.end(), meshName);
-    out.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh(name != names.end() ? meshName : ps::pp::shapeName[shape->type]);
 
     return objM.addObject(out);
 }
@@ -97,10 +108,9 @@ void utils::createCar(ps::ObjectManager& objM, ps::pp::Engine* e, kln::motor m) 
         ps::pp::BT_DYNAMIC,
         "car_body",
         new ps::pp::Box(2.f, 1.f, 4.f, 5, kln::uMotor()),
-        new ps::pp::Box(2.f, 1.f, 4.f, 5, kln::uMotor())
-    );
-    
-    body->rigidbody.shape->size = nvmath::scale_mat4(nvmath::vec3f(1, 1, 1)); //TODO yuck
+        new ps::pp::Box(2.f, 1.f, 4.f, 5, kln::uMotor()),
+        nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
+        );
 
     ps::Object* wheels[4];
     ps::pp::Joint joins[4];
@@ -109,50 +119,51 @@ void utils::createCar(ps::ObjectManager& objM, ps::pp::Engine* e, kln::motor m) 
         float x;
         float y;
         float z;
-    } s[4] = { {1, -1,1},{1, -1,-1},{-1, -1,-1},{-1, -1,1} } , pt = {1.3f, .5f , 1.4f};
+    } s[4] = { {1, -1,1},{1, -1,-1},{-1, -1,-1},{-1, -1,1} }, pt = { 1.3f, .5f , 1.4f };
     float travel = 0.5;
     float wheelR = 0.5;
-    
+
     for (int i = 0; i < 4; i++) {
         wheels[i] = objectCreate(
             objM,
-            m* kln::sqrt(kln::point(pt.x* s[i].x, pt.y* s[i].y, pt.z* s[i].z)* kln::origin()),
+            m * kln::sqrt(kln::point(pt.x * s[i].x, pt.y * s[i].y, pt.z * s[i].z) * kln::origin()),
             ps::pp::BT_DYNAMIC,
             "wheel",
             new ps::pp::Sphere(wheelR, 0.2f, kln::uMotor()),
-            new ps::pp::Sphere(wheelR, 0.2f, kln::uMotor())
-        );
+            new ps::pp::Sphere(wheelR, 0.2f, kln::uMotor()),
+            nvmath::scale_mat4(nvmath::vec3f(wheelR, wheelR, wheelR))
+            );
         wheels[i]->rigidbody.joins = new int[1];
         wheels[i]->rigidbody.joins[0] = (int)e->joins.size() + i;
         wheels[i]->rigidbody.joinSize = 1;
-        
+
         kln::point topAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y - (travel / 2.f) * s[i].y, pt.z * s[i].z);
         kln::point botAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y + (travel / 2.f) * s[i].y, pt.z * s[i].z);
 
-        auto line = ( topAttch & botAttch).normalized();
+        auto line = (topAttch & botAttch).normalized();
         joins[i] = {
             &body->rigidbody,
             &wheels[i]->rigidbody,
             { topAttch, botAttch},
             line
         };
-        
+
         kln::point springAttch = kln::point(pt.x * s[i].x, pt.y * s[i].y - travel * s[i].y, pt.z * s[i].z);
         springs[i] = {
             &body->rigidbody,
             &wheels[i]->rigidbody,
-            kln::sqrt( springAttch * kln::origin()),
+            kln::sqrt(springAttch * kln::origin()),
             kln::uMotor(),
             travel,
             -0.3f//-10.f -0.3f
         };
     }
-    
+
     body->rigidbody.joins = new int[4];
     int tmp[] = { (int)e->joins.size(), (int)e->joins.size() + 1,(int)e->joins.size() + 2 ,(int)e->joins.size() + 3 };
     memcpy(body->rigidbody.joins, tmp, sizeof(int) * 4);
     body->rigidbody.joinSize = 4;
-    
+
     e->joins.insert(e->joins.end(), joins, joins + 4);
     e->springs.insert(e->springs.end(), springs, springs + 4);
 }

@@ -15,8 +15,6 @@ ps::pp::Box::Box(float x, float y, float z, float _mass, kln::motor offset) {
         1.f
     ));
     
-    size = nvmath::scale_mat4(nvmath::vec3f(x, y, z));
-
     x /= 2.f;
     y /= 2.f;
     z /= 2.f;
@@ -85,7 +83,6 @@ ps::pp::Sphere::Sphere(float r, float _mass, kln::motor offset) {
         1.f
     );
     radius = r;
-    size = nvmath::scale_mat4(nvmath::vec3f(r, r, r));
     center = kln::point(0, 0, 0);
 }
 
@@ -97,7 +94,6 @@ void ps::pp::Sphere::move(const kln::motor& M, const BaseShape* og) {
 ps::pp::Plane::Plane(kln::plane p) {
     type = ST_PLANE;
     mass = 1.f;
-    size = nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f));
 
     plane = p;
     inertia = kln::motor(1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f);
@@ -114,8 +110,6 @@ ps::pp::Cylinder::Cylinder(float len, float r, float _mass, kln::motor offset) {
     mass = _mass;
     center = kln::origin(); //TODO change
 
-    size = nvmath::scale_mat4(nvmath::vec3f(r, len, r));
-    
 
     inertia = offset(kln::motor(
         1.f, 1.f, 1.f, 1.f,

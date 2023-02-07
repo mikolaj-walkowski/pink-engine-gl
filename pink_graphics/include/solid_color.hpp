@@ -55,7 +55,7 @@ public:
     void onResize(int /*w*/, int /*h*/) override;
     void destroyResources();
     void rasterize(int prev, int now, const VkCommandBuffer& cmdBuff);
-    void rasterizeHelper(const VkCommandBuffer&, std::pair<std::vector<ps::Object>*, std::vector<ps::Object>*>);
+    // void rasterizeHelper(const VkCommandBuffer&, std::pair<std::vector<ps::Object>*, std::vector<ps::Object>*>);
 
     void drawFrame(int prev, int now,float);
     void renderUI();

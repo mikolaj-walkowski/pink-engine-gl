@@ -336,7 +336,7 @@ void SolidColor::rasterize(int prev, int now, const VkCommandBuffer& cmdBuf)
 
     for (int i = 0; i < objects.size(); i++)
     {
-        auto model = objects[i]->mesh;
+        auto model = objects[i]->model.mesh;
         m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
         m_pcRaster.modelMatrix = objects[i]->interpolate(prev, now, dT);
 

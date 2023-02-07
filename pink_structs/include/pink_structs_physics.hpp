@@ -64,7 +64,6 @@ namespace ps::pp {
     public:
         kln::line inertia;
         kln::point center;
-        nvmath::mat4f size;
         ShapeType type;
         float mass;
 

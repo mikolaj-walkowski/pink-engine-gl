@@ -5,7 +5,9 @@
 #include <vector>
 #include "host_device.h"
 #include "nvvk/commands_vk.hpp"
+#include "klein/klein.hpp"
 namespace ps::pg {
+
 
     struct ObjMesh
     {
@@ -53,4 +55,13 @@ namespace ps::pg {
         void CreateObjDescriptionBuffer();
     };
 
+    struct Model {
+        pg::ObjMesh* mesh;
+        nvmath::mat4f scale = nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f));
+
+        struct {
+            kln::line log = {};
+            kln::motor obj = {};
+        }interpolation_catche;
+    };
 } //namespace pg

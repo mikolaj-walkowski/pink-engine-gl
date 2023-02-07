@@ -21,15 +21,10 @@ namespace ps {
   public:
     UniqueID id;
     pp::Rigidbody rigidbody;
-    pg::ObjMesh* mesh;
-
-    struct Interpolation_catche {
-      kln::line log;
-      kln::motor obj;
-    }interpolation_catche;
+    pg::Model model;
 
     nvmath::mat4f interpolate(int ,int ,float);
-    kln::motor motors[4]; // TODO
+    kln::motor motors[4];
   };
 
   struct ObjectIDCmp {
