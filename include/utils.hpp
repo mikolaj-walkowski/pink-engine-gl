@@ -38,8 +38,7 @@ namespace utils {
 
     ps::UniqueID newID();
 
-    ps::Object objectCreate(kln::motor m, ps::pp::BodyType, std::string meshName, ps::pp::BaseShape*, ps::pp::BaseShape*);
-    void createCar(ps::WordState* ws, ps::pp::Engine* e, kln::motor m);
+    ps::Object* objectCreate(ps::ObjectManager&, kln::motor m, ps::pp::BodyType, std::string meshName, ps::pp::BaseShape*, ps::pp::BaseShape*);
+    void createCar(ps::ObjectManager&, ps::pp::Engine* e, kln::motor m);
     
-    void objectDestroy(ps::Object* rb);
 }//namespace utils

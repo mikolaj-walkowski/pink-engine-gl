@@ -55,6 +55,7 @@ add_executable(pink_engine)
 
 _add_project_definitions(${PROJECT_NAME})
 add_subdirectory(pink_structs)
+add_subdirectory(pink_core)
 add_subdirectory(pink_graphics)
 add_subdirectory(pink_physics)
 
@@ -74,6 +75,7 @@ add_subdirectory(pink_physics)
 target_link_libraries(${PROJECT_NAME}
         klein::klein
         nvpro_core
+        pink::core
         pink::structs
         pink::graphics
         pink::physics

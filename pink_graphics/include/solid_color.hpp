@@ -36,12 +36,13 @@ using Allocator = nvvk::ResourceAllocatorDedicated;
 // - Rendering is done in an offscreen framebuffer
 // - The image of the framebuffer is displayed in post-process in a full-screen quad
 //
-class SolidColor: public nvvkhl::AppBaseVk
+class SolidColor: public nvvkhl::AppBaseVk, public ps::Module
 {
 public:
     nvmath::vec4f clearColor;
-    ps::WordState* w1;
-    ps::WordState* w2;
+    std::vector<ps::Object*> objects;
+    virtual void registerObject(ps::Object*);
+    virtual void deregisterObject(ps::Object*);
     float dT;
     SolidColor(nvvk::Context* vkctx, GLFWwindow* window, const int w, const int h);
     void setup(const VkInstance& instance, const VkDevice& device, const VkPhysicalDevice& physicalDevice, uint32_t queueFamily) override;
@@ -53,10 +54,10 @@ public:
     void updateUniformBuffer(const VkCommandBuffer& cmdBuf);
     void onResize(int /*w*/, int /*h*/) override;
     void destroyResources();
-    void rasterize(const VkCommandBuffer& cmdBuff);
+    void rasterize(int prev, int now, const VkCommandBuffer& cmdBuff);
     void rasterizeHelper(const VkCommandBuffer&, std::pair<std::vector<ps::Object>*, std::vector<ps::Object>*>);
 
-    void drawFrame(ps::WordState*, ps::WordState*,float);
+    void drawFrame(int prev, int now,float);
     void renderUI();
 
     Offscreen& offscreen() { return m_offscreen; }

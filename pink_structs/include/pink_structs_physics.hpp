@@ -21,8 +21,8 @@ namespace ps::pp {
 
     struct Spring {
 
-        int rb1;  //TODO Bad
-        int rb2; //TODO
+        Rigidbody* rb1;
+        Rigidbody* rb2;
 
         kln::motor rb1atch;
         kln::motor rb2atch;
@@ -31,14 +31,9 @@ namespace ps::pp {
         float k;
     };
 
-    struct Constraint {
-        kln::line C;
-        kln::line inertia;
-    };
-
     struct Joint {
-        int parent; //TODO Bad
-        int child;
+        Rigidbody* parent;
+        Rigidbody* child;
 
         kln::point Att[2];
         kln::line constraint;
@@ -59,6 +54,7 @@ namespace ps::pp {
         ST_COMPOSITE,
         ST_SIZE
     };
+    
     enum BodyType {
         BT_STATIC = 0,
         BT_DYNAMIC = 1

@@ -167,18 +167,18 @@ void UI::PhysicsWindow() {
         }
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("RigidBody props")) {
-            auto sim = pe->out->simulatedObjects;
-            for (int i = 0; i < sim.size(); i++) {
-                ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-                if (ImGui::TreeNode((std::to_string(sim[i].id) + "<" + ps::pp::shapeName[sim[i].rigidbody.shape->type] + ">").c_str())) {
-                    klnLine("dB", sim[i].rigidbody.dB);
-                    klnLine("B", sim[i].rigidbody.B);
+            // auto sim = pe->out->simulatedObjects;
+            // for (int i = 0; i < sim.size(); i++) {
+            //     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+            //     if (ImGui::TreeNode((std::to_string(sim[i].id) + "<" + ps::pp::shapeName[sim[i].rigidbody.shape->type] + ">").c_str())) {
+            //         klnLine("dB", sim[i].rigidbody.dB);
+            //         klnLine("B", sim[i].rigidbody.B);
 
-                    klnLine("dM", sim[i].rigidbody.dM);
-                    klnLine("M", sim[i].rigidbody.B);
-                    ImGui::TreePop();
-                }
-            }
+            //         klnLine("dM", sim[i].rigidbody.dM);
+            //         klnLine("M", sim[i].rigidbody.B);
+            //         ImGui::TreePop();
+            //     }
+            // }
             ImGui::TreePop();
         }
 #endif

@@ -11,15 +11,23 @@ namespace ps::pp {
 
 
     typedef void (*SimulateFunc)(Rigidbody*);
-    typedef void (*ColliderFunc)(Engine*, Rigidbody*, std::vector<ps::Object>&);
+    typedef void (*ColliderFunc)(Engine*, Rigidbody*, std::vector<ps::Object*>&);
     typedef void (*ResolverFunc)(Engine*);
     typedef void (*IntegrationFunc)(Engine*, Rigidbody*);
 
-    
-    class Engine {
+
+    class Engine: public Module {
     public:
-        ps::WordState* in;
-        ps::WordState* out;
+        virtual void registerObject(Object*);
+        virtual void deregisterObject(Object*);
+
+        std::vector<Object*> allBodies;
+        std::vector<Object*> simulatedRbs;
+        std::vector<Object*> constrainingRbs;
+        
+        std::vector<Spring> springs;
+        std::vector<Joint> joins;
+
         float dT;
 
         SimulateFunc simulate;
@@ -49,9 +57,10 @@ namespace ps::pp {
 
         }debug_data;
 #endif
-        std::vector<Spring> springs;
-        std::vector<Joint> joins;
-        void step(ps::WordState*, ps::WordState*, float);
+        
+
+        
+        void step(int, float);
         void applySprings();
         void enforceJoints();
         void renderUI();
@@ -63,19 +72,19 @@ namespace ps::pp {
 
     void checkJoin(Engine* e, Joint* j);
     void enforceJoint(Engine* e, Joint* j);
-    
+
     void basicSimulate(Rigidbody*);
     void carSimulate(Rigidbody*);
 
     void basicResolver(Engine*);
     void solidResolver(Engine*);
-    
+
     void basicCollider(Engine*, Rigidbody*);
-    void vecCollider(Engine* e, Rigidbody* rb, std::vector<ps::Object>& vec);
+    void vecCollider(Engine* e, Rigidbody* rb, std::vector<ps::Object*>& vec);
 
     void eulerIntegration(Engine*, Rigidbody*);
     void verletIntegration(Engine*, Rigidbody*);
-    
+
     void applyImpulseNormal(Rigidbody* rb, kln::line dir, float a);
     void applyImpulseStatic(Rigidbody* rb, kln::line dir, float a);
 

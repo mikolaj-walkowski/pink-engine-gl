@@ -64,10 +64,10 @@ void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         rb->B.grade2();
         rb->moved->move(rb->M, rb->shape);
 
-        e->collide(e, rb, e->out->simulatedObjects);
+        e->collide(e, rb, e->simulatedRbs);
         e->resolve(e);
 
-        e->collide(e, rb, e->out->staticObjects);
+        e->collide(e, rb, e->constrainingRbs);
         ps::pp::solidResolver(e);
     }
     rb->F *= 0;
@@ -86,11 +86,11 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
 
     rb->moved->move(rb->M, rb->shape);
 
-    e->collide(e, rb, e->out->simulatedObjects);
+    e->collide(e, rb, e->simulatedRbs);
     for (int i = 0; i < 1; i++) {
         e->resolve(e);
     }
-    e->collide(e, rb, e->out->staticObjects);
+    e->collide(e, rb, e->constrainingRbs);
     for (int i = 0; i < 1; i++) {
         ps::pp::solidResolver(e);
     }
@@ -132,8 +132,8 @@ void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
 // }
 
 void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
-    auto& staticObjects = e->out->staticObjects;
-    auto& dynamicObjects = e->out->simulatedObjects;
+    auto& staticObjects = e->constrainingRbs;
+    auto& dynamicObjects = e->simulatedRbs;
 
     auto& collisionData = e->collision_props.collisionData;
     auto& collisionSize = e->collision_props.size;
@@ -144,16 +144,16 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     for (int n = 0; n < dynamicObjects.size(); n++)
     {
         auto& i = dynamicObjects[n];
-        if (rb == &i.rigidbody) continue;
+        if (rb == &i->rigidbody) continue;
 
-        if (collide(rb, &i.rigidbody, &collisionData[collisionSize])) {
+        if (collide(rb, &i->rigidbody, &collisionData[collisionSize])) {
 #ifndef NDEBUG
             for (int di = 0; di < collisionData[collisionSize].count; di++)
             {
                 auto p = collisionData[collisionSize].pointsOfContact[di];
                 nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
                 nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
-                e->out->points.push_back(t * s);
+                //e->out->points.push_back(t * s);
             }
 #endif
             ++(collisionSize);
@@ -165,14 +165,14 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     {
         auto& i = staticObjects[n];
         if (collisionSize >= collisionMaxSize) break;
-        if (collide(rb, &i.rigidbody, &collisionData[collisionSize])) {
+        if (collide(rb, &i->rigidbody, &collisionData[collisionSize])) {
 #ifndef NDEBUG
             for (int di = 0; di < collisionData[collisionSize].count; di++)
             {
                 auto p = collisionData[collisionSize].pointsOfContact[di];
                 nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
                 nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
-                e->out->points.push_back(t * s);
+                // e->out->points.push_back(t * s);
             }
 #endif
             ++(collisionSize);
@@ -180,7 +180,7 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     }
 }
 
-void ps::pp::vecCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb, std::vector<ps::Object>& vec) {
+void ps::pp::vecCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb, std::vector<ps::Object*>& vec) {
     auto& collisionData = e->collision_props.collisionData;
     auto& collisionSize = e->collision_props.size;
     auto& collisionMaxSize = Engine::maxNumber;
@@ -189,17 +189,17 @@ void ps::pp::vecCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb, std::vector<p
 
     for (int n = 0; n < vec.size(); n++)
     {
-        auto& i = vec[n];
-        if (rb == &i.rigidbody) continue;
+        auto i = vec[n];
+        if (rb == &i->rigidbody) continue;
 
-        if (collide(rb, &i.rigidbody, &collisionData[collisionSize])) {
+        if (collide(rb, &i->rigidbody, &collisionData[collisionSize])) {
 #ifndef NDEBUG
             for (int di = 0; di < collisionData[collisionSize].count; di++)
             {
                 auto p = collisionData[collisionSize].pointsOfContact[di];
                 nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
                 nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
-                e->out->points.push_back(t * s);
+                // e->out->points.push_back(t * s);
             }
 #endif
             ++(collisionSize);
@@ -414,15 +414,41 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
 
 namespace ps::pp {
 
-    void checkJoin(Engine* e, Joint* j) {
-        auto& parent = e->out->simulatedObjects[j->parent];
-        auto& child = e->out->simulatedObjects[j->child];
+    void Engine::registerObject(Object* obj) {
 
+        allBodies.insert(std::upper_bound(allBodies.begin(), allBodies.end(), obj, ps::ObjectIDCmp()), obj);
+        if (obj->rigidbody.bodyType == BT_DYNAMIC) {
+            simulatedRbs.insert(std::upper_bound(simulatedRbs.begin(), simulatedRbs.end(), obj, ps::ObjectIDCmp()), obj);
+        }
+        else {
+            constrainingRbs.insert(std::upper_bound(constrainingRbs.begin(), constrainingRbs.end(), obj, ps::ObjectIDCmp()), obj);
+        }
+        for (int i = 0; i < 4; i++) {//TODO yuck
+            obj->motors[i] = obj->rigidbody.M;
+        }
+    }
+
+    void Engine::deregisterObject(Object* obj) {
+        allBodies.erase(std::upper_bound(allBodies.begin(), allBodies.end(), obj, ps::ObjectIDCmp()));
+        delete obj->rigidbody.shape;
+        delete obj->rigidbody.moved;
+        if (obj->rigidbody.bodyType == BT_DYNAMIC) {
+            simulatedRbs.erase(std::upper_bound(simulatedRbs.begin(), simulatedRbs.end(), obj, ps::ObjectIDCmp()));
+            delete obj->rigidbody.joins;
+        }
+        else {
+            constrainingRbs.erase(std::upper_bound(constrainingRbs.begin(), constrainingRbs.end(), obj, ps::ObjectIDCmp()));
+        }
+    }
+
+    void checkJoin(Engine* e, Joint* j) {
+        auto& parent = j->parent;
+        auto& child = j->child;
     }
 
     void enforceJoint(Engine* e, Joint* j) {
-        auto& parent = e->out->simulatedObjects[j->parent].rigidbody;
-        auto& child = e->out->simulatedObjects[j->child].rigidbody;
+        auto& parent = *j->parent;
+        auto& child = *j->child;
 
         auto joinToWorld = parent.M;
 
@@ -478,11 +504,11 @@ namespace ps::pp {
         for (int i = 0; i < springs.size(); i++)
         {
             auto& s = springs[i];
-            auto& b1 = out->simulatedObjects[s.rb1];//TODO very bad 
-            auto& b2 = out->simulatedObjects[s.rb2];//TODO very bad 
+            auto& b1 = *s.rb1;
+            auto& b2 = *s.rb2;
 
-            auto c1 = s.rb1atch(b1.rigidbody.moved->center);
-            auto c2 = s.rb2atch(b2.rigidbody.moved->center);
+            auto c1 = s.rb1atch(b1.moved->center);
+            auto c2 = s.rb2atch(b2.moved->center);
 
             auto line1 = c1 & c2;
             // auto line2 = c2 & c1;
@@ -496,8 +522,8 @@ namespace ps::pp {
             // b2.rigidbody.F -= ((~b2.rigidbody.M)((s.k * -x) * line2));
 
 
-            b1.rigidbody.B -= !~((~b1.rigidbody.M)(((s.k * -x) / b1.rigidbody.shape->mass) * line1));
-            b2.rigidbody.B += !~((~b2.rigidbody.M)(((s.k * -x) / b2.rigidbody.shape->mass) * line1));
+            b1.B -= !~((~b1.M)(((s.k * -x) / b1.shape->mass) * line1));
+            b2.B += !~((~b2.M)(((s.k * -x) / b2.shape->mass) * line1));
         }
     }
 
@@ -507,12 +533,9 @@ namespace ps::pp {
         }
     }
 
-    void Engine::step(ps::WordState* _in, ps::WordState* _out, float _dT) {
-        this->in = _in;
-        this->out = _out;
+    void Engine::step(int writePos, float _dT) {
         this->dT = _dT;
 
-        *out = *in; //TODO Wat?
 
 #ifndef NDEBUG
         if (debug_data.stepped) {
@@ -527,14 +550,14 @@ namespace ps::pp {
         debug_data.collisions.clear();
         debug_data.collisionData.clear();
 
-        out->points.clear();
+        // out->points.clear();
         //if(debug_data.oneStep)
 #endif
         applySprings();
 
 
-        for (int i = 0; i < in->simulatedObjects.size(); i++) {
-            this->integrator(this, &out->simulatedObjects[i].rigidbody);
+        for (int i = 0; i < simulatedRbs.size(); i++) {
+            this->integrator(this, &simulatedRbs[i]->rigidbody);
 
 #ifndef NDEBUG
             debug_data.collisionData.insert(debug_data.collisionData.end(), collision_props.collisionData, collision_props.collisionData + collision_props.size);
@@ -547,6 +570,10 @@ namespace ps::pp {
         }
 
         enforceJoints();
+
+        for (int i = 0; i < simulatedRbs.size(); i++) {
+            simulatedRbs[i]->motors[writePos] = simulatedRbs[i]->rigidbody.M;
+        }
 
     }
 }

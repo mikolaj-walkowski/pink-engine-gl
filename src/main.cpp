@@ -40,6 +40,7 @@
 
 #include "pink_physics.hpp"
 #include "pink_graphics.hpp"
+#include "pink_core.hpp"
 
 //////////////////////////////////////////////////////////////////////////
 #define UNUSED(x) (void)(x)
@@ -81,6 +82,8 @@ int main(int argc, char** argv)
   //Setup physics engine components
   ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::vecCollider, ps::pp::basicResolver, ps::pp::verletIntegration);
 
+  ps::ObjectManager objectManager({ &physicsEngine, &graphicsEngine });
+
   /// DEBUG ZONE ========
   // CREATING objects 
 
@@ -88,7 +91,8 @@ int main(int argc, char** argv)
   kln::euler_angles b = { kln::pi / 4.f, kln::pi / 4.f, 0.f };
 
 
-  ps::Object boxObj = utils::objectCreate(
+  ps::Object* boxObj = utils::objectCreate(
+    objectManager,
     (kln::motor)kln::translator(14.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
     ps::pp::BT_DYNAMIC,
     "",
@@ -96,7 +100,8 @@ int main(int argc, char** argv)
     new ps::pp::Box(1, 1, 1, 2, kln::uMotor())
   );
 
-  ps::Object boxObj2 = utils::objectCreate(
+  ps::Object* boxObj2 = utils::objectCreate(
+    objectManager,
     ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.1f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
     ps::pp::BT_DYNAMIC,
     "",
@@ -104,7 +109,8 @@ int main(int argc, char** argv)
     new ps::pp::Box(1, 1, 1, 2, kln::uMotor())
   );
 
-  ps::Object sphereObj = utils::objectCreate(
+  ps::Object* sphereObj = utils::objectCreate(
+    objectManager,
     kln::translator(-3, 1, 0, 0),
     ps::pp::BT_DYNAMIC,
     "",
@@ -112,7 +118,8 @@ int main(int argc, char** argv)
     new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
   );
 
-  ps::Object sphereObj2 = utils::objectCreate(
+  ps::Object* sphereObj2 = utils::objectCreate(
+    objectManager,
     kln::translator(-3, 1, 0, 0) * kln::translator(3, 0.1f, 1, 0.0f),
     ps::pp::BT_DYNAMIC,
     "",
@@ -120,22 +127,16 @@ int main(int argc, char** argv)
     new ps::pp::Sphere(1.f, 2.f, kln::uMotor())
   );
 
-  ps::Object planeObj = utils::objectCreate(
+  ps::Object* planeObj = utils::objectCreate(
+    objectManager,
     kln::translator(-3, 0, 1, 0) * kln::rotor(a),
     ps::pp::BT_STATIC,
     "",
     new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
     new ps::pp::Plane(kln::plane(0, 1, 0, 0))
   );
-  planeObj.rigidbody.shape->size = nvmath::scale_mat4(nvmath::vec3f(10.f, 10.f, 10.f));
+  planeObj->rigidbody.shape->size = nvmath::scale_mat4(nvmath::vec3f(10.f, 10.f, 10.f));
   //utils::createCar(&wordChain[0],&physicsEngine,(kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f));
-
-  //wordChain[0].simulatedObjects.push_back(boxObj);
-  //wordChain[0].simulatedObjects.push_back(boxObj2);
-  wordChain[0].simulatedObjects.push_back(sphereObj);
-  //wordChain[0].simulatedObjects.push_back(sphereObj2);
-
-  wordChain[0].staticObjects.push_back(planeObj);
 
   // physicsEngine.springs.push_back({ 0, 1, 5.f, -0.1f });
   // physicsEngine.joins.push_back(
@@ -151,12 +152,9 @@ int main(int argc, char** argv)
   int now = 0;
   int next = 1;
 
-
   static float limitFPS = 1.0f / 15.0f;
 
   static float dT = 1000 * limitFPS;
-
-  physicsEngine.step(&wordChain[now], &wordChain[next], dT);
 
   float lastTime = (float)glfwGetTime(), timer = lastTime;
   float deltaTime = 0, nowTime = 0;
@@ -165,9 +163,6 @@ int main(int argc, char** argv)
   while (!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
-    if (graphicsEngine.isMinimized())
-      continue;
-
 
     //- Measure time 
     nowTime = (float)glfwGetTime();
@@ -175,11 +170,13 @@ int main(int argc, char** argv)
 
     if (deltaTime >= 1.0) {
       next = (now + 1) % WC_SIZE;
-      physicsEngine.step(&wordChain[now], &wordChain[next], (nowTime - lastTime));
+      physicsEngine.step(next, (nowTime - lastTime));
       lastTime = nowTime;
       now = next;
     }
 
+    if (graphicsEngine.isMinimized())
+      continue;
 
     // Start the Dear ImGui frame
     UI::D().newFrame();
@@ -192,7 +189,7 @@ int main(int argc, char** argv)
     }
 
     nowTime = (float)glfwGetTime();
-    graphicsEngine.drawFrame(&wordChain[euclidean_remainder(now - 1, WC_SIZE)], &wordChain[now], std::min(deltaTime, 1.0f));
+    graphicsEngine.drawFrame(euclidean_remainder(now - 1, WC_SIZE), now, std::min(deltaTime, 1.0f));
   }
 
   // Cleanup

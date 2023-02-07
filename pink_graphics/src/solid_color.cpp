@@ -317,27 +317,10 @@ void SolidColor::destroyResources()
     m_alloc.deinit();
 }
 
-void SolidColor::rasterizeHelper(const VkCommandBuffer& cmdBuf, std::pair<std::vector<ps::Object>*, std::vector<ps::Object>*> vec) {
-    VkDeviceSize offset{ 0 };
-
-    for (int i = 0; i < vec.first->size(); i++)
-    {
-        auto model = (*vec.first)[i].mesh;
-        m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
-        m_pcRaster.modelMatrix = (*vec.first)[i].interpolate(&(*vec.second)[i], dT);
-
-        vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-            sizeof(PushConstantRaster), &m_pcRaster);
-        vkCmdBindVertexBuffers(cmdBuf, 0, 1, &model->vertexBuffer.buffer, &offset);
-        vkCmdBindIndexBuffer(cmdBuf, model->indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(cmdBuf, model->nbIndices, 1, 0, 0, 0);
-    }
-
-}
 //--------------------------------------------------------------------------------------------------
 // Drawing the scene in raster mode
 //
-void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
+void SolidColor::rasterize(int prev, int now, const VkCommandBuffer& cmdBuf)
 {
     m_debug.beginLabel(cmdBuf, "Rasterize");
 
@@ -349,18 +332,13 @@ void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
     vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descSet, 0, nullptr);
 
 
-    // Ogólnie to to niby działa
-    rasterizeHelper(cmdBuf, std::make_pair(&w1->staticObjects, &w2->staticObjects));
-    rasterizeHelper(cmdBuf, std::make_pair(&w1->simulatedObjects, &w2->simulatedObjects));
-
-#ifndef NDEBUG
     VkDeviceSize offset{ 0 };
-    
-    for (int i = 0; i < w2->points.size(); i++)
+
+    for (int i = 0; i < objects.size(); i++)
     {
-        auto model = ps::pg::ObjLibrary::getObjLibrary().GetMesh("sphere");
+        auto model = objects[i]->mesh;
         m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
-        m_pcRaster.modelMatrix = w2->points[i];
+        m_pcRaster.modelMatrix = objects[i]->interpolate(prev, now, dT);
 
         vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
             sizeof(PushConstantRaster), &m_pcRaster);
@@ -368,6 +346,22 @@ void SolidColor::rasterize(const VkCommandBuffer& cmdBuf)
         vkCmdBindIndexBuffer(cmdBuf, model->indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
         vkCmdDrawIndexed(cmdBuf, model->nbIndices, 1, 0, 0, 0);
     }
+
+#ifndef NDEBUG
+    // VkDeviceSize offset{ 0 };
+
+    // for (int i = 0; i < w2->points.size(); i++)
+    // {
+    //     auto model = ps::pg::ObjLibrary::getObjLibrary().GetMesh("sphere");
+    //     m_pcRaster.objIndex = model->objIndex;  // Telling which object is drawn
+    //     m_pcRaster.modelMatrix = w2->points[i];
+
+    //     vkCmdPushConstants(cmdBuf, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+    //         sizeof(PushConstantRaster), &m_pcRaster);
+    //     vkCmdBindVertexBuffers(cmdBuf, 0, 1, &model->vertexBuffer.buffer, &offset);
+    //     vkCmdBindIndexBuffer(cmdBuf, model->indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+    //     vkCmdDrawIndexed(cmdBuf, model->nbIndices, 1, 0, 0, 0);
+    // }
 #endif
     m_debug.endLabel(cmdBuf);
 }
@@ -559,9 +553,14 @@ SolidColor::SolidColor(nvvk::Context* vkctx, GLFWwindow* window, const int w, co
     setupGlfwCallbacks(window);
 }
 
-void SolidColor::drawFrame(ps::WordState* _w1, ps::WordState* _w2, float _dT) {
-    w1 = _w1;
-    w2 = _w2;
+void SolidColor::registerObject(ps::Object* o) {
+    objects.insert(std::upper_bound(objects.begin(), objects.end(), o, ps::ObjectIDCmp()), o);
+}
+void SolidColor::deregisterObject(ps::Object* o) {
+    objects.erase(std::upper_bound(objects.begin(), objects.end(), o, ps::ObjectIDCmp()));
+}
+
+void SolidColor::drawFrame(int prev, int now, float _dT) {
     dT = _dT;
     // Start rendering the scene
     prepareFrame();
@@ -593,7 +592,7 @@ void SolidColor::drawFrame(ps::WordState* _w1, ps::WordState* _w2, float _dT) {
 
         // Rendering Scene
         vkCmdBeginRenderPass(cmdBuf, &offscreenRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        rasterize(cmdBuf);
+        rasterize(prev, now, cmdBuf);
         vkCmdEndRenderPass(cmdBuf);
     }
 
@@ -642,10 +641,10 @@ void SolidColor::renderUI()
 //
 void SolidColor::initOffscreen()
 {
-  m_offscreen.createFramebuffer(m_size);
-  m_offscreen.createDescriptor();
-  m_offscreen.createPipeline(m_renderPass);
-  m_offscreen.updateDescriptorSet();
+    m_offscreen.createFramebuffer(m_size);
+    m_offscreen.createDescriptor();
+    m_offscreen.createPipeline(m_renderPass);
+    m_offscreen.updateDescriptorSet();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -653,10 +652,10 @@ void SolidColor::initOffscreen()
 //
 void SolidColor::initRayTracing()
 {
-//   m_raytrace.createBottomLevelAS(m_objModel, m_implObjects);
-//   m_raytrace.createTopLevelAS(m_instances, m_implObjects);
-  m_raytrace.createRtDescriptorSet(m_offscreen.colorTexture().descriptor.imageView);
-  m_raytrace.createRtPipeline(m_descSetLayout);
+    //   m_raytrace.createBottomLevelAS(m_objModel, m_implObjects);
+    //   m_raytrace.createTopLevelAS(m_instances, m_implObjects);
+    m_raytrace.createRtDescriptorSet(m_offscreen.colorTexture().descriptor.imageView);
+    m_raytrace.createRtPipeline(m_descSetLayout);
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -1,13 +1,13 @@
 #pragma once
 #include <vector>
 #include <klein/klein.hpp>
+
 #include "pink_structs_physics.hpp"
 #include "pink_structs_graphics.hpp"
 #include "nvp/nvpsystem.hpp"
 
 namespace ps {
 
-  // Default search path for shaders
   static std::vector<std::string> defaultSearchPaths = {
     NVPSystem::exePath() + "..",
     NVPSystem::exePath() + "../../",
@@ -18,19 +18,46 @@ namespace ps {
   const UniqueID nullID = 0;
 
   class Object {
-  private:
   public:
     UniqueID id;
-    std::vector<Object*> children;  // OPT można zmienić na tab albo zrobić własną klasę/struct pod tablice o jednolitym rozmiarze
-    pp::Rigidbody rigidbody;  // Mogę dać funkcje getInterpolatedTransform(RigidBody previousState, float blend (0.0 ... 1.0 )) zamiast transform i rotation 
+    pp::Rigidbody rigidbody;
     pg::ObjMesh* mesh;
+
     struct Interpolation_catche {
       kln::line log;
       kln::motor obj;
     }interpolation_catche;
-    nvmath::mat4f interpolate(ps::Object*, float);
+
+    nvmath::mat4f interpolate(int ,int ,float);
+    kln::motor motors[4]; // TODO
   };
 
+  struct ObjectIDCmp {
+    bool operator()(const ps::Object* left, const ps::Object* right)const
+    {
+      return (left->id < right->id);
+    }
+  };
+
+  class Module {
+  public:
+    virtual void registerObject(Object*) = 0;
+    virtual void deregisterObject(Object*) = 0;
+  };
+
+  class ObjectManager {
+    UniqueID idCounter = nullID;
+  public:
+    std::vector<Object*> objects;
+    std::vector<Module*> modules;
+
+    UniqueID newUniqueId();
+    Object* addObject(const Object&);
+    void deleteObject(Object*);
+    Object* findObject(UniqueID id);
+    std::vector<Object*>::iterator ObjectManager::findObjectInVector(UniqueID id);
+    ObjectManager(std::vector<Module*>);
+  };
 
   struct WordState { // Defacto output silnika fizycznego
     std::vector<Object> staticObjects;
