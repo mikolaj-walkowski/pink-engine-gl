@@ -1,6 +1,7 @@
 #include "pink_physics.hpp"
 #include "pink_structs.hpp"
 #include "pink_physics_colliders.hpp"
+#include "GLFW/glfw3.h"
 
 #include "backends/imgui_impl_glfw.h"
 #include "imgui.h"
@@ -575,5 +576,28 @@ namespace ps::pp {
             simulatedRbs[i]->motors[writePos] = simulatedRbs[i]->rigidbody.M;
         }
 
+    }
+
+    void Engine::run(int* inc,float* lastTime, bool* kill) {
+        static float limitFPS = 1.0f / 15.0f;
+
+        static float dT = 1000 * limitFPS;
+
+        float timer = *lastTime;
+        float deltaTime = 0, nowTime = 0;
+        int next;
+
+        while (!*kill)
+        {
+            nowTime = (float)glfwGetTime();
+            deltaTime += (nowTime - *lastTime) / limitFPS;
+
+            if (deltaTime >= 1.0) {
+                next = (*inc + 1) % 4;
+                step(next, (nowTime - *lastTime));
+                *lastTime = nowTime;
+                *inc = next;
+            }
+        }
     }
 }

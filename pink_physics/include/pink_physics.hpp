@@ -64,6 +64,8 @@ namespace ps::pp {
         void applySprings();
         void enforceJoints();
         void renderUI();
+        void run(int*,float*,bool* );
+        
         Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF);
     };
 

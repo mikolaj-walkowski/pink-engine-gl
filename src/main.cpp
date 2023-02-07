@@ -41,6 +41,7 @@
 #include "pink_physics.hpp"
 #include "pink_graphics.hpp"
 #include "pink_core.hpp"
+#include <thread>
 
 //////////////////////////////////////////////////////////////////////////
 #define UNUSED(x) (void)(x)
@@ -91,49 +92,49 @@ int main(int argc, char** argv)
   kln::euler_angles b = { kln::pi / 4.f, kln::pi / 4.f, 0.f };
 
 
-  // ps::Object* boxObj = utils::objectCreate(
-  //   objectManager,
-  //   (kln::motor)kln::translator(14.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
-  //   ps::pp::BT_DYNAMIC,
-  //   "",
-  //   new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-  //   new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-  //   nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
-  //   );
+  ps::Object* boxObj = utils::objectCreate(
+    objectManager,
+    (kln::motor)kln::translator(14.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
+    ps::pp::BT_DYNAMIC,
+    "",
+    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
+    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
+    nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
+    );
 
-  // ps::Object* boxObj2 = utils::objectCreate(
-  //   objectManager,
-  //   ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.1f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
-  //   ps::pp::BT_DYNAMIC,
-  //   "",
-  //   new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-  //   new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-  //   nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
-  // );
+  ps::Object* boxObj2 = utils::objectCreate(
+    objectManager,
+    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.1f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
+    ps::pp::BT_DYNAMIC,
+    "",
+    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
+    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
+    nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
+  );
 
-  // ps::Object* sphereObj = utils::objectCreate(
-  //   objectManager,
-  //   kln::translator(-3, 1, 0, 0),
-  //   ps::pp::BT_DYNAMIC,
-  //   "",
-  //   new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-  //   new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-  //   nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
-  // );
+  ps::Object* sphereObj = utils::objectCreate(
+    objectManager,
+    kln::translator(-3, 1, 0, 0),
+    ps::pp::BT_DYNAMIC,
+    "",
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
+    nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
+  );
 
-  // ps::Object* sphereObj2 = utils::objectCreate(
-  //   objectManager,
-  //   kln::translator(-3, 1, 0, 0) * kln::translator(3, 0.1f, 1, 0.0f),
-  //   ps::pp::BT_DYNAMIC,
-  //   "",
-  //   new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-  //   new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-  //   nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
-  // );
+  ps::Object* sphereObj2 = utils::objectCreate(
+    objectManager,
+    kln::translator(-3, 1, 0, 0) * kln::translator(3, 0.1f, 1, 0.0f),
+    ps::pp::BT_DYNAMIC,
+    "",
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
+    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
+    nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
+  );
 
   ps::Object* planeObj = utils::objectCreate(
     objectManager,
-    kln::translator(-3, 0, 1, 0) ,//* kln::rotor(a),
+    kln::translator(-3, 0, 1, 0) * kln::rotor(a),
     ps::pp::BT_STATIC,
     "",
     new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
@@ -141,7 +142,7 @@ int main(int argc, char** argv)
     nvmath::scale_mat4(nvmath::vec3f(10.f,10.f,10.f))
   );
   
-  utils::createCar(objectManager,&physicsEngine,(kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f));
+  //utils::createCar(objectManager,&physicsEngine,(kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f));
 
   // physicsEngine.springs.push_back({ 0, 1, 5.f, -0.1f });
   // physicsEngine.joins.push_back(
@@ -156,6 +157,7 @@ int main(int argc, char** argv)
   UI::D().init(window, true, &physicsEngine, &graphicsEngine);
   int now = 0;
   int next = 1;
+  bool kill = false;
 
   static float limitFPS = 1.0f / 15.0f;
 
@@ -163,6 +165,8 @@ int main(int argc, char** argv)
 
   float lastTime = (float)glfwGetTime(), timer = lastTime;
   float deltaTime = 0, nowTime = 0;
+
+  std::thread physics(&ps::pp::Engine::run,&physicsEngine, &now, &lastTime, &kill);
 
   // Main loop
   while (!glfwWindowShouldClose(window))
@@ -173,12 +177,12 @@ int main(int argc, char** argv)
     nowTime = (float)glfwGetTime();
     deltaTime += (nowTime - lastTime) / limitFPS;
 
-    if (deltaTime >= 1.0) {
-      next = (now + 1) % WC_SIZE;
-      physicsEngine.step(next, (nowTime - lastTime));
-      lastTime = nowTime;
-      now = next;
-    }
+    // if (deltaTime >= 1.0) {
+    //   next = (now + 1) % WC_SIZE;
+    //   physicsEngine.step(next, (nowTime - lastTime));
+    //   lastTime = nowTime;
+    //   now = next;
+    // }
 
     if (graphicsEngine.isMinimized())
       continue;
@@ -197,9 +201,11 @@ int main(int argc, char** argv)
     graphicsEngine.drawFrame(euclidean_remainder(now - 1, WC_SIZE), now, std::min(deltaTime, 1.0f));
   }
 
+  kill = true;
   // Cleanup
   vkDeviceWaitIdle(graphicsEngine.getDevice());
-
+  physics.join();
+  
   graphicsEngine.destroyResources();
   graphicsEngine.destroy();
   vkctx.deinit();
