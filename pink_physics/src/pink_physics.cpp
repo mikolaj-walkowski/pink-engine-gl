@@ -63,7 +63,7 @@ void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         rb->B = rb->B + (step * rb->dB);
         rb->M.normalize();
         rb->B.grade2();
-        rb->moved->move(rb->M, rb->shape);
+        rb->move();
 
         e->collide(e, rb, e->simulatedRbs);
         e->resolve(e);
@@ -85,16 +85,17 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     rb->M.normalize();
     rb->B.grade2();
 
-    rb->moved->move(rb->M, rb->shape);
+    rb->move();
 
-    e->collide(e, rb, e->simulatedRbs);
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 4; i++) {
+        e->collide(e, rb, e->simulatedRbs);
         e->resolve(e);
+        e->collide(e, rb, e->constrainingRbs);
+        ps::pp::solidResolver(e);  
     }
-    e->collide(e, rb, e->constrainingRbs);
-    for (int i = 0; i < 1; i++) {
-        ps::pp::solidResolver(e);
-    }
+    
+    // for (int i = 0; i < 1; i++) {
+    // }
 }
 
 void ps::pp::basicSimulate(ps::pp::Rigidbody* rb) {
@@ -210,7 +211,7 @@ void ps::pp::vecCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb, std::vector<p
 }
 
 void ps::pp::solidResolver(ps::pp::Engine* e) {
-    float rho = 0.5f;
+    float rho = 0.0f;
 
 
     for (int i = 0; i < e->collision_props.size; i++)
@@ -293,7 +294,7 @@ void ps::pp::solidResolver(ps::pp::Engine* e) {
 
 void ps::pp::basicResolver(ps::pp::Engine* e) {
     // Coefficient of restitution
-    float rho = 0.5f;
+    float rho = 0.8f;
 
 
     for (int i = 0; i < e->collision_props.size; i++)
@@ -414,6 +415,21 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
 
 
 namespace ps::pp {
+    Rigidbody::~Rigidbody() {
+        
+    }
+    Rigidbody::Rigidbody(kln::motor M, kln::line B, BodyType bt, BaseShape* shape): M(M),B(B),bodyType(bt),shape(shape) {
+        dM = kln::uMotor();
+        dB = kln::line();
+
+        kln::line F = kln::line(0, 0, 0, 0, 0, 0);
+        move();
+    }
+
+    void Rigidbody::move() {
+        shape->move(M);
+    }
+
 
     void Engine::registerObject(Object* obj) {
 
@@ -431,11 +447,8 @@ namespace ps::pp {
 
     void Engine::deregisterObject(Object* obj) {
         allBodies.erase(std::upper_bound(allBodies.begin(), allBodies.end(), obj, ps::ObjectIDCmp()));
-        delete obj->rigidbody.shape;
-        delete obj->rigidbody.moved;
         if (obj->rigidbody.bodyType == BT_DYNAMIC) {
             simulatedRbs.erase(std::upper_bound(simulatedRbs.begin(), simulatedRbs.end(), obj, ps::ObjectIDCmp()));
-            delete obj->rigidbody.joins;
         }
         else {
             constrainingRbs.erase(std::upper_bound(constrainingRbs.begin(), constrainingRbs.end(), obj, ps::ObjectIDCmp()));
@@ -457,7 +470,7 @@ namespace ps::pp {
 
         auto line = joinToWorld(j->constraint);
 
-        auto center = child.moved->center;
+        auto center = child.shape->center;
         auto newCenter = kln::project(center, line).normalized();
 
         auto minAtt = joinToWorld(j->Att[0]);
@@ -508,8 +521,8 @@ namespace ps::pp {
             auto& b1 = *s.rb1;
             auto& b2 = *s.rb2;
 
-            auto c1 = s.rb1atch(b1.moved->center);
-            auto c2 = s.rb2atch(b2.moved->center);
+            auto c1 = s.rb1atch(b1.shape->center);
+            auto c2 = s.rb2atch(b2.shape->center);
 
             auto line1 = c1 & c2;
             // auto line2 = c2 & c1;
@@ -593,7 +606,7 @@ namespace ps::pp {
             deltaTime += (nowTime - *lastTime) / limitFPS;
 
             if (deltaTime >= 1.0) {
-                next = (*inc + 1) % 4;
+                next = (*inc + 1) % 4; //TODO
                 step(next, (nowTime - *lastTime));
                 *lastTime = nowTime;
                 *inc = next;

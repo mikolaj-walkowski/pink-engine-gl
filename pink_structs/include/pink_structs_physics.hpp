@@ -37,7 +37,7 @@ namespace ps::pp {
 
         kln::point Att[2];
         kln::line constraint;
-        
+
         kln::line parentInertiaMask;
         kln::line childInertiaMask;
 
@@ -54,24 +54,26 @@ namespace ps::pp {
         ST_COMPOSITE,
         ST_SIZE
     };
-    
+
     enum BodyType {
         BT_STATIC = 0,
         BT_DYNAMIC = 1
     };
 
     class BaseShape {
+    protected:
+        kln::point mult;
     public:
-        kln::line inertia;
         kln::point center;
+        kln::line inertia;
         ShapeType type;
         float mass;
 
-        virtual void move(const kln::motor& M, const BaseShape* og) = 0;
+        virtual void move(const kln::motor& M) = 0;
     };
 
     class Rigidbody {
-        public:
+    public:
         kln::motor M;
         kln::line B;
 
@@ -80,17 +82,20 @@ namespace ps::pp {
 
         kln::line F;
 
-        kln::point centerOfMass;
-
         BodyType bodyType;
 
         BaseShape* shape;
-        BaseShape* moved;
 
         applyImpulse apply; // TODO yuck 
 
         int* joins; //TODO yuck2 
         int joinSize;
+
+        void move();
+        Rigidbody(kln::motor, kln::line, BodyType, BaseShape*);
+        Rigidbody() = default;
+        
+        ~Rigidbody();
     };
 
 

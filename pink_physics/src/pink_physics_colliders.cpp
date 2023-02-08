@@ -26,19 +26,17 @@ ps::pp::Interval ps::pp::GetInterval(const kln::point* verts, const vec3& axis){
 }
 
 bool ps::pp::OverlapOnAxis(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, const vec3& axis) {
-    kln::point* verts1 = ((ps::pp::Box*) rb1->moved)->verts;
-    kln::point* verts2 = ((ps::pp::Box*) rb2->moved)->verts;
+    kln::point* verts1 = ((ps::pp::Box*) rb1->shape)->verts;
+    kln::point* verts2 = ((ps::pp::Box*) rb2->shape)->verts;
 
     Interval a = GetInterval(verts1, axis);
     Interval b = GetInterval(verts2, axis);
     return ((b.min <= a.max) && (a.min <= b.max));
 }
 
-const float* calcBoxOrientation(ps::pp::Rigidbody* rb){
-    ps::pp::Box* box = (ps::pp::Box*) rb->moved;
+void calcBoxOrientation(ps::pp::Rigidbody* rb, vec3* orientation){
+    ps::pp::Box* box = (ps::pp::Box*) rb->shape;
 
-    // TODO chyba lepiej byłoby bez malloc, ale nie ma czasu
-    float* orientation = (float*) malloc(sizeof(float)*9);
     uint8_t i = 0;
 
     for (auto& edge: {box->edges[0], box->edges[4], box->edges[1]})
@@ -46,14 +44,9 @@ const float* calcBoxOrientation(ps::pp::Rigidbody* rb){
         auto a = box->verts[edge.first];
         auto b = box->verts[edge.second];
 
-        // Not sure if this really works
-
-        vec3 orientationAxis = {a.x() - b.x(), a.y() - b.y(), a.z() - b.z()};
-        
-        for (uint8_t j = 0; j<3; ++j) orientation[i++] = orientationAxis[j];
+        // Not sure if this really works, to mia by dot, bo jak tak to git? 
+        orientation[i++] = {a.x() - b.x(), a.y() - b.y(), a.z() - b.z()};
     }
-
-    return orientation;
 }
 
 bool ps::pp::eCmp(float a, float b) {
@@ -92,7 +85,7 @@ bool ps::pp::collide(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, ps::pp::Man
         break;
     }
     }
-    bool out = f(m->rb1->moved, &m->rb1->M, m->rb2->moved, &m->rb2->M, m);
+    bool out = f(m->rb1->shape, &m->rb1->M, m->rb2->shape, &m->rb2->M, m);
     return out;
 }
 
@@ -258,11 +251,8 @@ bool ps::pp::boxToPlane(BaseShape* _plane, kln::motor* m1, BaseShape* _box, kln:
 //     return out;
 // }
 
-const kln::line* ps::pp::kln_calcBoxOrientation(ps::pp::Rigidbody* rb){
+void ps::pp::kln_calcBoxOrientation(ps::pp::Rigidbody* rb, kln::line* orientation){
     ps::pp::Box* box = (ps::pp::Box*) rb->shape;
-
-    // TODO chyba lepiej byłoby bez malloc, ale nie ma czasu
-    kln::line* orientation = (kln::line*) malloc(sizeof(kln::line)*3);
     uint8_t i = 0;
 
     for (auto& edge: {box->edges[0], box->edges[4], box->edges[1]})
@@ -273,7 +263,6 @@ const kln::line* ps::pp::kln_calcBoxOrientation(ps::pp::Rigidbody* rb){
         orientation[i++] = a & b;
     }
 
-    return orientation;
 }
 bool ps::pp::PointInBox(kln::point& inp_point, ps::pp::Rigidbody* rb) {
     bool output = true;
@@ -335,7 +324,9 @@ bool ps::pp::ClipToPlane(const kln::plane& plane, std::pair<kln::point, kln::poi
     // // printf("\tz: %f, %f, %f\n\n", line.first.z(), line.second.z(), intersection.z());
 
     // if (x && y && z) {
-    *outPoint = intersection;
+
+    // ,,Optymalizacja``
+    * outPoint = intersection;
     return true;
     // }
 
@@ -344,7 +335,7 @@ bool ps::pp::ClipToPlane(const kln::plane& plane, std::pair<kln::point, kln::poi
 
 std::vector<kln::point> ps::pp::ClipEdgesToOBB(std::pair<kln::point, kln::point>* edges, ps::pp::Rigidbody* rb) {
 
-    ps::pp::Box* OBB = (ps::pp::Box*) rb->moved;
+    ps::pp::Box* OBB = (ps::pp::Box*) rb->shape;
     std::vector<kln::point> result;
     kln::point intersection;
 
@@ -369,8 +360,8 @@ std::vector<kln::point> ps::pp::ClipEdgesToOBB(std::pair<kln::point, kln::point>
 }
 
 float ps::pp::PenetrationDepth(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, const vec3& axis, bool* outShouldFlip) {
-    kln::point* a = ((ps::pp::Box*) rb1->moved)->verts;
-    kln::point* b = ((ps::pp::Box*) rb2->moved)->verts;
+    kln::point* a = ((ps::pp::Box*) rb1->shape)->verts;
+    kln::point* b = ((ps::pp::Box*) rb2->shape)->verts;
 
     ps::pp::Interval i1 = ps::pp::GetInterval(a, axis);
     ps::pp::Interval i2 = ps::pp::GetInterval(b, axis);
@@ -395,26 +386,13 @@ float ps::pp::PenetrationDepth(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, c
 bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, kln::motor* m2, Manifold* m) {
     bool out = false;
 
-    auto box1 = (ps::pp::Box*)(m->rb1->moved);
-    auto box2 = (ps::pp::Box*)(m->rb2->moved);
+    auto box1 = (ps::pp::Box*)(m->rb1->shape);
+    auto box2 = (ps::pp::Box*)(m->rb2->shape);
 
-    // I know, it's terrible
-    const kln::line* kln_o1 = ps::pp::kln_calcBoxOrientation(m->rb1);
-    const kln::line* kln_o2 = ps::pp::kln_calcBoxOrientation(m->rb2);
-
-    kln::line kln_test[15] = {
-        kln_o1[0],
-        kln_o1[1],
-        kln_o1[2],
-        kln_o2[0],
-        kln_o2[1],
-        kln_o2[2]
-    };
+    kln::line kln_test[15] = {};
     
-    // TODO jeszcze ta pamięć którą trzeba zwolnić samemu
-    // Mało inżynierskie jak na inżynierkę...
-    free((void*) kln_o1);
-    free((void*) kln_o2);
+    ps::pp::kln_calcBoxOrientation(m->rb1, kln_test);
+    ps::pp::kln_calcBoxOrientation(m->rb2,kln_test+3);
 
     for (int i = 0; i < 3; ++i) { // Fill out rest of axes
         kln_test[6 + i * 3 + 0] = kln_test[i] * kln_test[0];
@@ -422,20 +400,9 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
         kln_test[6 + i * 3 + 2] = kln_test[i] * kln_test[2];
     }
 
-    const float* o1 = calcBoxOrientation(m->rb1);
-    const float* o2 = calcBoxOrientation(m->rb2);
-    vec3 test[15] = {
-        vec3(o1[0], o1[1], o1[2]),
-        vec3(o1[3], o1[4], o1[5]),
-        vec3(o1[6], o1[7], o1[8]),
-        vec3(o2[0], o2[1], o2[2]),
-        vec3(o2[3], o2[4], o2[5]),
-        vec3(o2[6], o2[7], o2[8])
-    };
-
-    free((void*) o1);
-    free((void*) o2);
-
+    vec3 test[15] = {};
+    calcBoxOrientation(m->rb1,test);
+    calcBoxOrientation(m->rb2,test + 3);
 
     for (int i = 0; i < 3; ++i) { // Fill out rest of axes
         test[6 + i * 3 + 0] = Cross(test[i], test[0]);
@@ -511,48 +478,7 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
         ++(m->count);
     }
 
-    // int points = 0;
-    // for(auto vert : box1->verts)
-    // {
-    //     if(PointInBox(vert, m->rb2)){
-    //         ++points;
-    //     }
-    // }
-    // for(auto vert : box2->verts)
-    // {
-    //     if(PointInBox(vert, m->rb1))
-    //     {
-    //         ++points;
-    //     }
-    // }
-
-    // if(points) printf("points = %d\n", points);
-
-    // Interval interval = GetInterval(box1->verts, axis);
-    // float distance = (interval.max - interval.min)* 0.5f - m->penetration * 0.5f;
-
-    // vec3 center = {
-    //     box1->center.x(),
-    //     box1->center.y(),
-    //     box1->center.z()};
-
-    // vec3 pointOnPlane = center + axis * distance;
-
-    // kln::point p1;
-
-    // for (int i = m->count - 1; i>= 0; --i) {
-    //     p1 = m->pointsOfContact[i];
-    //     vec3 contact = {p1.x(), p1.y(), p1.z()};
-    //     contact = contact + (axis * Dot(axis, pointOnPlane - contact));
-    //     m->pointsOfContact[i] = kln::point(contact[0], contact[1], contact[2]);
-    // }
-
-    //really bad
-    // kln::plane normal = normal_line.normalized() | box1->center;
-
-    // m->normal = normal;
-    m->normal = (box1->center & box2->center) | box1->center;
+    m->normal = kln::plane(axis[0],axis[1],axis[2],1.f);
 
     return true;
-
 }

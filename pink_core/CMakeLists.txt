@@ -17,6 +17,8 @@ target_sources(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     pink::structs
+    pink::physics
+    pink::graphics
     klein::klein
     nvpro_core
     imgui

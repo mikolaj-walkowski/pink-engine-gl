@@ -63,8 +63,6 @@ int euclidean_remainder(int a, int b)
 int main(int argc, char** argv)
 {
   UNUSED(argc);
-  ps::WordState wordChain[WC_SIZE]; // Buffer dla kolejnych stanów 
-
   //Setup Glfw
   GLFWwindow* window = utils::glfw::setupGLFWindow();
 
@@ -90,26 +88,24 @@ int main(int argc, char** argv)
 
   kln::euler_angles a = { kln::pi / 8.f, 0.f, 0.f };
   kln::euler_angles b = { kln::pi / 4.f, kln::pi / 4.f, 0.f };
-
+  auto test = new ps::pp::Box(1, 1, 1, 2, kln::uMotor());
 
   ps::Object* boxObj = utils::objectCreate(
     objectManager,
-    (kln::motor)kln::translator(14.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
+    (kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
     ps::pp::BT_DYNAMIC,
     "",
-    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-    nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
-    );
+    test,//new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
+    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
+  );
 
   ps::Object* boxObj2 = utils::objectCreate(
     objectManager,
-    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.1f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
+    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.0f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
     ps::pp::BT_DYNAMIC,
     "",
     new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-    nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
+    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
   );
 
   ps::Object* sphereObj = utils::objectCreate(
@@ -118,8 +114,7 @@ int main(int argc, char** argv)
     ps::pp::BT_DYNAMIC,
     "",
     new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-    nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
+    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
   );
 
   ps::Object* sphereObj2 = utils::objectCreate(
@@ -128,21 +123,19 @@ int main(int argc, char** argv)
     ps::pp::BT_DYNAMIC,
     "",
     new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-    nvmath::scale_mat4(nvmath::vec3f(1.f,1.f,1.f))
+    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
   );
 
   ps::Object* planeObj = utils::objectCreate(
     objectManager,
-    kln::translator(-3, 0, 1, 0) * kln::rotor(a),
+    kln::translator(-3, 0, 1, 0),// * kln::rotor(a),
     ps::pp::BT_STATIC,
     "",
     new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
-    new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
-    nvmath::scale_mat4(nvmath::vec3f(10.f,10.f,10.f))
+    nvmath::scale_mat4(nvmath::vec3f(10.f, 10.f, 10.f))
   );
-  
-  //utils::createCar(objectManager,&physicsEngine,(kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f));
+
+  // utils::createCar(objectManager,&physicsEngine,(kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f));
 
   // physicsEngine.springs.push_back({ 0, 1, 5.f, -0.1f });
   // physicsEngine.joins.push_back(
@@ -166,7 +159,7 @@ int main(int argc, char** argv)
   float lastTime = (float)glfwGetTime(), timer = lastTime;
   float deltaTime = 0, nowTime = 0;
 
-  std::thread physics(&ps::pp::Engine::run,&physicsEngine, &now, &lastTime, &kill);
+  std::thread physics(&ps::pp::Engine::run, &physicsEngine, &now, &lastTime, &kill);
 
   // Main loop
   while (!glfwWindowShouldClose(window))
@@ -176,13 +169,6 @@ int main(int argc, char** argv)
     //- Measure time 
     nowTime = (float)glfwGetTime();
     deltaTime += (nowTime - lastTime) / limitFPS;
-
-    // if (deltaTime >= 1.0) {
-    //   next = (now + 1) % WC_SIZE;
-    //   physicsEngine.step(next, (nowTime - lastTime));
-    //   lastTime = nowTime;
-    //   now = next;
-    // }
 
     if (graphicsEngine.isMinimized())
       continue;
@@ -205,7 +191,7 @@ int main(int argc, char** argv)
   // Cleanup
   vkDeviceWaitIdle(graphicsEngine.getDevice());
   physics.join();
-  
+
   graphicsEngine.destroyResources();
   graphicsEngine.destroy();
   vkctx.deinit();

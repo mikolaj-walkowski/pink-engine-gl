@@ -6,8 +6,8 @@
 #include "GLFW/glfw3.h"
 
 class UI {
-    bool showGraphics = true;
-    bool showPhysics = true;
+    bool showGraphics = false;
+    bool showPhysics = false;
 
     ps::pp::Engine* pe;
     SolidColor* ge;

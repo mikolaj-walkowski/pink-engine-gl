@@ -54,12 +54,4 @@ namespace ps {
     ObjectManager(std::vector<Module*>);
   };
 
-  struct WordState { // Defacto output silnika fizycznego
-    std::vector<Object> staticObjects;
-    std::vector<Object> simulatedObjects;
-#ifndef NDEBUG
-    std::vector<nvmath::mat4f> points;
-#endif
-  };
-
 }  // namespace ps

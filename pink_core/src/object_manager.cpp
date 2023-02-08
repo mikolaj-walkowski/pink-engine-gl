@@ -20,6 +20,10 @@ namespace ps {
             modules[i]->deregisterObject(obj);
         }
         objects.erase(findObjectInVector(obj->id));
+        
+        delete obj->rigidbody.shape;
+        delete obj->rigidbody.joins;
+        delete obj;
     }
 
     UniqueID ObjectManager::newUniqueId() {
