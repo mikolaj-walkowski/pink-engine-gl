@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
   ps::Object* boxObj2 = utils::objectCreate(
     objectManager,
-    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.0f, 1.0f, 0.0f) * kln::rotor(b)).normalized(),
+    ((kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f) * kln::translator(3.0f, 0.0f, 1.0f, 0.0f)* kln::rotor(b)).normalized(),
     ps::pp::BT_DYNAMIC,
     "",
     new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),

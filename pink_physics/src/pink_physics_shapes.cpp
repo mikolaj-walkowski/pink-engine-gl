@@ -23,10 +23,17 @@ ps::pp::Box::Box(float x, float y, float z, float _mass, kln::motor offset) {
 
 void ps::pp::Box::move(const kln::motor& M) {
     center = M(kln::origin());
-    
+
     for (int i = 0; i < 8; i++)
     {
         verts[i] = M(_verts[i].mult(mult));
+    }
+}
+
+void ps::pp::Box::getBodyVerts(kln::point* v) {
+    for (int i = 0; i < 8; i++)
+    {
+        v[i] = _verts[i].mult(mult);
     }
 }
 
@@ -86,7 +93,7 @@ ps::pp::Cylinder::Cylinder(float len, float r, float _mass, kln::motor offset) {
 
 void ps::pp::Cylinder::move(const kln::motor& M) {
     center = M(kln::origin());
-    
+
     for (int i = 0; i < 2; i++)
     {
         caps[i] = M(_caps[i].mult(mult));
@@ -101,7 +108,7 @@ void ps::pp::Composite::move(const kln::motor& M) {
     center = M(kln::origin());
 
     for (int i = 0; i < children.size(); ++i) {
-        children[i].first->move(M*children[i].second);
+        children[i].first->move(M * children[i].second);
     }
 }
 

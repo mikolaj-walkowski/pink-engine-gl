@@ -91,9 +91,9 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         e->collide(e, rb, e->simulatedRbs);
         e->resolve(e);
         e->collide(e, rb, e->constrainingRbs);
-        ps::pp::solidResolver(e);  
+        ps::pp::solidResolver(e);
     }
-    
+
     // for (int i = 0; i < 1; i++) {
     // }
 }
@@ -416,14 +416,27 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
 
 namespace ps::pp {
     Rigidbody::~Rigidbody() {
-        
+
     }
-    Rigidbody::Rigidbody(kln::motor M, kln::line B, BodyType bt, BaseShape* shape): M(M),B(B),bodyType(bt),shape(shape) {
+    Rigidbody::Rigidbody(kln::motor M, kln::line B, BodyType bt, BaseShape* shape): M(M), B(B), bodyType(bt), shape(shape) {
         dM = kln::uMotor();
-        dB = kln::line();
+        dB = kln::line(0, 0, 0, 0, 0, 0);
 
         kln::line F = kln::line(0, 0, 0, 0, 0, 0);
+
+        joins = NULL;
+        joinSize = 0;
         move();
+    }
+
+    Rigidbody::Rigidbody() {
+        M = kln::uMotor();
+        B = kln::line(0, 0, 0, 0, 0, 0);
+        dM = kln::uMotor();
+        dB = kln::line(0, 0, 0, 0, 0, 0);
+        kln::line F = kln::line(0, 0, 0, 0, 0, 0);
+        joins = NULL;
+        joinSize = 0;
     }
 
     void Rigidbody::move() {
@@ -591,7 +604,7 @@ namespace ps::pp {
 
     }
 
-    void Engine::run(int* inc,float* lastTime, bool* kill) {
+    void Engine::run(int* inc, float* lastTime, bool* kill) {
         static float limitFPS = 1.0f / 15.0f;
 
         static float dT = 1000 * limitFPS;

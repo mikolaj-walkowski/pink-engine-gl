@@ -5,14 +5,14 @@ float Dot(const vec3& l, const vec3& r) {
 }
 
 vec3 Cross(const vec3& l, const vec3& r) {
- vec3 result;
- result.x = l.y * r.z - l.z * r.y;
- result.y = l.z * r.x - l.x * r.z;
- result.z = l.x * r.y - l.y * r.x;
- return result; // Done
+    vec3 result;
+    result.x = l.y * r.z - l.z * r.y;
+    result.y = l.z * r.x - l.x * r.z;
+    result.z = l.x * r.y - l.y * r.x;
+    return result; // Done
 }
 
-ps::pp::Interval ps::pp::GetInterval(const kln::point* verts, const vec3& axis){
+ps::pp::Interval ps::pp::GetInterval(const kln::point* verts, const vec3& axis) {
     Interval result;
     result.min = result.max = Dot(axis, vec3(verts[0].x(), verts[0].y(), verts[0].z()));
     for (int i = 1; i < 8; ++i) {
@@ -25,27 +25,34 @@ ps::pp::Interval ps::pp::GetInterval(const kln::point* verts, const vec3& axis){
     return result;
 }
 
+bool ps::pp::Interval::operator[](float& a) {
+    return this->min <= a && this->max >= a;
+}
+bool ps::pp::Interval::operator()(float& a) {
+    return this->min < a&& this->max > a;
+}
+
 bool ps::pp::OverlapOnAxis(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, const vec3& axis) {
-    kln::point* verts1 = ((ps::pp::Box*) rb1->shape)->verts;
-    kln::point* verts2 = ((ps::pp::Box*) rb2->shape)->verts;
+    kln::point* verts1 = ((ps::pp::Box*)rb1->shape)->verts;
+    kln::point* verts2 = ((ps::pp::Box*)rb2->shape)->verts;
 
     Interval a = GetInterval(verts1, axis);
     Interval b = GetInterval(verts2, axis);
     return ((b.min <= a.max) && (a.min <= b.max));
 }
 
-void calcBoxOrientation(ps::pp::Rigidbody* rb, vec3* orientation){
-    ps::pp::Box* box = (ps::pp::Box*) rb->shape;
+void calcBoxOrientation(ps::pp::Rigidbody* rb, vec3* orientation) {
+    ps::pp::Box* box = (ps::pp::Box*)rb->shape;
 
     uint8_t i = 0;
 
-    for (auto& edge: {box->edges[0], box->edges[4], box->edges[1]})
+    for (auto& edge : { box->edges[0], box->edges[4], box->edges[1] })
     {
         auto a = box->verts[edge.first];
         auto b = box->verts[edge.second];
 
         // Not sure if this really works, to mia by dot, bo jak tak to git? 
-        orientation[i++] = {a.x() - b.x(), a.y() - b.y(), a.z() - b.z()};
+        orientation[i++] = { a.x() - b.x(), a.y() - b.y(), a.z() - b.z() };
     }
 }
 
@@ -53,6 +60,7 @@ bool ps::pp::eCmp(float a, float b) {
     float epsilon = 0.0001f;
     return abs(a - b) < epsilon;
 }
+
 
 bool ps::pp::collide(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, ps::pp::Manifold* m) {
     if (rb1->shape->type > rb2->shape->type) {
@@ -137,6 +145,28 @@ void* find(void* arr, void* arr_end, void* data, int size) {
     for (void* i = arr; i < arr_end; i = static_cast<char*>(i) + size) {
         if (memcmp(i, data, size) == 0)
             return i;
+    }
+    return NULL;
+}
+
+
+bool eCmp(float a, float b, float epsilon) {
+    return abs(a - b) < epsilon;
+}
+
+kln::point* findApprox(kln::point* arr, int size, kln::point& p) {
+    float f = 0.01f;
+    for (int i = 0; i < size; i++)
+    {
+        auto& a = arr[i];
+        if (
+            eCmp(a.e013(), p.e013(), f) &&
+            eCmp(a.e021(), p.e021(), f) &&
+            eCmp(a.e032(), p.e032(), f) &&
+            eCmp(a.e123(), p.e123(), f)
+            ) {
+            return &a;
+        }
     }
     return NULL;
 }
@@ -251,95 +281,70 @@ bool ps::pp::boxToPlane(BaseShape* _plane, kln::motor* m1, BaseShape* _box, kln:
 //     return out;
 // }
 
-void ps::pp::kln_calcBoxOrientation(ps::pp::Rigidbody* rb, kln::line* orientation){
-    ps::pp::Box* box = (ps::pp::Box*) rb->shape;
+void ps::pp::kln_calcBoxOrientation(ps::pp::Rigidbody* rb, kln::line* orientation) {
+    ps::pp::Box* box = (ps::pp::Box*)rb->shape;
     uint8_t i = 0;
 
-    for (auto& edge: {box->edges[0], box->edges[4], box->edges[1]})
+    for (auto& edge : { box->edges[0], box->edges[4], box->edges[1] })
     {
-        auto a = rb->M(box->verts[edge.first]);
-        auto b = rb->M(box->verts[edge.second]);
-        
+        auto a = box->verts[edge.first];
+        auto b = box->verts[edge.second];
+
         orientation[i++] = a & b;
     }
 
 }
-bool ps::pp::PointInBox(kln::point& inp_point, ps::pp::Rigidbody* rb) {
-    bool output = true;
 
-    vec3 point(inp_point.x(), inp_point.y(), inp_point.z());
+// inp_point must be in word space 
+bool ps::pp::PointInBox(kln::point& inp_point, ps::pp::Rigidbody* rb) {
+    kln::point p_Rel = (~rb->M)(inp_point);
+
+    vec3 point(p_Rel.x(), p_Rel.y(), p_Rel.z());
 
     //dynamic_cast byłby bezpieczniejszy ale my nie jesteśmy bezpieczni
-    auto OBB = (ps::pp::Box*) rb->shape;
+    auto OBB = (ps::pp::Box*)rb->shape;
 
-    kln::point center_point = rb->M(OBB->center);
-    vec3 center(center_point.x(), center_point.y(), center_point.z());
+    kln::point v[8];
+    OBB->getBodyVerts(v);
 
-    point -= center;
-
-    float orientation[3][3] = {
-        {1.f, 0.f, 0.f},
-        {0.f, 1.f, 0.f},
-        {0.f, 0.f, 1.f}
-    };
-    
     for (int i = 0; i < 3; ++i) {
-        vec3 axis(
-            orientation[i][0],
-            orientation[i][1],
-            orientation[i][2]);
+        vec3 axis(0.f, 0.f, 0.f);
+        axis[i] = 1.f;
 
-        //temp solution - TODO
-        ps::pp::Interval interval = ps::pp::GetInterval(OBB->verts, axis);
-        float projection = Dot(axis, vec3(point[0], point[1], point[2]));
+        ps::pp::Interval interval = ps::pp::GetInterval(v, axis);
+        float projection = Dot(axis, point);
 
-        if (projection > interval.max  || projection < interval.min) {
-            output = false;
-            break;
+        if (!interval[projection]) {
+            return false;
         }
     }
-    return output;
+    return true;
 }
 
-bool ps::pp::ClipToPlane(const kln::plane& plane, std::pair<kln::point, kln::point>& line, kln::point* outPoint) {
+int ps::pp::ClipToPlane(const kln::plane& plane, std::pair<kln::point, kln::point>& line, kln::point* outPoint, kln::point* outPoint2) {
     kln::point intersection = (line.first & line.second) ^ plane;
-
-    // bool x = between(
-    //     std::max(line.first.x(), line.second.x()),
-    //     std::min(line.first.x(), line.second.x()),
-    //     intersection.x()
-    // );
-    // bool y = between(
-    //     std::max(line.first.y(), line.second.y()),
-    //     std::min(line.first.y(), line.second.y()),
-    //     intersection.y()
-    // );
-    // bool z = between(
-    //     std::max(line.first.z(), line.second.z()),
-    //     std::min(line.first.z(), line.second.z()),
-    //     intersection.z()
-    // );
-    // // printf("\n\tx: %f, %f, %f\n", line.first.x(), line.second.x(), intersection.x());
-    // // printf("\ty: %f, %f, %f\n", line.first.y(), line.second.y(), intersection.y());
-    // // printf("\tz: %f, %f, %f\n\n", line.first.z(), line.second.z(), intersection.z());
-
-    // if (x && y && z) {
-
-    // ,,Optymalizacja``
-    * outPoint = intersection;
-    return true;
-    // }
-
-    // return false;
+    if (eCmp(outPoint->e123(), 0.f)) {
+        *outPoint = intersection.normalized();
+        return 1;
+    }
+    else {
+        if (eCmp((plane & line.first).scalar(), 0.0f)) {
+            *outPoint = line.first;
+            *outPoint2 = line.second;
+            return 2;
+        }
+    }
+    return 0;
 }
 
 std::vector<kln::point> ps::pp::ClipEdgesToOBB(std::pair<kln::point, kln::point>* edges, ps::pp::Rigidbody* rb) {
 
-    ps::pp::Box* OBB = (ps::pp::Box*) rb->shape;
+    ps::pp::Box* OBB = (ps::pp::Box*)rb->shape;
     std::vector<kln::point> result;
     kln::point intersection;
+    kln::point intersection2;
 
-    for (auto face : OBB->faces){
+    for (auto face : OBB->faces) {
         auto vert1 = OBB->verts[face[0]];
         auto vert2 = OBB->verts[face[1]];
         auto vert3 = OBB->verts[face[2]];
@@ -347,12 +352,20 @@ std::vector<kln::point> ps::pp::ClipEdgesToOBB(std::pair<kln::point, kln::point>
 
         auto plane = vert1 & vert2 & vert3;
 
-
         for (int j = 0; j < 12; ++j) {
-            if (ClipToPlane(plane, edges[j], &intersection)) {
+            switch (ClipToPlane(plane, edges[j], &intersection, &intersection2))
+            {
+            case 0:
+                break;
+            case 2:
+                if (PointInBox(intersection2, rb)) {
+                    result.push_back(intersection2);
+                }
+            case 1:// fallthrough
                 if (PointInBox(intersection, rb)) {
                     result.push_back(intersection);
                 }
+                break;
             }
         }
     }
@@ -360,26 +373,27 @@ std::vector<kln::point> ps::pp::ClipEdgesToOBB(std::pair<kln::point, kln::point>
 }
 
 float ps::pp::PenetrationDepth(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, const vec3& axis, bool* outShouldFlip) {
-    kln::point* a = ((ps::pp::Box*) rb1->shape)->verts;
-    kln::point* b = ((ps::pp::Box*) rb2->shape)->verts;
+    kln::point* a = ((ps::pp::Box*)rb1->shape)->verts;
+    kln::point* b = ((ps::pp::Box*)rb2->shape)->verts;
 
     ps::pp::Interval i1 = ps::pp::GetInterval(a, axis);
     ps::pp::Interval i2 = ps::pp::GetInterval(b, axis);
-    
+
     if (!((i2.min <= i1.max) && (i1.min <= i2.max))) {
         return 0.0f; // No penetration
     }
-    
+
+    // Co  tu właściwie robisz: Rozmiar przecięcia interwałów? Rozmiar różnicy ?  
     float len1 = i1.max - i1.min;
     float len2 = i2.max - i2.min;
     float min = fminf(i1.min, i2.min);
     float max = fmaxf(i1.max, i2.max);
     float length = max - min;
-    
+
     if (outShouldFlip != nullptr) {
         *outShouldFlip = (i2.min < i1.min);
     }
-    
+
     return (len1 + len2) - length;
 }
 
@@ -390,9 +404,9 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
     auto box2 = (ps::pp::Box*)(m->rb2->shape);
 
     kln::line kln_test[15] = {};
-    
+
     ps::pp::kln_calcBoxOrientation(m->rb1, kln_test);
-    ps::pp::kln_calcBoxOrientation(m->rb2,kln_test+3);
+    ps::pp::kln_calcBoxOrientation(m->rb2, kln_test + 3);
 
     for (int i = 0; i < 3; ++i) { // Fill out rest of axes
         kln_test[6 + i * 3 + 0] = kln_test[i] * kln_test[0];
@@ -401,8 +415,8 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
     }
 
     vec3 test[15] = {};
-    calcBoxOrientation(m->rb1,test);
-    calcBoxOrientation(m->rb2,test + 3);
+    calcBoxOrientation(m->rb1, test);
+    calcBoxOrientation(m->rb2, test + 3);
 
     for (int i = 0; i < 3; ++i) { // Fill out rest of axes
         test[6 + i * 3 + 0] = Cross(test[i], test[0]);
@@ -416,10 +430,10 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
     m->count = 0;
     m->penetration = 0;
     bool overlap = false;
-    vec3 axis(0,0,0);
+    vec3 axis(0, 0, 0);
 
     for (int i = 0; i < 15; ++i) {
-        if (abs(kln_test[i] | kln_test[i]) < 0.001f){
+        if (abs(kln_test[i] | kln_test[i]) < 0.001f) {
             continue;
         }
 
@@ -427,7 +441,7 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
         if (!OverlapOnAxis(m->rb1, m->rb2, test[i])) {
             return false; // Seperating axis found
         }
-        else if (depth < m->penetration || m->penetration == 0){
+        else if (depth < m->penetration || m->penetration == 0) {
             if (shouldFlip) {
                 kln_test[i] = ~kln_test[i];
                 test[i] = test[i] * -1.0f;
@@ -438,47 +452,38 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
         }
     }
 
-    if(!axis[0] && !axis[1] && !axis[2])
+    if (!axis[0] && !axis[1] && !axis[2])
     {
         return false; // Coś nie pykło
     }
-    
+
     m->penetration /= 2.0f; // PenetrationDepth zwraca chyba tak naprawdę dwukrotność głębokości penetracji
 
-    std::pair<kln::point, kln::point> edges1[12];
-    for(int i = 0; i < 12; ++i)
-    {
-        // kln::point p1 =  m->rb1->M(box1->verts[box1->edges[i].first]);
-        // kln::point p2 =  m->rb1->M(box1->verts[box1->edges[i].second]);
-        kln::point p1 =  box1->verts[box1->edges[i].first];
-        kln::point p2 =  box1->verts[box1->edges[i].second];
-        edges1[i] = std::make_pair(p1, p2);
-    }
-    std::vector<kln::point> c1 = ps::pp::ClipEdgesToOBB(edges1, m->rb2);
 
-    for(int i = 0; i < 12; ++i)
-    {
-        // kln::point p1 = m->rb2->M(box2->verts[box2->edges[i].first]);
-        // kln::point p2 = m->rb2->M(box2->verts[box2->edges[i].second]);
-        kln::point p1 = box2->verts[box2->edges[i].first];
-        kln::point p2 = box2->verts[box2->edges[i].second];
-        edges1[i] = std::make_pair(p1, p2);
-    }
-    std::vector<kln::point> c2 = ps::pp::ClipEdgesToOBB(edges1, m->rb1);
-    
-    for(int i = 0; i < std::min(m->maxContactPoints, (int) c1.size()); ++i)
-    {
-        m->pointsOfContact[m->count] = c1[m->count];
-        ++(m->count);
+    for (auto& rb : { m->rb1, m->rb2 }) {
+        auto box = (ps::pp::Box*)(rb->shape);
+        std::pair<kln::point, kln::point> edges[12];
+
+        for (int i = 0; i < 12; ++i)
+        {
+            kln::point p1 = box->verts[box->edges[i].first];
+            kln::point p2 = box->verts[box->edges[i].second];
+            edges[i] = std::make_pair(p1, p2);
+        }
+
+        std::vector<kln::point> c = ps::pp::ClipEdgesToOBB(edges, rb);
+        
+        for (int i = 0; m->count < m->maxContactPoints && i < (int)c.size(); ++i)
+        {
+            kln::point* p = findApprox(m->pointsOfContact, m->count, c[i]);
+            if (p == NULL) {
+                m->pointsOfContact[m->count] = c[i];
+                ++(m->count);
+            }
+        }
     }
 
-    for(int i = 0; i < std::min(m->maxContactPoints - m->count, (int) c2.size()); ++i)
-    {
-        m->pointsOfContact[m->count] = c2[i];
-        ++(m->count);
-    }
-
-    m->normal = kln::plane(axis[0],axis[1],axis[2],1.f);
+    m->normal = kln::plane(-axis[0], -axis[1], -axis[2], 0.f);
 
     return true;
 }

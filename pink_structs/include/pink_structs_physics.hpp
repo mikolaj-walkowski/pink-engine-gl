@@ -93,7 +93,7 @@ namespace ps::pp {
 
         void move();
         Rigidbody(kln::motor, kln::line, BodyType, BaseShape*);
-        Rigidbody() = default;
+        Rigidbody();
         
         ~Rigidbody();
     };

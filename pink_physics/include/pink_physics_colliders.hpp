@@ -7,13 +7,20 @@ namespace ps::pp {
     struct Interval {
         float min;
         float max;
+
+        //Inclusive
+        bool operator[](float&);
+
+        //Exclusive
+        bool operator()(float&);
     };
+
 
     Interval GetInterval(const kln::point* verts, const vec3& axis);
     bool OverlapOnAxis(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, const vec3& axis);
     void kln_calcBoxOrientation(ps::pp::Rigidbody* rb, kln::line* orientation);
     bool PointInBox(kln::point& inp_point, ps::pp::Rigidbody* rb);
-    bool ClipToPlane(const kln::plane& plane, std::pair<kln::point, kln::point>& line, kln::point* outPoint);
+    int ClipToPlane(const kln::plane& plane, std::pair<kln::point, kln::point>& line, kln::point* outPoint, kln::point* outPoint2);
     std::vector<kln::point> ClipEdgesToOBB(std::pair<kln::point, kln::point>* edges, ps::pp::Rigidbody* rb);
     float PenetrationDepth(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, const vec3& axis, bool* outShouldFlip = nullptr);
 

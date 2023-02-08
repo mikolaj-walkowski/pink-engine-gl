@@ -44,7 +44,7 @@ namespace ps::pp {
 
         Box(float x, float y, float z, float mass, kln::motor offset);
         virtual void move(const kln::motor& M);
-
+        void getBodyVerts(kln::point* v);
     };
 
 
