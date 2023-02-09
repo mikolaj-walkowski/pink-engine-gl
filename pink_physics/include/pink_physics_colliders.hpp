@@ -7,12 +7,18 @@ namespace ps::pp {
     struct Interval {
         float min;
         float max;
+        float len;
 
         //Inclusive
         bool operator[](float&);
 
         //Exclusive
         bool operator()(float&);
+
+        bool overlap(const Interval&, Interval&);
+
+        Interval() = default;
+        Interval(float, float);
     };
 
 

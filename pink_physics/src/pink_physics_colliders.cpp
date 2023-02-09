@@ -25,6 +25,22 @@ ps::pp::Interval ps::pp::GetInterval(const kln::point* verts, const vec3& axis) 
     return result;
 }
 
+ps::pp::Interval::Interval(float a, float b) {
+    min = a < b ? a : b;
+    max = a > b ? a : b;
+    len = max - min;
+}
+
+bool ps::pp::Interval::overlap(const Interval& oth, Interval& res) {
+
+    res.min = fmaxf(res.min, min);
+    res.max = fminf(res.max, max);
+    res.len = res.max - res.min;
+
+    return (min <= max);
+}
+
+
 bool ps::pp::Interval::operator[](float& a) {
     return this->min <= a && this->max >= a;
 }
@@ -155,7 +171,7 @@ bool eCmp(float a, float b, float epsilon) {
 }
 
 kln::point* findApprox(kln::point* arr, int size, kln::point& p) {
-    float f = 0.01f;
+    float f = 0.1f;
     for (int i = 0; i < size; i++)
     {
         auto& a = arr[i];
@@ -322,15 +338,23 @@ bool ps::pp::PointInBox(kln::point& inp_point, ps::pp::Rigidbody* rb) {
 }
 
 int ps::pp::ClipToPlane(const kln::plane& plane, std::pair<kln::point, kln::point>& line, kln::point* outPoint, kln::point* outPoint2) {
-    kln::point intersection = (line.first & line.second) ^ plane;
-    if (eCmp(outPoint->e123(), 0.f)) {
-        *outPoint = intersection.normalized();
+    kln::line l = line.first & line.second;
+    kln::point intersection = (l) ^ plane;
+    intersection.normalize();
+    if (!ps::pp::eCmp(intersection.e123(), 0.f)) {
+        float i_val = (l | intersection).e0();
+        Interval interval((l | line.first).e0(), (l | line.second).e0());
+
+        if (!interval[i_val])
+            return 0;
+
+        *outPoint = intersection;
         return 1;
     }
     else {
-        if (eCmp((plane & line.first).scalar(), 0.0f)) {
-            *outPoint = line.first;
-            *outPoint2 = line.second;
+        if (ps::pp::eCmp((plane & line.first).scalar(), 0.0f)) {
+            *outPoint = kln::project(line.first, plane).normalized();
+            *outPoint2 = kln::project(line.second, plane).normalized();
             return 2;
         }
     }
@@ -379,6 +403,16 @@ float ps::pp::PenetrationDepth(ps::pp::Rigidbody* rb1, ps::pp::Rigidbody* rb2, c
     ps::pp::Interval i1 = ps::pp::GetInterval(a, axis);
     ps::pp::Interval i2 = ps::pp::GetInterval(b, axis);
 
+    // ps::pp::Interval res;
+    // if (!i1.overlap(i2, res)) {
+    //     return 0.0f; // No penetration
+    // }
+
+    // if (outShouldFlip != nullptr) {
+    //     *outShouldFlip = (i2.min < i1.min);
+    // }
+
+    // return res.len;
     if (!((i2.min <= i1.max) && (i1.min <= i2.max))) {
         return 0.0f; // No penetration
     }
@@ -459,8 +493,9 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
 
     m->penetration /= 2.0f; // PenetrationDepth zwraca chyba tak naprawdę dwukrotność głębokości penetracji
 
-
-    for (auto& rb : { m->rb1, m->rb2 }) {
+    Rigidbody* rbs[2] = { m->rb1, m->rb2 };
+    for (int i = 0; i < 2; i++) {
+        auto rb = rbs[i];
         auto box = (ps::pp::Box*)(rb->shape);
         std::pair<kln::point, kln::point> edges[12];
 
@@ -471,8 +506,8 @@ bool ps::pp::boxToBox(BaseShape* ap_box1_, kln::motor* m1, BaseShape* ap_box2_, 
             edges[i] = std::make_pair(p1, p2);
         }
 
-        std::vector<kln::point> c = ps::pp::ClipEdgesToOBB(edges, rb);
-        
+        std::vector<kln::point> c = ps::pp::ClipEdgesToOBB(edges, rbs[1 - i]);
+
         for (int i = 0; m->count < m->maxContactPoints && i < (int)c.size(); ++i)
         {
             kln::point* p = findApprox(m->pointsOfContact, m->count, c[i]);
