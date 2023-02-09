@@ -56,7 +56,90 @@ int euclidean_remainder(int a, int b)
 }
 
 
+void wallTake(ps::ObjectManager& objectManager) {
+  kln::euler_angles a = { kln::pi / 8.f, 0.f, 0.f };
+  kln::euler_angles b = { kln::pi / 4.f, kln::pi / 4.f, 0.f };
 
+  ps::Object* planeObj = utils::objectCreate(
+    objectManager,
+    kln::translator(-2.5, 0, 1, 0),// * kln::rotor(a),
+    ps::pp::BT_STATIC,
+    "",
+    new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
+    nvmath::scale_mat4(nvmath::vec3f(10.f, 10.f, 10.f))
+  );
+
+  // utils::createCube(objectManager, kln::translator(-0.5, 1, 0, 0), kln::line(0, 0, 0, 0, 0, 0), { 1.f,1.f,1.f });
+  // utils::createCube(objectManager, kln::translator(0, 1, 0, 0), kln::line(0, 0, 0, 0, 0, 0), { 1.f,1.f,1.f },1);
+
+  utils::createCube(objectManager, kln::translator(-1, 0, 1, 0) * kln::translator(-0.65f, 1, 0, 0), kln::line(0, 0, 0, 0, 0, 0), { 1.f,1.f,1.f }, 1);
+  utils::createCube(objectManager, kln::translator(-1, 0, 1, 0) * kln::translator(0.65f, 1, 0, 0), kln::line(0, 0, 0, 0, 0, 0), { 1.f,1.f,1.f }, 1);
+
+  utils::createCube(objectManager, kln::translator(-2, 0, 1, 0) * kln::translator(0, 1, 0, 0), kln::line(0, 0, 0, 0, 0, 0), { 1.f,1.f,1.f }, 1);
+  utils::createCube(objectManager, kln::translator(-2, 0, 1, 0) * kln::translator(-1.25f, 1, 0, 0), kln::line(0, 0, 0, 0, 0, 0), { 1.f,1.f,1.f }, 1);
+  utils::createCube(objectManager, kln::translator(-2, 0, 1, 0) * kln::translator(1.25f, 1, 0, 0), kln::line(0, 0, 0, 0, 0, 0), { 1.f,1.f,1.f }, 1);
+
+  auto bullet = utils::createCube(objectManager, kln::translator(-0.75f, 0, 1, 0) * kln::translator(7, 0, 0, 1), kln::line(0, 0, -20, 0, 0, 0), { 1.7f,1.7f,1.7f }, 20);
+}
+
+void unstableWall(ps::ObjectManager& objectManager) {
+
+  ps::Object* planeObj = utils::objectCreate(
+    objectManager,
+    kln::translator(-0.5, 0, 1, 0),// * kln::rotor(a),
+    ps::pp::BT_STATIC,
+    "",
+    new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
+    nvmath::scale_mat4(nvmath::vec3f(10.f, 10.f, 10.f))
+  );
+
+  float width = 5;
+  float height = 3;
+
+  float offset = 0.4f;
+
+  for (float x = 0; x < width; x++)
+  {
+    offset = -copysignf(0.4f,offset);
+    for (float y = 0; y < height; y++)
+    {
+      utils::createCube(objectManager, kln::translator(x * 1.f, 0, 1, 0) * kln::translator(offset + y * 1.5f, 1, 0, 0), kln::line(0, 0, 0, 0, 0, 0), { 1.f,1.f,1.f }, 1);
+    }
+  }
+
+}
+void billiardTake(ps::ObjectManager& objectManager) {
+  //kln::euler_angles a = { kln::pi / 8.f, 0.f, 0.f };
+  kln::euler_angles b = { kln::pi / 4.f, kln::pi / 4.f, 0.f };
+
+  ps::Object* planeObj = utils::objectCreate(
+    objectManager,
+    kln::translator(-1, 0, 1, 0),// * kln::rotor(a),
+    ps::pp::BT_STATIC,
+    "",
+    new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
+    nvmath::scale_mat4(nvmath::vec3f(10.f, 10.f, 10.f))
+  );
+
+  float a = 1.74f;
+
+  utils::createBall(objectManager, kln::translator(0, 1, 0, 0), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+
+  utils::createBall(objectManager, kln::translator(a, 1, 0, 0) * kln::translator(1, 0, 0, 1), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+  utils::createBall(objectManager, kln::translator(a, 1, 0, 0) * kln::translator(-1, 0, 0, 1), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+
+  utils::createBall(objectManager, kln::translator(2 * a, 1, 0, 0) * kln::translator(0, 0, 0, 1), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+  utils::createBall(objectManager, kln::translator(2 * a, 1, 0, 0) * kln::translator(2, 0, 0, 1), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+  utils::createBall(objectManager, kln::translator(2 * a, 1, 0, 0) * kln::translator(-2, 0, 0, 1), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+
+  utils::createBall(objectManager, kln::translator(3 * a, 1, 0, 0) * kln::translator(1, 0, 0, 1), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+  utils::createBall(objectManager, kln::translator(3 * a, 1, 0, 0) * kln::translator(-1, 0, 0, 1), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+  utils::createBall(objectManager, kln::translator(3 * a, 1, 0, 0) * kln::translator(3, 0, 0, 1), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+  utils::createBall(objectManager, kln::translator(3 * a, 1, 0, 0) * kln::translator(-3, 0, 0, 1), kln::line(0, 0, 0, 0, 0, 0), 1, 1);
+
+  utils::createBall(objectManager, kln::translator(-6, 1, 0, 0), kln::line(20, 0, 0, 0, 0, 0), 1, 1);
+
+}
 //--------------------------------------------------------------------------------------------------
 // Application Entry
 //
@@ -79,61 +162,15 @@ int main(int argc, char** argv)
   SolidColor graphicsEngine(&vkctx, window, utils::glfw::SAMPLE_WIDTH, utils::glfw::SAMPLE_HEIGHT);
 
   //Setup physics engine components
-  ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::vecCollider, ps::pp::basicResolver, ps::pp::verletIntegration);
+  ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicResolver, ps::pp::verletIntegration);
 
   ps::ObjectManager objectManager({ &physicsEngine, &graphicsEngine });
 
   /// DEBUG ZONE ========
   // CREATING objects 
+  billiardTake(objectManager);
+  // unstableWall(objectManager);
 
-  kln::euler_angles a = { kln::pi / 8.f, 0.f, 0.f };
-  kln::euler_angles b = { kln::pi / 4.f, kln::pi / 4.f, 0.f };
-  auto test = new ps::pp::Box(1, 1, 1, 2, kln::uMotor());
-
-  ps::Object* boxObj = utils::objectCreate(
-    objectManager,
-    (kln::motor)kln::translator(3.f, 0.f, 0.f, 1.f), //* kln::rotor(kln::pi_4, 1.f, 0.f, 1.f),
-    ps::pp::BT_DYNAMIC,
-    "",
-    test,//new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
-  );
-
-  ps::Object* boxObj2 = utils::objectCreate(
-    objectManager,
-    ((kln::motor)kln::translator(3.f, 0.f, 0.f, 1.f) * kln::translator(3.0f, 0.0f, 1.0f, 0.0f)),//* kln::rotor(b)).normalized(),
-    ps::pp::BT_DYNAMIC,
-    "",
-    new ps::pp::Box(1, 1, 1, 2, kln::uMotor()),
-    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
-  );
-
-  ps::Object* sphereObj = utils::objectCreate(
-    objectManager,
-    kln::translator(-3, 1, 0, 0),
-    ps::pp::BT_DYNAMIC,
-    "",
-    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
-  );
-
-  ps::Object* sphereObj2 = utils::objectCreate(
-    objectManager,
-    kln::translator(-3, 1, 0, 0) * kln::translator(3, 0.1f, 1, 0.0f),
-    ps::pp::BT_DYNAMIC,
-    "",
-    new ps::pp::Sphere(1.f, 2.f, kln::uMotor()),
-    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
-  );
-
-  ps::Object* planeObj = utils::objectCreate(
-    objectManager,
-    kln::translator(-3, 0, 1, 0),// * kln::rotor(a),
-    ps::pp::BT_STATIC,
-    "",
-    new ps::pp::Plane(kln::plane(0, 1, 0, 0)),
-    nvmath::scale_mat4(nvmath::vec3f(10.f, 10.f, 10.f))
-  );
 
   // utils::createCar(objectManager,&physicsEngine,(kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f));
 

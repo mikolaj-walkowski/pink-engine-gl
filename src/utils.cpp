@@ -94,6 +94,54 @@ ps::Object* utils::objectCreate(ps::ObjectManager& objM, kln::motor m, ps::pp::B
     return objM.addObject(out);
 }
 
+ps::Object* utils::createCube(ps::ObjectManager& objM, kln::motor m, kln::line b, nvmath::vec3f s,float mass) {
+    ps::Object out = {};
+
+    m.normalize();
+
+    //Physics
+    out.rigidbody = ps::pp::Rigidbody(
+        m,
+        b,
+        ps::pp::BT_DYNAMIC,
+        new ps::pp::Box(s[0], s[1], s[2], mass, kln::uMotor()));
+    out.rigidbody.apply = ps::pp::applyImpulseNormal; //TODO yuck
+
+    //Graphics 
+    ps::pg::Model model;
+    model.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh(ps::pp::shapeName[ps::pp::ST_BOX]);
+    model.scale = nvmath::scale_mat4(s);
+
+    out.model = model;
+
+
+    return objM.addObject(out);
+}
+
+ps::Object* utils::createBall(ps::ObjectManager& objM, kln::motor m, kln::line b, float s, float mass) {
+    ps::Object out = {};
+
+    m.normalize();
+
+    //Physics
+    out.rigidbody = ps::pp::Rigidbody(
+        m,
+        b,
+        ps::pp::BT_DYNAMIC,
+        new ps::pp::Sphere(s, mass, kln::uMotor()));
+    out.rigidbody.apply = ps::pp::applyImpulseNormal; //TODO yuck
+
+    //Graphics 
+    ps::pg::Model model;
+    model.mesh = ps::pg::ObjLibrary::getObjLibrary().GetMesh(ps::pp::shapeName[ps::pp::ST_SPHERE]);
+    model.scale = nvmath::scale_mat4(nvmath::vec3f(s,s,s));
+
+    out.model = model;
+
+
+    return objM.addObject(out);
+}
+
 void utils::createCar(ps::ObjectManager& objM, ps::pp::Engine* e, kln::motor m) {
     ps::Object* body = objectCreate(
         objM,

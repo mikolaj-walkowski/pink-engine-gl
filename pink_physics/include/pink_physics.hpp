@@ -11,7 +11,7 @@ namespace ps::pp {
 
 
     typedef void (*SimulateFunc)(Rigidbody*);
-    typedef void (*ColliderFunc)(Engine*, Rigidbody*, std::vector<ps::Object*>&);
+    // typedef void (*ColliderFunc)(Engine*, Rigidbody*, std::vector<ps::Object*>&, EngineCollisionStore&);
     typedef void (*ResolverFunc)(Engine*);
     typedef void (*IntegrationFunc)(Engine*, Rigidbody*);
 
@@ -31,15 +31,15 @@ namespace ps::pp {
         float dT;
 
         SimulateFunc simulate;
-        ColliderFunc collide;
+        // ColliderFunc collide;
         ResolverFunc resolve;
         IntegrationFunc integrator;
 
         static const int maxNumber = 10;
-        struct {
+        struct CollisionStore{
             int size;
             Manifold collisionData[Engine::maxNumber];
-        }collision_props;
+        }collision_props, constrainingCollisions;
 
         struct {
             float step = 0.4f;
@@ -65,8 +65,9 @@ namespace ps::pp {
         void enforceJoints();
         void renderUI();
         void run(int*,float*,bool* );
+        void vecCollider(Rigidbody* rb, std::vector<ps::Object*>& vec, CollisionStore& CS);
         
-        Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF);
+        Engine(SimulateFunc sF, ResolverFunc rF, IntegrationFunc iF);
     };
 
     Rigidbody rigidbodyCreate(kln::motor, ShapeType, void*, int);
@@ -82,7 +83,6 @@ namespace ps::pp {
     void solidResolver(Engine*);
 
     void basicCollider(Engine*, Rigidbody*);
-    void vecCollider(Engine* e, Rigidbody* rb, std::vector<ps::Object*>& vec);
 
     void eulerIntegration(Engine*, Rigidbody*);
     void verletIntegration(Engine*, Rigidbody*);

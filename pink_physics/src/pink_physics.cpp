@@ -65,11 +65,13 @@ void ps::pp::eulerIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
         rb->B.grade2();
         rb->move();
 
-        e->collide(e, rb, e->simulatedRbs);
-        e->resolve(e);
+        e->vecCollider(rb, e->simulatedRbs, e->collision_props);
+        e->vecCollider(rb, e->constrainingRbs, e->constrainingCollisions);
 
-        e->collide(e, rb, e->constrainingRbs);
-        ps::pp::solidResolver(e);
+        for (int i = 0; i < 10; i++) { //TODO change to move collide from for
+            ps::pp::basicResolver(e);
+            ps::pp::solidResolver(e);
+        }
     }
     rb->F *= 0;
 }
@@ -86,11 +88,11 @@ void ps::pp::verletIntegration(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     rb->B.grade2();
 
     rb->move();
+    e->vecCollider(rb, e->simulatedRbs, e->collision_props);
+    e->vecCollider(rb, e->constrainingRbs, e->constrainingCollisions);
 
-    for (int i = 0; i < 4; i++) {
-        e->collide(e, rb, e->simulatedRbs);
-        e->resolve(e);
-        e->collide(e, rb, e->constrainingRbs);
+    for (int i = 0; i < 3; i++) { //TODO change to move collide from for
+        ps::pp::basicResolver(e);
         ps::pp::solidResolver(e);
     }
 
@@ -182,42 +184,16 @@ void ps::pp::basicCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb) {
     }
 }
 
-void ps::pp::vecCollider(ps::pp::Engine* e, ps::pp::Rigidbody* rb, std::vector<ps::Object*>& vec) {
-    auto& collisionData = e->collision_props.collisionData;
-    auto& collisionSize = e->collision_props.size;
-    auto& collisionMaxSize = Engine::maxNumber;
 
-    collisionSize = 0;
-
-    for (int n = 0; n < vec.size(); n++)
-    {
-        auto i = vec[n];
-        if (rb == &i->rigidbody) continue;
-
-        if (collide(rb, &i->rigidbody, &collisionData[collisionSize])) {
-#ifndef NDEBUG
-            for (int di = 0; di < collisionData[collisionSize].count; di++)
-            {
-                auto p = collisionData[collisionSize].pointsOfContact[di];
-                nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
-                nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
-                // e->out->points.push_back(t * s);
-            }
-#endif
-            ++(collisionSize);
-
-        }
-    }
-}
 
 void ps::pp::solidResolver(ps::pp::Engine* e) {
-    float rho = 0.0f;
+    float rho = 0.9f;
 
 
-    for (int i = 0; i < e->collision_props.size; i++)
+    for (int i = 0; i < e->constrainingCollisions.size; i++)
     {
         // Collision data 
-        auto& data = e->collision_props.collisionData[i];
+        auto& data = e->constrainingCollisions.collisionData[i];
         // Colliding body
         auto rb_p = data.rb1;
         auto rb_m = data.rb2;
@@ -277,7 +253,7 @@ void ps::pp::solidResolver(ps::pp::Engine* e) {
 
             if (ps::pp::eCmp(jt, 0.0f) || isnan(jt)) continue;
 
-            float f = 0.05f;
+            float f = 0.15f;
 
             if (jt > j * f) {
                 jt = j * f;
@@ -294,7 +270,7 @@ void ps::pp::solidResolver(ps::pp::Engine* e) {
 
 void ps::pp::basicResolver(ps::pp::Engine* e) {
     // Coefficient of restitution
-    float rho = 0.8f;
+    float rho = 0.9f;
 
 
     for (int i = 0; i < e->collision_props.size; i++)
@@ -365,7 +341,7 @@ void ps::pp::basicResolver(ps::pp::Engine* e) {
             auto j = -(1 + rho) * num / den;
             j /= (float)data.count;
             if (isnan(j)) continue;
-            if (j > 0.f) continue;
+            if (j > 0.f) continue; //TODO error ?? 
 
             rb_p->apply(rb_p, (~rb_p->M)(I_pN), j);
             rb_m->apply(rb_m, (~rb_m->M)(I_mN), -j);
@@ -443,6 +419,33 @@ namespace ps::pp {
         shape->move(M);
     }
 
+    void Engine::vecCollider(ps::pp::Rigidbody* rb, std::vector<ps::Object*>& vec, CollisionStore& CS) {
+        auto& collisionData = CS.collisionData;
+        auto& collisionSize = CS.size;
+        auto& collisionMaxSize = Engine::maxNumber;
+
+        collisionSize = 0;
+
+        for (int n = 0; n < vec.size(); n++)
+        {
+            auto i = vec[n];
+            if (rb == &i->rigidbody) continue;
+
+            if (collide(rb, &i->rigidbody, &collisionData[collisionSize])) {
+#ifndef NDEBUG
+                for (int di = 0; di < collisionData[collisionSize].count; di++)
+                {
+                    auto p = collisionData[collisionSize].pointsOfContact[di];
+                    nvmath::mat4f s = nvmath::scale_mat4(nvmath::vec3f(0.2f, 0.2f, 0.2f));
+                    nvmath::mat4f t = nvmath::translation_mat4(nvmath::vec3f(p.x(), p.y(), p.z()));
+                    // e->out->points.push_back(t * s);
+                }
+#endif
+                ++(collisionSize);
+
+            }
+        }
+    }
 
     void Engine::registerObject(Object* obj) {
 
@@ -523,7 +526,7 @@ namespace ps::pp {
         rb->B += dir * a;
     }
 
-    Engine::Engine(SimulateFunc sF, ColliderFunc cF, ResolverFunc rF, IntegrationFunc iF): simulate(sF), collide(cF), resolve(rF), integrator(iF) {
+    Engine::Engine(SimulateFunc sF, ResolverFunc rF, IntegrationFunc iF): simulate(sF), resolve(rF), integrator(iF) {
 
     }
 
