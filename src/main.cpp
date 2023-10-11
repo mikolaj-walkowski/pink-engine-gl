@@ -164,12 +164,14 @@ int main(int argc, char** argv)
   //Setup physics engine components
   ps::pp::Engine physicsEngine(ps::pp::basicSimulate, ps::pp::basicResolver, ps::pp::verletIntegration);
 
-  ps::ObjectManager objectManager({ &physicsEngine, &graphicsEngine });
+  auto& objectManager = ps::ObjectManager::GetInstance();
+  objectManager.init({ &physicsEngine, &graphicsEngine });
 
   /// DEBUG ZONE ========
   // CREATING objects 
   billiardTake(objectManager);
   // unstableWall(objectManager);
+  // wallTake(objectManager);
 
 
   // utils::createCar(objectManager,&physicsEngine,(kln::motor)kln::translator(3.f, 1.f, 0.f, 0.f));

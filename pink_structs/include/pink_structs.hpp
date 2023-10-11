@@ -42,16 +42,18 @@ namespace ps {
 
   class ObjectManager {
     UniqueID idCounter = nullID;
+    ObjectManager();
   public:
     std::vector<Object*> objects;
     std::vector<Module*> modules;
 
+    void init(std::vector<Module*>);
     UniqueID newUniqueId();
     Object* addObject(const Object&);
     void deleteObject(Object*);
     Object* findObject(UniqueID id);
     std::vector<Object*>::iterator ObjectManager::findObjectInVector(UniqueID id);
-    ObjectManager(std::vector<Module*>);
+    static ObjectManager& GetInstance();
   };
 
 }  // namespace ps

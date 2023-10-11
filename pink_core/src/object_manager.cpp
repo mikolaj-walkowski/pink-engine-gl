@@ -1,7 +1,9 @@
 #include "pink_core.hpp"
 
 namespace ps {
-    ObjectManager::ObjectManager(std::vector<Module*> m): modules(m) {}
+    ObjectManager::ObjectManager() {}
+
+    void ObjectManager::init(std::vector<Module*> m) {modules = m;}
 
     Object* ObjectManager::addObject(const Object& o) {
         auto newObj = new Object(o);
@@ -41,5 +43,10 @@ namespace ps {
         o.id = id;
         auto out = std::lower_bound(objects.begin(), objects.end(), &o, ObjectIDCmp());
         return out;
+    }
+
+    ObjectManager& ObjectManager::GetInstance(){
+        static ObjectManager instance;
+        return instance;
     }
 }
