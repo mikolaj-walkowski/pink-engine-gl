@@ -6,6 +6,7 @@ UI::UI() {}
 
 void UI::show() {
     if (ImGui::BeginMainMenuBar()) {
+        ImGui::MenuItem("General", "", &showGeneral);
         ImGui::MenuItem("Graphics", "", &showGraphics);
         ImGui::MenuItem("Physics", "", &showPhysics);
 #ifndef NDEBUG
@@ -25,6 +26,7 @@ void UI::show() {
     }
     PhysicsWindow();
     GraphicsWindow();
+    GeneralWindow();
 }
 
 void UI::init(GLFWwindow* w, bool b, ps::pp::Engine* _p, SolidColor* _g) {
@@ -195,6 +197,85 @@ void UI::GraphicsWindow() {
         ge->renderUI();
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGuiH::Control::Info("", "", "(F10) Toggle Pane", ImGuiH::Control::Flags::Disabled);
+        ImGui::End();
+    }
+}
+
+void UI::GeneralWindow() {
+    if (showGeneral) 
+    {
+        // TODO make this pretty, idk how to use ImGui
+
+        ImGui::SetNextWindowPos(ImVec2(480, 30), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+        ImGui::Begin("General Debug", NULL);
+
+        if (ImGui::CollapsingHeader("Create new object"))
+        {
+            static bool dynamic_physics = false;
+            static float pos_X = 0, pos_Y = 0, pos_Z = 0;
+            static float vel_X = 0, vel_Y = 0, vel_Z = 0;
+
+            if (ImGui::CollapsingHeader("Object coords"))
+            {
+                ImGui::InputFloat("X position", &pos_X);
+                ImGui::InputFloat("Y position", &pos_Y);
+                ImGui::InputFloat("Z position", &pos_Z);
+            }
+
+            ImGui::Checkbox("Is dynamic", &dynamic_physics);
+
+            if (ImGui::CollapsingHeader("Object velocity"))
+            {
+                ImGui::InputFloat("X velocity", &vel_X);
+                ImGui::InputFloat("Y velocity", &vel_Y);
+                ImGui::InputFloat("Z velocity", &vel_Z);
+            }
+
+            // FIXME do this better, this is just the initial version
+            // ge->objChoice() or smth here? It would be good to be able to choose any object from ObjLibrary
+            // For now I'll just add the primitives
+            const char* items[] = { "Box", "Sphere", "Cylinder", "Plane"};
+            static const char* current_item = items[0];
+
+            if (ImGui::BeginCombo("Shape", current_item)) // The second parameter is the label previewed before opening the combo.
+            {
+                for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+                {
+                    bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+                    if (ImGui::Selectable(items[n], is_selected))
+                        current_item = items[n];
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+                }
+                ImGui::EndCombo();
+            }
+
+            // Oh God, what have I done
+            if(ImGui::Button("Create") && current_item != NULL)
+            {
+                ps::pp::BaseShape* shape;
+                if (!strcmp(current_item, "Box"))
+                    shape = new ps::pp::Box(1, 1, 1, 1, kln::uMotor());
+                else if (!strcmp(current_item, "Cylinder"))
+                    shape = new ps::pp::Cylinder(2, 1, 1, kln::uMotor());
+                else if (!strcmp(current_item, "Sphere"))
+                    shape = new ps::pp::Sphere(1.f, 2.f, kln::uMotor());
+                else if (!strcmp(current_item, "Plane"))
+                    shape = new ps::pp::Plane(kln::plane(0, 1, 0, 0));
+
+                ps::Object* createdObj = utils::objectCreate(
+                    ps::ObjectManager::GetInstance(),
+                    kln::translator(pos_X, 1, 0, 0) * kln::translator(pos_Y, 0, 1, 0) * kln::translator(pos_Z, 0, 0, 1),// * kln::rotor(a),
+                    dynamic_physics? ps::pp::BT_DYNAMIC : ps::pp::BT_STATIC,
+                    "",
+                    shape,
+                    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
+                );
+
+                std::cout << "Stop\n";
+            };
+        }
         ImGui::End();
     }
 }

@@ -1,11 +1,13 @@
 #pragma once
 #include "imgui.h"
+#include "utils.hpp"
 #include "pink_structs.hpp"
 #include "pink_physics.hpp"
 #include "pink_graphics.hpp"
 #include "GLFW/glfw3.h"
 
 class UI {
+    bool showGeneral = false;
     bool showGraphics = false;
     bool showPhysics = false;
 
@@ -24,4 +26,5 @@ public:
 
     void PhysicsWindow();
     void GraphicsWindow();
+    void GeneralWindow();
 };
