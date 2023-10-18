@@ -72,13 +72,13 @@ void utils::nvidia::setupContext(nvvk::Context* c, std::vector<utils::ExtensionL
 
 }
 
-ps::Object* utils::objectCreate(ps::ObjectManager& objM, kln::motor m, ps::pp::BodyType bt_type, std::string meshName, ps::pp::BaseShape* shape, nvmath::mat4f scale) {
+ps::Object* utils::objectCreate(ps::ObjectManager& objM, kln::motor m, ps::pp::BodyType bt_type, std::string meshName, ps::pp::BaseShape* shape, nvmath::mat4f scale, kln::line force) {
     ps::Object out = {};
 
     m.normalize();
 
     //Physics
-    out.rigidbody = ps::pp::Rigidbody(m, kln::line(0, 0, 0, 0, 0, 0), bt_type, shape);
+    out.rigidbody = ps::pp::Rigidbody(m, force, bt_type, shape);
     out.rigidbody.apply = bt_type == ps::pp::BT_DYNAMIC ? ps::pp::applyImpulseNormal : ps::pp::applyImpulseStatic; //TODO yuck
 
     //Graphics 

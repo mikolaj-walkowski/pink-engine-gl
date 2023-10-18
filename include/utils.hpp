@@ -39,7 +39,7 @@ namespace utils {
     ps::UniqueID newID();
     ps::Object* createCube(ps::ObjectManager& objM, kln::motor m, kln::line b, nvmath::vec3f s, float mass);
     ps::Object* createBall(ps::ObjectManager& objM, kln::motor m, kln::line b, float s, float mass);
-    ps::Object* objectCreate(ps::ObjectManager& objM, kln::motor m, ps::pp::BodyType bt_type, std::string meshName, ps::pp::BaseShape* shape, nvmath::mat4f scale);
+    ps::Object* objectCreate(ps::ObjectManager& objM, kln::motor m, ps::pp::BodyType bt_type, std::string meshName, ps::pp::BaseShape* shape, nvmath::mat4f scale, kln::line force = kln::line(0,0,0,0,0,0));
     void createCar(ps::ObjectManager&, ps::pp::Engine* e, kln::motor m);
 
 }//namespace utils

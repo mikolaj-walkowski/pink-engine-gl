@@ -214,7 +214,10 @@ void UI::GeneralWindow() {
         {
             static bool dynamic_physics = false;
             static float pos_X = 0, pos_Y = 0, pos_Z = 0;
+            static float rot_X = 0, rot_Y = 0, rot_Z = 0;
+            static float sca_X = 1, sca_Y = 1, sca_Z = 1;
             static float vel_X = 0, vel_Y = 0, vel_Z = 0;
+            static float mass = 1;
 
             if (ImGui::CollapsingHeader("Object coords"))
             {
@@ -223,30 +226,44 @@ void UI::GeneralWindow() {
                 ImGui::InputFloat("Z position", &pos_Z);
             }
 
-            ImGui::Checkbox("Is dynamic", &dynamic_physics);
+            if (ImGui::CollapsingHeader("Object rotation"))
+            {
+                ImGui::InputFloat("X rotation", &rot_X);
+                ImGui::InputFloat("Y rotation", &rot_Y);
+                ImGui::InputFloat("Z rotation", &rot_Z);
+            }
 
-            if (ImGui::CollapsingHeader("Object velocity"))
+            if (ImGui::CollapsingHeader("Object scale"))
+            {
+                ImGui::InputFloat("X scale", &sca_X);
+                ImGui::InputFloat("Y scale", &sca_Y);
+                ImGui::InputFloat("Z scale", &sca_Z);
+            }
+
+            ImGui::Checkbox("Is dynamic", &dynamic_physics);
+            if(dynamic_physics)
             {
                 ImGui::InputFloat("X velocity", &vel_X);
                 ImGui::InputFloat("Y velocity", &vel_Y);
                 ImGui::InputFloat("Z velocity", &vel_Z);
+                ImGui::InputFloat("Object mass", &mass);
             }
 
             // FIXME do this better, this is just the initial version
             // ge->objChoice() or smth here? It would be good to be able to choose any object from ObjLibrary
             // For now I'll just add the primitives
-            const char* items[] = { "Box", "Sphere", "Cylinder", "Plane"};
+            const char* items[] = { "Box", "Sphere", "Plane", /*"Cylinder"*/};
             static const char* current_item = items[0];
 
-            if (ImGui::BeginCombo("Shape", current_item)) // The second parameter is the label previewed before opening the combo.
+            if (ImGui::BeginCombo("Shape", current_item))
             {
                 for (int n = 0; n < IM_ARRAYSIZE(items); n++)
                 {
-                    bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+                    bool is_selected = (current_item == items[n]);
                     if (ImGui::Selectable(items[n], is_selected))
                         current_item = items[n];
                     if (is_selected)
-                        ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+                        ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
             }
@@ -256,24 +273,39 @@ void UI::GeneralWindow() {
             {
                 ps::pp::BaseShape* shape;
                 if (!strcmp(current_item, "Box"))
-                    shape = new ps::pp::Box(1, 1, 1, 1, kln::uMotor());
+                    shape = new ps::pp::Box(sca_X, sca_Y, sca_Z, mass, kln::uMotor());
                 else if (!strcmp(current_item, "Cylinder"))
-                    shape = new ps::pp::Cylinder(2, 1, 1, kln::uMotor());
+                    shape = new ps::pp::Cylinder(sca_Y, sca_X, mass, kln::uMotor());   
+                                // NOTE: The X and Z scale make it a bit more complex; this is not correct
                 else if (!strcmp(current_item, "Sphere"))
-                    shape = new ps::pp::Sphere(1.f, 2.f, kln::uMotor());
+                    shape = new ps::pp::Sphere(sca_X, mass, kln::uMotor());     
+                                // NOTE: This is not correct at all
                 else if (!strcmp(current_item, "Plane"))
+                {
+                    if (dynamic_physics)
+                        // You can't do that!!! Probably some better handling should be placed here but I just can't be bothered
+                        dynamic_physics = false;
+
                     shape = new ps::pp::Plane(kln::plane(0, 1, 0, 0));
+                }
 
                 ps::Object* createdObj = utils::objectCreate(
                     ps::ObjectManager::GetInstance(),
-                    kln::translator(pos_X, 1, 0, 0) * kln::translator(pos_Y, 0, 1, 0) * kln::translator(pos_Z, 0, 0, 1),// * kln::rotor(a),
+                    // position
+                    kln::translator(pos_X, 1, 0, 0) * 
+                    kln::translator(pos_Y, 0, 1, 0) * 
+                    kln::translator(pos_Z, 0, 0, 1) * 
+                    // rotation (pi/180 = around 0.01745)
+                    kln::rotor(rot_X * 0.01745f, 1, 0, 0) *  
+                    kln::rotor(rot_Y * 0.01745f, 0, 1, 0) * 
+                    kln::rotor(rot_Z * 0.01745f, 0, 0, 1)
+                    ,
                     dynamic_physics? ps::pp::BT_DYNAMIC : ps::pp::BT_STATIC,
                     "",
                     shape,
-                    nvmath::scale_mat4(nvmath::vec3f(1.f, 1.f, 1.f))
+                    nvmath::scale_mat4(nvmath::vec3f(sca_X, sca_Y, sca_Z)),
+                    kln::line(vel_X, vel_Y, vel_Z, 0, 0, 0)
                 );
-
-                std::cout << "Stop\n";
             };
         }
         ImGui::End();
